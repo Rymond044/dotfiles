@@ -1,0 +1,25 @@
+# Ignore all
+*
+
+# Track gitignore
+!.gitignore
+
+# Track folders
+!binc/
+!hypr/
+!kitty/
+!rofi/
+!swaync/
+!wallust/
+!waybar/
+!fastfetch/
+
+# Track files inside folders
+!binc/**
+!hypr/**
+!kitty/**
+!rofi/**
+!swaync/**
+!wallust/**
+!waybar/**
+!fastfetch/**

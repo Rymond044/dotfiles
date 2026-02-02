@@ -1,0 +1,224 @@
+@import "../../.cache/wallust/colors-waybar.css";
+
+* {
+    font-family: system-ui;
+    font-size: 14px;
+    transition: background-color 0.3s ease-out;
+}
+
+window#waybar {
+    background: transparent;
+    color: @foreground;
+    font-family: system-ui;
+    transition: background-color 0.5s;
+}
+
+.modules-left,
+.modules-center,
+.modules-right {
+    background: @main_pill;
+    margin: 5px 10px;
+    padding: 0 5px;
+    border-radius: 100px;
+}
+
+.modules-left {
+    padding: 0 0 0 0;
+    margin: 5px 5px 5px 10px;
+}
+
+.modules-center {
+    padding: 0 0px;
+}
+
+#clock,
+#battery,
+#cpu,
+#memory,
+#disk,
+#temperature,
+#backlight,
+#network,
+#pulseaudio,
+#wireplumber,
+#custom-media,
+#tray,
+#mode,
+#idle_inhibitor,
+#scratchpad,
+#power-profiles-daemon,
+#language,
+#mpd {
+    padding: 0 10px;
+    border-radius: 100px;
+}
+
+#custom-playerctl-prev,
+#custom-playerctl,
+#custom-playerctl-next {
+    padding: 0 8px;
+    border-radius: 100px;
+}
+
+#custom-playerctl-prev {
+    padding: 0 12px;
+    font-size: 20px;
+}
+
+#custom-playerctl-next {
+    padding: 0 12px;
+    font-size: 20px;
+}
+
+#tray {
+    padding: 0 10px 0 10px;
+    background: @main_pill;
+    border-radius: 999px;
+}
+
+#custom-notification.dnd,
+#custom-notification {
+    padding: 0 12px 0 12px;
+    background: @main_pill;
+    border-radius: 999px;
+}
+
+#custom-notification:hover {
+    background: @hover_pill;
+}
+
+#tray > * {
+    margin: 0 3px;
+    padding: 4px 2px;
+    min-width: 24px;
+    transition: all 0.15s ease;
+}
+
+#tray > *:hover {
+    background: @hover_pill;
+    border-radius: 8px;
+}
+
+#tray:hover {
+    background: @hover_pill;
+}
+
+#clock:hover,
+#battery:hover,
+#cpu:hover,
+#memory:hover,
+#disk:hover,
+#temperature:hover,
+#backlight:hover,
+#network:hover,
+#pulseaudio:hover,
+#wireplumber:hover,
+#custom-media:hover,
+#tray:hover,
+#mode:hover,
+#idle_inhibitor:hover,
+#scratchpad:hover,
+#power-profiles-daemon:hover,
+#language:hover,
+#mpd:hover {
+    background: @hover_pill;
+    padding: 0 10px;
+    border-radius: 100px;
+}
+
+#custom-playerctl-prev:hover,
+#custom-playerctl:hover,
+#custom-playerctl-next:hover {
+    padding: 0 8px;
+    border-radius: 100px;
+    background: @hover_pill;
+}
+
+#custom-playerctl-prev:hover {
+    padding: 0 12px;
+}
+
+#custom-playerctl-next:hover {
+    padding: 0 12px;
+}
+
+#workspaces button {
+    background: transparent;
+    font-family: system-ui;
+    font-weight: 900;
+    font-size: 13pt;
+    padding: 0 11px 0 6px;
+    margin: 0 0 0 0;
+    color: @foreground;
+    border: none;
+    border-radius: 100px;
+}
+
+#workspaces button.active {
+    padding: 0 10px 0 7px;
+    background: @accent;
+    color: @text_dark;
+}
+
+#workspaces button:hover {
+    padding: 0 11px 0 6px;
+    background: @accent;
+    color: @text_dark;
+}
+
+#custom-arch {
+    margin-left: 5px;
+    padding: 0 10px;
+    font-size: 25px;
+    transition: color 0.5s;
+}
+
+#custom-arch:hover {
+    color: @accent;
+}
+#bluetooth {
+    font-size: 17px;
+    padding: 0 5px;
+    border-radius: 100px;
+}
+#bluetooth:hover {
+    background: @hover_pill;
+}
+
+#backlight {
+    color: @foreground;
+}
+
+#language {
+    min-width: 20px;
+    padding: 0 5px;
+    margin: 0 7.5px;
+}
+
+#language:hover {
+    min-width: 20px;
+    padding: 0 5px;
+    margin: 0 7.5px;
+}
+
+#custom-sysmon {
+    font-size: 17px;
+    padding: 0 10px;
+    border-radius: 100px;
+}
+
+#custom-sysmon:hover {
+    background: @hover_pill;
+}
+
+#custom-power {
+    padding: 0 10px;
+    border-radius: 100px;
+    font-size: 17px;
+    color: #e06c75;
+}
+
+#custom-power:hover {
+    background: @hover_pill;
+    color: #61afef;
+}
