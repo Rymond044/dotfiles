@@ -18,10 +18,11 @@ uptime="`uptime -p | sed -e 's/up //g'`"
 host=`hostname`
 
 # Options
-shutdown=' Shutdown'
-reboot=' Reboot'
-lock=' Lock'
-suspend=' Suspend'
+shutdown='   Shutdown'
+reboot='   Reboot'
+lock='   Lock'
+suspend='   Suspend'
+logout='    Logout'
 yes=' Yes'
 no=' No'
 
@@ -53,7 +54,7 @@ confirm_exit() {
 
 # Pass variables to rofi dmenu
 run_rofi() {
-	echo -e "$lock\n$suspend\n$reboot\n$shutdown" | rofi_cmd
+    echo -e "$lock\n$suspend\n$reboot\n$shutdown\n$logout" | rofi_cmd
 }
 
 # Execute Command
@@ -64,6 +65,8 @@ run_cmd() {
 			systemctl poweroff
 		elif [[ $1 == '--reboot' ]]; then
 			systemctl reboot
+		elif [[ $1 == '--logout' ]] then
+		    hyprctl dispatch exit
 		elif [[ $1 == '--suspend' ]]; then
 			mpc -q pause
 			amixer set Master mute
@@ -85,7 +88,6 @@ case ${chosen} in
         ;;
     $lock)
         if [[ -x '/usr/bin/hyprlock' ]]; then
-            # Close Rofi first by killing its process
             pkill -x rofi
             sleep 0.1
             hyprlock
@@ -94,4 +96,6 @@ case ${chosen} in
     $suspend)
 		run_cmd --suspend
         ;;
+    $logout)
+        run_cmd --logout
 esac

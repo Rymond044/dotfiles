@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Переходим в папку с ключами (это важно, чтобы openvpn нашел файлы сертификатов)
+cd ~/vpnfiles
+
+# Запускаем openvpn
+echo "VPN Server launching..."
+sudo openvpn --config vpnbook-us178-tcp443.ovpn --auth-user-pass auth.txt

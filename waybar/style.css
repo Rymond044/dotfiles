@@ -161,9 +161,9 @@ window#waybar {
 }
 
 #workspaces button:hover {
-    padding: 0 11px 0 6px;
-    background: @accent;
-    color: @text_dark;
+    box-shadow: none;
+    text-shadow: none;
+    color: @accent;
 }
 
 #custom-arch {

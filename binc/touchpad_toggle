@@ -1,0 +1,60 @@
+#!/bin/bash
+#
+DEVICE_NAME="ASUE120B:00 04F3:31C0 Touchpad"
+PID_FILE="/tmp/touchpad_evtest.pid"
+
+toggle_xinput() {
+    if command -v xinput > /dev/null; then
+        local id=$(xinput list --id-only "$DEVICE_NAME")
+        if [ -n "$id" ]; then
+            local state=$(xinput list-props "$id" | grep "Device Enabled" | awk '{print $NF}')
+            if [ "$state" -eq 1 ]; then
+                xinput disable "$id"
+                notify-send "Touchpad" "Disabled"
+            else
+                xinput enable "$id"
+                notify-send "Touchpad" "Enabled"
+            fi
+            return 0
+        fi
+    fi
+    return 1
+}
+
+toggle_evtest() {
+    if [ -f "$PID_FILE" ]; then
+        local pid=$(cat "$PID_FILE")
+        if kill "$pid" 2>/dev/null; then
+            rm "$PID_FILE"
+            notify-send "Touchpad" "Enabled"
+            return 0
+        else
+            rm "$PID_FILE"
+        fi
+    fi
+
+    local event_dev=$(grep -E 'Handlers|Name' /proc/bus/input/devices | \
+        grep -A 1 "$DEVICE_NAME" | grep -oE 'event[0-9]+' | head -n 1)
+
+    if [ -n "$event_dev" ]; then
+        nohup evtest --grab "/dev/input/$event_dev" > /dev/null 2>&1 &
+        echo $! > "$PID_FILE"
+        notify-send "Touchpad" "Disabled"
+        return 0
+    fi
+    return 1
+}
+
+main() {
+    if toggle_xinput; then
+        exit 0
+    fi
+    if toggle_evtest; then
+        exit 0
+    fi
+
+    notify-send "Error" "Touchpad not found"
+    exit 1
+}
+
+main

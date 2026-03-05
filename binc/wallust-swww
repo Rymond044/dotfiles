@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+WALLPAPER="$1"
+
+if [ -z "$WALLPAPER" ]; then
+  echo "Использование: ./script.sh /путь/к/обоям"
+  exit 1
+fi
+
+# ПЕРЕМЕННАЯ ДЛЯ ПЕРЕЗАПИСЫВАЕМОГО ФАЙЛА
+CURRENT_WALL="$HOME/Wallpapers/current.jpg"
+
+# 0. Копируем выбранный файл в current.jpg
+# (флаг -f принудительно перезаписывает файл)
+cp -f "$WALLPAPER" "$CURRENT_WALL"
+
+# 1. Меняем обои (используем уже скопированный файл)
+swww img "$CURRENT_WALL" --transition-type any
+
+# 2. Запускаем wallust
+wallust run "$CURRENT_WALL"
+
+# 3. Перезагружаем софт
+hyprctl reload
+killall -SIGUSR2 waybar
+killall -USR1 kitty
+swaync-client -rs && swaync-client -t -sw && swaync-client -t
+
+echo "Theme updated! Image saved to $CURRENT_WALL"

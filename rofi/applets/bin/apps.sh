@@ -29,7 +29,7 @@ remove_pkg='hyprctl dispatch exec "[float; size 1300 750; center] kitty -e .conf
 edit_configs='zeditor ~/.config/'
 switch_wallpapers="$HOME/.config/rofi/scripts/wall-selector.sh"
 term_cmd='kitty'
-file_cmd='dolphin'
+file_cmd='nautilus'
 web_cmd='chromium'
 
 # Options
