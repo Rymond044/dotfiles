@@ -1,0 +1,35 @@
+#!/bin/bash
+
+DEVICE_PATH=$(grep -l 'MSNB0001:00 04CA:2642 Touchpad' /sys/class/input/input*/name 2>/dev/null | head -n1 | sed 's/\/name$//')
+
+if [ -z "$DEVICE_PATH" ] || [ ! -d "$DEVICE_PATH" ]; then
+    echo "❌ Error: Touchpad not found in sysfs"
+    echo "   Try to list available devices:"
+    grep -l 'Touchpad' /sys/class/input/input*/name 2>/dev/null | sed 's/\/name$//'
+    exit 1
+fi
+
+echo "✅ Found device: $DEVICE_PATH"
+
+INHIBIT_FILE="$DEVICE_PATH/inhibited"
+
+if [ ! -f "$INHIBIT_FILE" ]; then
+    echo "❌ Error: $INHIBIT_FILE does not exist"
+    echo "   Kernel may not support this feature or device driver changed"
+    exit 1
+fi
+
+CURRENT_STATE=$(cat "$INHIBIT_FILE")
+
+if [ "$CURRENT_STATE" -eq 0 ]; then
+    echo "1" | sudo tee "$INHIBIT_FILE" > /dev/null
+    echo "🖱️ Touchpad DISABLED"
+    notify-send "Touchpad" "Disabled" -t 1500
+else
+    echo "0" | sudo tee "$INHIBIT_FILE" > /dev/null
+    echo "🖱️ Touchpad ENABLED"
+    notify-send "Touchpad" "Enabled" -t 1500
+fi
+
+NEW_STATE=$(cat "$INHIBIT_FILE")
+[ "$NEW_STATE" -eq 1 ] && echo "   Status: disabled" || echo "   Status: enabled"

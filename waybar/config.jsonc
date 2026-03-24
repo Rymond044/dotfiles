@@ -1,0 +1,36 @@
+{
+  "layer": "top",
+  "position": "top",
+  "height": 42,
+  "spacing": 1,
+
+  // Left side
+  "modules-left": ["custom/arch", "hyprland/workspaces"],
+
+  // Center
+  "modules-center": [
+    "custom/playerctl-prev",
+    "custom/playerctl",
+    "custom/playerctl-next",
+    "tray",
+  ],
+
+  // Right side
+  "modules-right": [
+    "pulseaudio",
+    "backlight",
+    "bluetooth",
+    "network",
+
+    "custom/sysmon",
+
+    "battery",
+    "custom/notification",
+    "clock",
+    "hyprland/language",
+    "custom/power",
+  ],
+
+  // Load module definitions
+  "include": ["~/.config/waybar/modules.jsonc"],
+}

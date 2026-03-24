@@ -1,0 +1,187 @@
+{
+  "custom/arch": {
+    "format": "󰣇",
+    "tooltip": true,
+    "tooltip-format": "i use arch btw 󰣇",
+    "on-click": "sleep 0.2s && hyprctl dispatch hyprexpo:expo toggle",
+  },
+
+  "hyprland/workspaces": {
+    "format": "{icon}",
+    "on-click": "activate",
+    "all-outputs": false,
+    "sort-by-number": true,
+    "active-only": false,
+    "persistent-workspaces": {
+      "*": 5,
+    },
+
+    "format-icons": {
+      "1": "一",
+      "2": "二",
+      "3": "三",
+      "4": "四",
+      "5": "五",
+      "6": "六",
+      "7": "七",
+      "8": "八",
+      "9": "九",
+      "10": "十",
+      "active": "󱓻",
+      "default": "",
+    },
+  },
+
+  "tray": {
+    "format": "{icon}",
+    "icon-size": 18,
+    "spacing": 10,
+    "show-passive-items": true,
+    "tooltip": false,
+  },
+
+  "custom/playerctl-prev": {
+    "format": "󰒮",
+    "on-click": "playerctl previous",
+    "tooltip": false,
+    "exec": "echo '{\"text\": \"󰒮\", \"alt\": \"prev\"}'",
+    "exec-if": "playerctl status 2>/dev/null | grep -q Playing || playerctl status 2>/dev/null | grep -q Paused",
+    "return-type": "json",
+    "interval": 1,
+  },
+
+  "custom/playerctl": {
+    "format": "<span font='20px'>{icon}</span> <span rise='2000'>{text}</span>",
+    "return-type": "json",
+    "max-length": 80,
+    "exec": "playerctl -a metadata --format '{\"text\": \"{{artist}} - {{markup_escape(title)}}\", \"tooltip\": \"{{playerName}} : {{artist}} - {{markup_escape(title)}}\", \"alt\": \"{{status}}\", \"class\": \"{{status}}\"}' -F",
+    "exec-if": "playerctl status 2>/dev/null | grep -q Playing || playerctl status 2>/dev/null | grep -q Paused",
+    "format-icons": {
+      "Playing": "󰐊",
+      "Paused": "󰏤",
+    },
+    "on-click": "playerctl play-pause",
+    "on-scroll-up": "playerctl volume 0.05+",
+    "on-scroll-down": "playerctl volume 0.05-",
+  },
+
+  "custom/playerctl-next": {
+    "format": "󰒭",
+    "on-click": "playerctl next",
+    "tooltip": false,
+    "exec": "echo '{\"text\": \"󰒭\", \"alt\": \"next\"}'",
+    "exec-if": "playerctl status 2>/dev/null | grep -q Playing || playerctl status 2>/dev/null | grep -q Paused",
+    "return-type": "json",
+    "interval": 1,
+  },
+
+  "custom/notification": {
+    "tooltip": false,
+    "format": "{icon}",
+    "format-icons": {
+      "notification": "<span foreground='red'><sup></sup></span>",
+      "none": "",
+      "dnd-notification": "<span foreground='red'><sup></sup></span>",
+      "dnd-none": "",
+    },
+    "return-type": "json",
+    "exec": "swaync-client -swb",
+    "on-click": "sleep 0.1 && swaync-client -t -sw",
+    "on-click-right": "swaync-client -C",
+    "escape": true,
+  },
+
+  "pulseaudio": {
+    "format": "{icon} {volume}%",
+    "max-volume": 150,
+    "scroll-step": 5,
+    "format-muted": " ",
+    "format-icons": {
+      "headphone": "",
+      "default": ["", "", ""],
+    },
+    "on-click": "hyprctl dispatch exec \"[float; size 1300 750; center] kitty -e wiremix\"",
+  },
+
+  "backlight": {
+    "device": "intel_backlight",
+    "format": "{icon} {percent}%",
+    "format-icons": ["󰃜", "󰃛", "󰃚"],
+    "on-scroll-up": "brightnessctl set 1%+",
+    "on-scroll-down": "brightnessctl set 1%-",
+    "tooltip": false,
+  },
+
+  "bluetooth": {
+    "format": "",
+    "tooltip": true,
+    "tooltip-format": "{status}",
+    "on-click": "hyprctl dispatch exec \"[float; size 1300 750; center] kitty -e bluetui\"",
+  },
+
+  "network": {
+    "interface": "wlan0",
+    "format-wifi": "  {essid}",
+    "tooltip": true,
+    "tooltip-format": "SSID: {essid}\nSignal: {signalStrength}%\nSpeed: {bandwidthDownBits} ↓ / {bandwidthUpBits} ↑",
+    "format-ethernet": "",
+    "format-disconnected": "",
+    "interval": 2,
+    "on-click": "hyprctl dispatch exec \"[float; size 1300 750; center] kitty -e sudo impala\"",
+  },
+
+  "custom/sysmon": {
+    "format": "󰍛",
+    "tooltip": false,
+    "on-click": "hyprctl dispatch exec \"[float; size 1300 750; center] kitty -e btop\"",
+    "interval": 2,
+  },
+
+  "cpu": {
+    "format": "",
+    "tooltip": false,
+  },
+
+  "memory": {
+    "format": "",
+    "tooltip": false,
+  },
+
+  "battery": {
+    "states": {
+      "warning": 30,
+      "critical": 15,
+    },
+    "format": "{icon} {capacity}%",
+    "format-charging": " {capacity}%",
+    "format-plugged": " {capacity}%",
+    "format-icons": ["", "", "", "", ""],
+    "on-click": "~/.config/waybar/scripts/power-profiles.sh",
+  },
+
+  "clock": {
+    "format": "{:%H:%M  }",
+    "format-alt": "{:%e %B  }",
+    "tooltip": true,
+    "tooltip-format": "{calendar}",
+    "calendar": {
+      "format": {
+        "months": "<span size='larger' style='italic'>{}</span>",
+        "today": "<b><big>{}</big></b>",
+      },
+    },
+    "on-click-right": "hyprctl dispatch exec \"[float; size 1300 750; center] kitty -e calcure\"",
+  },
+
+  "custom/power": {
+    "format": "",
+    "tooltip": false,
+    "on-click": "~/.config/rofi/powermenu/type-1/powermenu.sh",
+  },
+
+  "hyprland/language": {
+    "format": "{}",
+    "format-en": "en",
+    "format-ru": "ru",
+  },
+}

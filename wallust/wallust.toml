@@ -1,0 +1,17 @@
+
+backend = "fast-resize"
+color_space = "labmixed"
+threshold = 7
+palette = "dark16"
+
+
+[image]
+path = "~/Wallpapers/current.jpg"
+
+[templates]
+hyprland = { template = 'hyprland.conf.j2', target = '~/.cache/wallust/hyprland.conf' }
+waybar = {template = 'colors-waybar.css.j2', target = '~/.cache/wallust/colors-waybar.css'}
+kitty = {template = 'kitty.conf.j2', target = '~/.cache/wallust/kitty.conf'}
+swaync = {template = 'swaync.css.j2', target = '~/.cache/wallust/swaync.css'}
+rofi = {template = 'rofi-colors.rasi.j2', target = '~/.cache/wallust/rofi-colors.rasi'}
+hyprlock = {template = 'hyprlock.conf.j2', target = '~/.config/hypr/hyprlock.conf'}

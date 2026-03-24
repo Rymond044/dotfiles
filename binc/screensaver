@@ -1,0 +1,79 @@
+#!/bin/bash
+
+ART_FILE="$HOME/.config/arch_logo.txt"
+EFFECTS=("beams" "binarypath" "blackhole" "burn" "matrix" "synthgrid" "unstable" "vhstape")
+CLASS_NAME="arch-screensaver"
+SCRIPT_PATH="$(realpath "$0")"
+
+wait_for_activity() {
+    start_pos=$(hyprctl cursorpos | sed 's/,//g')
+    start_x=$(echo $start_pos | cut -d' ' -f1)
+    start_y=$(echo $start_pos | cut -d' ' -f2)
+
+    while true; do
+        current_pos=$(hyprctl cursorpos | sed 's/,//g')
+        curr_x=$(echo $current_pos | cut -d' ' -f1)
+        curr_y=$(echo $current_pos | cut -d' ' -f2)
+
+        diff_x=$(( ${curr_x#-} - ${start_x#-} ))
+        diff_y=$(( ${curr_y#-} - ${start_y#-} ))
+
+        if [ ${diff_x#-} -gt 10 ] || [ ${diff_y#-} -gt 10 ]; then
+            pkill -f "$CLASS_NAME"
+            exit 0
+        fi
+        sleep 0.2
+    done
+}
+
+run_animation() {
+    wait_for_activity &
+    tput civis
+    printf "\033]11;#000000\007"
+
+    sleep 0.3
+    cols=$(tput cols)
+    lines=$(tput lines)
+
+    while true; do
+        RANDOM_EFFECT=${EFFECTS[$RANDOM % ${#EFFECTS[@]}]}
+        printf "\033[2J\033[H"
+
+        if [ -f "$ART_FILE" ]; then
+            cat "$ART_FILE" | tte \
+                --anchor-canvas c --anchor-text c \
+                --canvas-width "$cols" --canvas-height "$lines" \
+                --ignore-terminal-dimensions \
+                --no-restore-cursor \
+                --no-eol \
+                --frame-rate 60 "$RANDOM_EFFECT"
+        else
+            echo "ARCH LINUX" | tte \
+                --anchor-canvas c --anchor-text c \
+                --canvas-width "$cols" --canvas-height "$lines" \
+                --no-eol \
+                --frame-rate 60 "$RANDOM_EFFECT"
+        fi
+
+        sleep 0.1
+    done
+}
+
+
+if [ "$1" == "worker" ]; then
+    run_animation
+    exit 0
+fi
+
+pgrep -f "$CLASS_NAME" && exit 0
+
+kitty --class "$CLASS_NAME" \
+    --start-as=fullscreen \
+    -o background_opacity=1.0 \
+    -o background=#000000 \
+    -o window_padding_width=0 \
+    -o placement_strategy=center \
+    -o resize_in_steps=no \
+    -o confirm_os_window_close=0 \
+    -o remember_window_size=no \
+    bash "$SCRIPT_PATH" worker &

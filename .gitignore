@@ -1,0 +1,33 @@
+# Ignore all
+*
+
+# Track gitignore
+!.gitignore
+
+# Track folders
+!binc/
+!hypr/
+!kitty/
+!rofi/
+!swaync/
+!wallust/
+!waybar/
+!fastfetch/
+!fontconfig/
+!nvim/
+!btop/
+
+# Track files inside folders
+!binc/**
+binc/myvpn
+!hypr/**
+!kitty/**
+!rofi/**
+!swaync/**
+!wallust/**
+!waybar/**
+!fastfetch/**
+!fontconfig/**
+!arch_logo.txt
+!nvim/**
+!btop/**

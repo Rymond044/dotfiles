@@ -1,0 +1,75 @@
+/* ~/.config/rofi/wallpapers.rasi */
+configuration {
+    show-icons: true;
+    icon-theme: "Papirus";
+}
+
+@import "~/.cache/wallust/rofi-colors.rasi"
+
+window {
+    transparency: "real";
+    location: center;
+    width: 800px;
+    height: 600px;
+    border: 1px solid;
+    border-color: @selected;
+    background-color: @background;
+}
+
+mainbox {
+    children: [ "inputbar", "listview" ];
+    background-color: transparent;
+}
+
+inputbar {
+    children: [ "prompt", "entry" ];
+    padding: 20px;
+    background-color: transparent;
+}
+
+prompt {
+    padding: 0 10px;
+    text-color: @selected;
+    background-color: transparent;
+}
+
+entry {
+    placeholder: "Search...";
+    text-color: @foreground;
+    background-color: transparent;
+}
+
+listview {
+    columns: 3;
+    lines: 2;
+    spacing: 20px;
+    padding: 20px;
+    cycle: true;
+    dynamic: true;
+    layout: vertical;
+    background-color: transparent;
+}
+
+element {
+    orientation: vertical;
+    padding: 10px;
+    border-radius: 10px;
+    background-color: transparent;
+}
+
+element selected {
+    background-color: @selected;
+    text-color: @background;
+}
+
+element-icon {
+    size: 150px;
+    horizontal-align: 0.5;
+    background-color: transparent;
+}
+
+element-text {
+    horizontal-align: 0.5;
+    text-color: inherit;
+    background-color: transparent;
+}
