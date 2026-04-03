@@ -3,7 +3,7 @@
     "format": "󰣇",
     "tooltip": true,
     "tooltip-format": "i use arch btw 󰣇",
-    "on-click": "sleep 0.2s && hyprctl dispatch hyprexpo:expo toggle",
+    "on-click": "sleep 0.2s && hyprctl dispatch hyprtasking:toggle all",
   },
 
   "hyprland/workspaces": {
@@ -13,9 +13,8 @@
     "sort-by-number": true,
     "active-only": false,
     "persistent-workspaces": {
-      "*": 5,
+      "*": 9,
     },
-
     "format-icons": {
       "1": "一",
       "2": "二",
@@ -26,7 +25,6 @@
       "7": "七",
       "8": "八",
       "9": "九",
-      "10": "十",
       "active": "󱓻",
       "default": "",
     },

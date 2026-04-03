@@ -23,6 +23,7 @@ binc/myvpn
 !hypr/**
 !kitty/**
 !rofi/**
+rofi/scripts/
 !swaync/**
 !wallust/**
 !waybar/**
