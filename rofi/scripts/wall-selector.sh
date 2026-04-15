@@ -1,45 +1,56 @@
 #!/usr/bin/env bash
+# -----------------------------------------------------------------------------
+# Выбор обоев с превью через Rofi
+# -----------------------------------------------------------------------------
+set -euo pipefail
 
-# Пути
 WALL_DIR="$HOME/Wallpapers"
 CACHE_DIR="$HOME/.cache/wall-previews"
 THEME_SCRIPT="$HOME/.config/binc/wallust-swww"
+ROFI_THEME="$HOME/.config/rofi/scripts/wallpapers.rasi"
 
 mkdir -p "$CACHE_DIR"
 
-# Генерируем превью (требуется imagemagick)
-for wall in "$WALL_DIR"/*.{jpg,jpeg,png,webp}; do
-    [ -e "$wall" ] || continue
-    filename=$(basename "$wall")
+# Проверка зависимостей
+command -v convert >/dev/null 2>&1 || { echo "Ошибка: ImageMagick не установлен." >&2; exit 1; }
+command -v rofi    >/dev/null 2>&1 || { echo "Ошибка: Rofi не установлен." >&2; exit 1; }
 
-    # Пропускаем файл с названием "current"
-    if [[ "$filename" == "current.jpg" ]]; then
-        continue
-    fi
+# Генерация превью (если нет)
+shopt -s nullglob
+wall_files=("$WALL_DIR"/*.{jpg,jpeg,png,webp})
+shopt -u nullglob
 
-    if [ ! -f "$CACHE_DIR/$filename" ]; then
-        # Делаем квадратное превью 200x200
-        convert "$wall" -thumbnail 200x200^ -gravity center -extent 200x200 "$CACHE_DIR/$filename" &
+if [[ ${#wall_files[@]} -eq 0 ]]; then
+    echo "В $WALL_DIR нет подходящих изображений." >&2
+    exit 0
+fi
+
+pids=()
+for wall in "${wall_files[@]}"; do
+    [[ -e "$wall" ]] || continue
+    filename="${wall##*/}"
+    [[ "$filename" == "current.jpg" ]] && continue
+
+    preview="$CACHE_DIR/$filename"
+    if [[ ! -f "$preview" ]]; then
+        convert "$wall" -thumbnail 200x200^ -gravity center -extent 200x200 "$preview" &
+        pids+=($!)
     fi
 done
-wait
+[[ ${#pids[@]} -gt 0 ]] && wait "${pids[@]}"
 
 # Формируем список для Rofi
 list_walls() {
-    for wall in "$WALL_DIR"/*.{jpg,jpeg,png,webp}; do
-        [ -e "$wall" ] || continue
-        filename=$(basename "$wall")
-
-        # Исключаем current.jpg из вывода в Rofi
-        if [[ "$filename" != "current.jpg" ]]; then
-            echo -en "$filename\0icon\x1f$CACHE_DIR/$filename\n"
-        fi
+    for wall in "${wall_files[@]}"; do
+        [[ -e "$wall" ]] || continue
+        filename="${wall##*/}"
+        [[ "$filename" == "current.jpg" ]] && continue
+        echo -en "${filename}\0icon\x1f$CACHE_DIR/$filename\n"
     done
 }
 
-# Запуск Rofi
-selected=$(list_walls | rofi -dmenu -p "Wallpapers:" -theme "$HOME/.config/rofi/scripts/wallpapers.rasi")
+selected=$(list_walls | rofi -dmenu -p "Wallpapers:" -theme "$ROFI_THEME")
 
-if [ -n "$selected" ]; then
+if [[ -n "$selected" ]]; then
     bash "$THEME_SCRIPT" "$WALL_DIR/$selected"
 fi

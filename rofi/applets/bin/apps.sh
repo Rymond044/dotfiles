@@ -28,6 +28,7 @@ install_pkg_aur='hyprctl dispatch exec "[float; size 1300 750; center] kitty -e 
 remove_pkg='hyprctl dispatch exec "[float; size 1300 750; center] kitty -e .config/binc/pkg_remove.sh"'
 edit_configs='zeditor ~/.config/'
 switch_wallpapers="$HOME/.config/rofi/scripts/wall-selector.sh"
+# switch_wallpapers="quickshell ipc -p ~/Apps/skwd-wall/daemon.qml call wallpaper toggle"
 term_cmd='kitty'
 file_cmd='nautilus'
 web_cmd='chromium'

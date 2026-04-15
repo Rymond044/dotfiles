@@ -66,10 +66,23 @@ element-icon {
     size: 150px;
     horizontal-align: 0.5;
     background-color: transparent;
+    border-radius: 8px;
 }
 
+/* ---------- Изменения только здесь ---------- */
 element-text {
     horizontal-align: 0.5;
-    text-color: inherit;
-    background-color: transparent;
+    background-color: rgba(0, 0, 0, 0);
+    text-color: #ffffff;
+    padding: 4px 12px;
+    margin: 6px 0 0 0;
+    width: 140px;
+    wrap: true;
+}
+
+/* При выборе элемента меняем фон плашки и цвет текста */
+element selected element-text {
+    background-color: @selected;
+    text-color: @background;
+    text-shadow: none;
 }
