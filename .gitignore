@@ -17,6 +17,7 @@
 !nvim/
 !btop/
 !skwd-wall/
+#!walker/
 
 # Track files inside folders
 !binc/**
@@ -35,3 +36,4 @@ rofi/scripts/
 !btop/**
 !README.md
 !skwd-wall/**
+# !walker/**

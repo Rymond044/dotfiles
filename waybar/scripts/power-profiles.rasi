@@ -22,6 +22,7 @@ window {
     padding:                     0px;
     border:                      0px solid;
     border-color:                @selected;
+    border-radius:               15px;
     background-color:            @background;
     cursor:                      "default";
 }
@@ -80,7 +81,7 @@ element {
     margin:                      0px;
     padding:                     12px 15px;
     border:                      0px solid;
-    border-radius:               0px;
+    border-radius:               10px;
     border-color:                @selected;
     background-color:            transparent;
     text-color:                  @foreground;

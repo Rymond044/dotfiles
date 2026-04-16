@@ -26,18 +26,18 @@ window {
     location:                    center;
     anchor:                      center;
     fullscreen:                  false;
-    width:                       400px;
     x-offset:                    0px;
     y-offset:                    0px;
 
     enabled:                     true;
     margin:                      0px;
     padding:                     0px;
-    border:                      1px solid;
-    border-radius:               0px;
     border-color:                @selected;
     background-color:            @background;
     cursor:                      "default";
+    width:            650px;       /* Увеличим ширину для стиля Spotlight [cite: 8] */
+    border:           2px solid;   /* Сделаем рамку чуть заметнее [cite: 14] */
+    border-radius:    16px;
 }
 
 /*****----- Main Box -----*****/
@@ -60,7 +60,6 @@ inputbar {
     margin:                      0px;
     padding:                     15px;
     border:                      0px solid;
-    border-radius:               0px;
     border-color:                @selected;
     background-color:            @selected;
     text-color:                  @background;
@@ -93,7 +92,7 @@ entry {
 listview {
     enabled:                     true;
     columns:                     1;
-    lines:                       6;
+    lines:                       7;
     cycle:                       true;
     dynamic:                     true;
     scrollbar:                   false;
@@ -140,8 +139,8 @@ element alternate.normal {
 }
 
 element selected.normal {
-    background-color:            @background;
-    text-color:                  @foreground;
+    background-color:            @selected;
+    text-color:                  @background;
 }
 
 element normal.urgent,
