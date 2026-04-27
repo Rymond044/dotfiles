@@ -16,8 +16,9 @@ https://github.com/user-attachments/assets/44e4d759-637e-4236-847c-cd813c1b8619
 - **Custom Arch logo screensaver** – A unique screensaver that displays the Arch logo (or any custom logo) when the system is idle.
 - **TUI suite** – A collection of terminal‑based utilities integrated into the workflow:
   - `btop` – system monitor with matching theme
-  - `bluetui` + `impala` – Bluetooth management
-  - `wiremix` – network connection manager
+  - `bluetui` – Bluetooth management
+  - `impala` – network connection manager
+  - `wiremix` - audio mixer
   - `calcure` – calendar and task management
 - **Seamless application launcher** – Rofi provides not only an app launcher but also a power menu, battery manager, and a dedicated applet launcher.
 ---
