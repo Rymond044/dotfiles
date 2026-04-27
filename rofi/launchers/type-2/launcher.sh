@@ -17,4 +17,6 @@ theme='style-1'
 ## Run
 rofi \
     -show drun \
+    -modi drun,calc,filebrowser \
+    -calc-command "echo -n '{result}' | xclip -sel clip" \
     -theme ${dir}/${theme}.rasi

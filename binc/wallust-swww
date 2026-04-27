@@ -11,7 +11,7 @@ CURRENT_WALL="$HOME/Wallpapers/current.jpg"
 
 cp -f "$WALLPAPER" "$CURRENT_WALL"
 
-swww img "$CURRENT_WALL" --transition-type any
+swww img "$CURRENT_WALL" --transition-type wipe
 
 wallust run "$CURRENT_WALL"
 
