@@ -16,7 +16,6 @@
 !fontconfig/
 !nvim/
 !btop/
-!skwd-wall/
 #!walker/
 
 # Track files inside folders
@@ -35,5 +34,3 @@ rofi/scripts/
 !nvim/**
 !btop/**
 !README.md
-!skwd-wall/**
-# !walker/**

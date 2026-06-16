@@ -1,8 +1,8 @@
 
-backend = "fast-resize"
-color_space = "labmixed"
+# backend = "full"
+# color_space = "lab"
 threshold = 7
-palette = "dark16"
+# palette = "dark16"
 
 
 [image]
