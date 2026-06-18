@@ -3,7 +3,7 @@
     "format": "󰣇",
     "tooltip": true,
     "tooltip-format": "i use arch btw 󰣇",
-    "on-click": "sleep 0.2s && hyprctl dispatch hyprtasking:toggle all",
+    "on-click": "hyprctl dispatch 'hl.plugin.hyprtasking.toggle(\"all\")'",
   },
 
   "hyprland/workspaces": {
@@ -11,7 +11,7 @@
     "on-click": "activate",
     "all-outputs": false,
     "sort-by-number": true,
-    "active-only": false,
+    "active-only": true,
     "persistent-workspaces": {
       "*": 9,
     },
@@ -98,7 +98,7 @@
       "headphone": "",
       "default": ["", "", ""],
     },
-    "on-click": "hyprctl dispatch exec \"[float; size 1300 750; center] kitty -e wiremix\"",
+    "on-click": "kitty --class wiremix -e wiremix",
   },
 
   "backlight": {
@@ -114,7 +114,7 @@
     "format": "",
     "tooltip": true,
     "tooltip-format": "{status}",
-    "on-click": "hyprctl dispatch exec \"[float; size 1300 750; center] kitty -e bluetui\"",
+    "on-click": "kitty --class bluetui -e bluetui",
   },
 
   "network": {
@@ -125,13 +125,13 @@
     "format-ethernet": "",
     "format-disconnected": "",
     "interval": 2,
-    "on-click": "hyprctl dispatch exec \"[float; size 1300 750; center] kitty -e sudo impala\"",
+    "on-click": "kitty --class impala -e sudo impala",
   },
 
   "custom/sysmon": {
     "format": "󰍛",
     "tooltip": false,
-    "on-click": "hyprctl dispatch exec \"[float; size 1300 750; center] kitty -e btop\"",
+    "on-click": "kitty --class btop -e btop",
     "interval": 2,
   },
 
@@ -168,7 +168,7 @@
         "today": "<b><big>{}</big></b>",
       },
     },
-    "on-click-right": "hyprctl dispatch exec \"[float; size 1300 750; center] kitty -e calcure\"",
+    "on-click-right": "kitty --class calcure -e calcure",
   },
 
   "custom/power": {

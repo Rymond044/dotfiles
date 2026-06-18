@@ -23,7 +23,10 @@ hl.config({
     general = {
         border_size = 2,
         col = {
-            active_border = "0xee{{color1 | strip}} 0xee{{color2 | strip}} 45deg",
+            active_border = {
+                colors = { "0xee{{color1 | strip}}", "0xee{{color2 | strip}}" },
+                angle = 45
+            },
             inactive_border = "0xcc{{color0 | strip}}",
         },
     },

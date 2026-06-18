@@ -34,3 +34,5 @@ rofi/scripts/
 !nvim/**
 !btop/**
 !README.md
+hypr/plugins
+.gitmodules

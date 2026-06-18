@@ -93,7 +93,7 @@ case ${chosen} in
         if [[ -x '/usr/bin/hyprlock' ]]; then
             pkill -x rofi
             sleep 0.1
-            hyprlock
+            pidof hyprlock || hyprlock
         fi
         ;;
     $screensaver)
