@@ -66,8 +66,8 @@ run_cmd() {
 			systemctl poweroff
 		elif [[ $1 == '--reboot' ]]; then
 			systemctl reboot
-		elif [[ $1 == '--logout' ]] then
-		    hyprctl dispatch exit
+		elif [[ $1 == '--logout' ]]; then
+            hyprctl dispatch 'hl.dsp.exit()'
 		elif [[ $1 == '--screensaver' ]]; then
 			.config/binc/screensaver
 		elif [[ $1 == '--suspend' ]]; then

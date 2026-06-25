@@ -46,5 +46,5 @@ for i = 1, smw.get_amount_of_workspaces() do
     end
 
     hl.bind(mainMod .. " +" .. n, smw.workspace(n))
-    hl.bind(mainMod .. " + SHIFT +" .. n, smw.move_to_workspace_silent(n))
+    hl.bind(mainMod .. " + SHIFT +" .. n, smw.move_to_workspace(n))
 end
