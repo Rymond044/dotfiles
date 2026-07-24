@@ -116,6 +116,15 @@ hl.window_rule({
 })
 
 hl.window_rule({
+    name  = "eye of gnome",
+    match = {
+        class = "org.gnome.eog"
+    },
+    float = 1,
+    size  = { 1300, 750 },
+})
+
+hl.window_rule({
     name  = "install",
     match = {
         class = "install"

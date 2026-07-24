@@ -1,38 +1,51 @@
+-- hl.config({
+--     plugin = {
+--         hyprtasking = {
+--             layout = "grid",
+--             gap_size = 10,
+--             border_size = 3,
+--             bg_color = 0xee111111,
+--             select_button = 273,
+--             drag_button = 272,
+--             exit_on_hovered = false,
+--             gestures = {
+--                 enabled = true,
+--                 open_fingers = 3,
+--                 move_fingers = 6,
+--             },
+--             grid = {
+--                 gaps_use_aspect_ratio = true,
+--             },
+--         },
+--     },
+-- })
+
 hl.config({
     plugin = {
-        hyprtasking = {
-            layout = "grid",
-            gap_size = 10,
-            border_size = 3,
-            bg_color = 0xee111111,
-            full_render = true,
-            select_button = 273,
-            drag_button = 272,
-            exit_on_hovered = false,
-            gestures = {
-                enabled = true,
-                open_fingers = 3,
-                move_fingers = 6,
-            },
-            grid = {
-                gaps_use_aspect_ratio = true,
-            },
+        hymission = {
+            outer_padding = 92,
+            layout_engine = "grid",
+            toggle_switch_mode = 0,
+            niri_mode = 1,
+            switch_release_key = "Super_L",
+            workspace_strip_anchor = "left",
+            hover_expand_scale = 1.1,
+            multi_workspace_sort_recent_first = 0,
         },
     },
 })
 
-package.path = package.path
-    .. ";"
-    .. os.getenv("HOME")
-    .. "/.config/hypr/?.lua"
-    .. ";"
-    .. os.getenv("HOME")
-    .. "/.config/hypr/?/init.lua"
+hl.plugin.hymission.gesture({
+    fingers = 3,
+    direction = "vertical",
+    action = "toggle",
+})
+
 local smw = require("plugins")
 smw.setup({
     workspace_count = 9,
     keep_focused = 1,
-    enable_persistent_workspaces = false,
+    enable_persistent_workspaces = true,
     enable_notifications = 0,
     enable_wrapping = 0,
 })

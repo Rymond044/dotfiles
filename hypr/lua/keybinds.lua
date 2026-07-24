@@ -18,8 +18,7 @@ local appMenu = "~/.config/rofi/applets/bin/apps.sh"
 local powermenu = "~/.config/rofi/powermenu/type-1/powermenu.sh"
 local browser = "chromium --ozone-platform=wayland --enable-features=TouchpadOverscrollHistoryNavigation"
 local bufferman = "[float; size 900 550; center] kitty -e clipse"
-local screenshot =
-"grim-| tee /tmp/temp_screenshot.png && hyprctl dispatch exec [float; size 1300 750; center] eog /tmp/temp_screenshot.png"
+local screenshot = "grim /tmp/temp_screenshot.png && eog /tmp/temp_screenshot.png"
 local touchpadToggle = "~/.config/binc/touchpad_toggle"
 
 local mainMod = "SUPER" -- Sets "Windows" key as main modifier
@@ -50,15 +49,24 @@ hl.bind(mainMod .. " + SHIFT + right", hl.dsp.window.move({ direction = "r" }))
 hl.bind(mainMod .. " + SHIFT + up", hl.dsp.window.move({ direction = "u" }))
 hl.bind(mainMod .. " + SHIFT + down", hl.dsp.window.move({ direction = "d" }))
 
+-- hl.bind("SUPER + Tab", function() hl.plugin.hyprtasking.toggle("all") end)
 
-hl.bind("SUPER + Tab", function() hl.plugin.hyprtasking.toggle("all") end)
+-- hl.bind("CTRL + TAB", function()
+--     hl.plugin.hyprexpo.expo("toggle")
+-- end)
+
+hl.bind("SUPER + TAB", hl.plugin.hymission.toggle)
+hl.bind("CTRL + TAB", function()
+    hl.plugin.hymission.toggle("onlycurrentworkspace")
+end)
+
 
 -- escape closes the overview if it's open
-hl.bind("escape", function()
-    if hl.plugin.hyprtasking.is_active() then
-        hl.plugin.hyprtasking.toggle('all')
-    end
-end, { non_consuming = true })
+-- hl.bind("escape", function()
+--     if hl.plugin.hyprtasking.is_active() then
+--         hl.plugin.hyprtasking.toggle("all")
+--     end
+-- end, { non_consuming = true })
 
 hl.bind("SHIFT + CTRL + M", hl.dsp.pass({ window = "class:vesktop" }))
 

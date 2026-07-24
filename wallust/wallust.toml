@@ -9,7 +9,7 @@ threshold = 7
 path = "~/Wallpapers/current.jpg"
 
 [templates]
-hyprland = { template = 'hyprland.conf.j2', target = '~/.cache/wallust/hyprland.conf' }
+hyprland = { template = 'hyprland.lua.j2', target = '~/.cache/wallust/hyprland.lua' }
 waybar = {template = 'colors-waybar.css.j2', target = '~/.cache/wallust/colors-waybar.css'}
 kitty = {template = 'kitty.conf.j2', target = '~/.cache/wallust/kitty.conf'}
 swaync = {template = 'swaync.css.j2', target = '~/.cache/wallust/swaync.css'}
