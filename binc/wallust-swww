@@ -7,7 +7,7 @@ if [ -z "$WALLPAPER" ]; then
   exit 1
 fi
 
-CURRENT_WALL="$HOME/Wallpapers/current.jpg"
+CURRENT_WALL="$HOME/Wallpapers/current"
 
 cp -f "$WALLPAPER" "$CURRENT_WALL"
 

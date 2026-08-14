@@ -31,6 +31,8 @@ hl.config({
             workspace_strip_anchor = "left",
             hover_expand_scale = 1.1,
             multi_workspace_sort_recent_first = 0,
+            debug_logs = 0,
+            debug_surface_logs = 0
         },
     },
 })

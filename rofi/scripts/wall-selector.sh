@@ -17,7 +17,7 @@ command -v rofi    >/dev/null 2>&1 || { echo "Ошибка: Rofi не устан
 
 # Генерация превью (если нет)
 shopt -s nullglob
-wall_files=("$WALL_DIR"/*.{jpg,jpeg,png,webp})
+wall_files=("$WALL_DIR"/*.{jpg,jpeg,png,webp,gif})
 shopt -u nullglob
 
 if [[ ${#wall_files[@]} -eq 0 ]]; then
