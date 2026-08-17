@@ -16,6 +16,7 @@
 !fontconfig/
 !nvim/
 !btop/
+!clipse/
 #!walker/
 
 # Track files inside folders
@@ -34,4 +35,6 @@ binc/myvpn
 !btop/**
 !README.md
 hypr/plugins
+!clipse/config.json
+!clipse/custom_theme.json
 .gitmodules
