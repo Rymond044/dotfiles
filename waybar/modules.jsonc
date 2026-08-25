@@ -3,9 +3,8 @@
     "format": "󰣇",
     "tooltip": true,
     "tooltip-format": "i use arch btw 󰣇",
-    "on-click": "hyprctl dispatch 'hl.plugin.hyprtasking.toggle(\"all\")'",
+    "on-click": "bash; hyprctl dispatch 'hl.plugin.hymission.toggle'",
   },
-
   "hyprland/workspaces": {
     "format": "{icon}",
     "on-click": "hyprctl dispatch workspace {name}",
@@ -29,7 +28,6 @@
       "default": "",
     },
   },
-
   "tray": {
     "format": "{icon}",
     "icon-size": 18,
@@ -37,7 +35,6 @@
     "show-passive-items": true,
     "tooltip": false,
   },
-
   "custom/playerctl-prev": {
     "format": "󰒮",
     "on-click": "playerctl previous",
@@ -47,7 +44,6 @@
     "return-type": "json",
     "interval": 1,
   },
-
   "custom/playerctl": {
     "format": "<span font='20px'>{icon}</span> <span rise='2000'>{text}</span>",
     "return-type": "json",
@@ -62,7 +58,6 @@
     "on-scroll-up": "playerctl volume 0.05+",
     "on-scroll-down": "playerctl volume 0.05-",
   },
-
   "custom/playerctl-next": {
     "format": "󰒭",
     "on-click": "playerctl next",
@@ -72,7 +67,6 @@
     "return-type": "json",
     "interval": 1,
   },
-
   "custom/notification": {
     "tooltip": false,
     "format": "{icon}",
@@ -88,7 +82,6 @@
     "on-click-right": "swaync-client -C",
     "escape": true,
   },
-
   "pulseaudio": {
     "format": "{icon} {volume}%",
     "max-volume": 150,
@@ -96,27 +89,32 @@
     "format-muted": " ",
     "format-icons": {
       "headphone": "",
-      "default": ["", "", ""],
+      "default": [
+        "",
+        "",
+        ""
+      ],
     },
     "on-click": "kitty --class wiremix -e wiremix",
   },
-
   "backlight": {
     "device": "intel_backlight",
     "format": "{icon} {percent}%",
-    "format-icons": ["󰃜", "󰃛", "󰃚"],
+    "format-icons": [
+      "󰃜",
+      "󰃛",
+      "󰃚"
+    ],
     "on-scroll-up": "brightnessctl set 1%+",
     "on-scroll-down": "brightnessctl set 1%-",
     "tooltip": false,
   },
-
   "bluetooth": {
     "format": "",
     "tooltip": true,
     "tooltip-format": "{status}",
     "on-click": "kitty --class bluetui -e bluetui",
   },
-
   "network": {
     "interface": "wlan0",
     "format-wifi": "  {essid}",
@@ -127,24 +125,20 @@
     "interval": 2,
     "on-click": "kitty --class impala -e sudo impala",
   },
-
   "custom/sysmon": {
     "format": "󰍛",
     "tooltip": false,
     "on-click": "kitty --class btop -e btop",
     "interval": 2,
   },
-
   "cpu": {
     "format": "",
     "tooltip": false,
   },
-
   "memory": {
     "format": "",
     "tooltip": false,
   },
-
   "battery": {
     "states": {
       "warning": 30,
@@ -153,10 +147,15 @@
     "format": "{icon} {capacity}%",
     "format-charging": " {capacity}%",
     "format-plugged": " {capacity}%",
-    "format-icons": ["", "", "", "", ""],
+    "format-icons": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
     "on-click": "~/.config/waybar/scripts/power-profiles.sh",
   },
-
   "clock": {
     "format": "{:%H:%M  }",
     "format-alt": "{:%e %B  }",
@@ -170,13 +169,11 @@
     },
     "on-click-right": "kitty --class calcure -e calcure",
   },
-
   "custom/power": {
     "format": "",
     "tooltip": false,
     "on-click": "~/.config/rofi/powermenu/type-1/powermenu.sh",
   },
-
   "hyprland/language": {
     "format": "{}",
     "format-en": "en",

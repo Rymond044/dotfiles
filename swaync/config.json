@@ -20,13 +20,11 @@
   "hide-on-action": true,
   "script-fail-notify": true,
   "text-empty": "No Notification",
-  "scripts": {
-    "sound-script": {
-      "exec": "swaync-client -D | grep -q 'false' && paplay ~/.config/swaync/notification.mp3 || true",
-      "app-name": ".*"
-    }
-  },
-  "widgets": ["title", "dnd", "notifications"],
+  "widgets": [
+    "title",
+    "dnd",
+    "notifications"
+  ],
   "widget-config": {
     "title": {
       "text": "Notification Center",
