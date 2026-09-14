@@ -48,6 +48,12 @@ hl.config({
 	},
 })
 
+hl.config({
+	render = {
+		direct_scanout = 1,
+	},
+})
+
 -- https://wiki.hypr.land/Configuring/Variables/#animations
 hl.config({ animations = { enabled = true } })
 

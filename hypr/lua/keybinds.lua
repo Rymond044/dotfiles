@@ -50,29 +50,16 @@ hl.bind(mainMod .. " + SHIFT + up", hl.dsp.window.move({ direction = "u" }))
 hl.bind(mainMod .. " + SHIFT + down", hl.dsp.window.move({ direction = "d" }))
 
 -- hl.bind("SUPER + Tab", function() hl.plugin.hyprtasking.toggle("all") end)
-
--- hl.bind("CTRL + TAB", function()
---     hl.plugin.hyprexpo.expo("toggle")
--- end)
-
 hl.bind("SUPER + TAB", hl.plugin.hymission.toggle)
 hl.bind("CTRL + TAB", function()
 	hl.plugin.hymission.toggle("onlycurrentworkspace")
 end)
 
--- escape closes the overview if it's open
--- hl.bind("escape", function()
---     if hl.plugin.hyprtasking.is_active() then
---         hl.plugin.hyprtasking.toggle("all")
---     end
--- end, { non_consuming = true })
-
 hl.bind("SHIFT + CTRL + M", hl.dsp.pass({ window = "class:vesktop" }))
 hl.bind("SHIFT + CTRL + M", hl.dsp.pass({ window = "class:discord" }))
-hl.bind("CTRL + M", hl.dsp.pass({ window = "class:discord" }))
 
--- Example special workspace (scratchpad)
-hl.bind(mainMod .. " + S", hl.dsp.workspace.toggle_special("magic")):remove()
+hl.bind("switch:on:Lid Switch", hl.dsp.exec_cmd("hyprlock & systemctl suspend"))
+hl.bind("switch:off:Lid Switch", hl.dsp.exec_cmd("hyprctl dispatch dpms on"))
 hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" })):remove()
 
 --Screenshots
