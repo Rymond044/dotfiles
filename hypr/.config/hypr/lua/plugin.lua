@@ -134,6 +134,10 @@ hl.plugin.hymission.gesture({
 local smw = require("plugins")
 smw.setup({
 	workspace_count = 9,
+	-- Фиксированный порядок диапазонов: eDP-1 = 1–9, DP-1 = 10–18, HDMI-A-1 = 19–27.
+	-- Без него smw раздаёт диапазоны по порядку подключения, и после переподключения монитора
+	-- воркспейсы перетасовываются.
+	monitor_priority = { "eDP-1", "DP-1", "HDMI-A-1" },
 	keep_focused = true,
 	enable_persistent_workspaces = true,
 	enable_notifications = false,

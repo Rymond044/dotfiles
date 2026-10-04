@@ -1,0 +1,21 @@
+// Переопределения для узких мониторов (логическая ширина < 1400, напр. вертикальный DP-1).
+// Подключается раньше config.jsonc, поэтому ключи отсюда главнее (объекты сливаются глубоко).
+// Какой бар на каком мониторе — решает scripts/launch.sh.
+{
+  "mpris": {
+    "format": "<span font='20px'>{status_icon}</span>",
+    "format-stopped": "",
+  },
+  "network": {
+    "format-wifi": "",
+  },
+  "backlight": {
+    "format": "{icon}",
+    "tooltip": true,
+    "tooltip-format": "{percent}%",
+  },
+  "pulseaudio": {
+    "format": "{icon}",
+    "tooltip-format": "{volume}% · {desc}",
+  },
+}

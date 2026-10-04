@@ -10,7 +10,7 @@
   // Center
   "modules-center": [
     "custom/playerctl-prev",
-    "custom/playerctl",
+    "mpris",
     "custom/playerctl-next",
     "tray",
   ],
@@ -31,6 +31,7 @@
     "custom/power",
   ],
 
-  // Load module definitions
+  // Load module definitions. На каждый монитор бар (полный/компактный) собирает
+  // scripts/launch.sh; голый `waybar` тоже работает — один полный бар везде.
   "include": ["~/.config/waybar/modules.jsonc"],
 }
