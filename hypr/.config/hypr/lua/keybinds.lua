@@ -57,8 +57,9 @@ end)
 hl.bind("SHIFT + CTRL + M", hl.dsp.pass({ window = "class:vesktop" }))
 hl.bind("SHIFT + CTRL + M", hl.dsp.pass({ window = "class:discord" }))
 
-hl.bind("switch:on:Lid Switch", hl.dsp.exec_cmd("hyprlock & systemctl suspend"))
-hl.bind("switch:off:Lid Switch", hl.dsp.exec_cmd("hyprctl dispatch dpms on"))
+-- Крышка: усыпляет logind (HandleLidSwitch=suspend), блокирует hypridle (before_sleep_cmd).
+-- Свой suspend здесь давал второй сон наперегонки с logind и hyprlock в обход общего пути.
+hl.bind("switch:off:Lid Switch", hl.dsp.dpms({ action = "on" }))
 hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" })):remove()
 
 --Screenshots

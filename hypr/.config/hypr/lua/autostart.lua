@@ -13,7 +13,7 @@
 -- Autostart
 hl.on("hyprland.start", function()
 	hl.exec_cmd("hypridle")
-	hl.exec_cmd("hyprlock")
+	hl.exec_cmd("~/.config/binc/lock")
 	hl.exec_cmd("~/.config/waybar/scripts/launch.sh --force")
 	hl.exec_cmd("hyprpm reload")
 	hl.exec_cmd("impala")

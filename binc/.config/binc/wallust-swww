@@ -14,6 +14,7 @@ cp -f "$WALLPAPER" "$CURRENT_WALL"
 swww img "$CURRENT_WALL" --transition-type wipe
 
 wallust run "$CURRENT_WALL"
+~/.config/binc/lock --prepare &  # фон и конфиг hyprlock заранее, чтобы блокировка не ждала
 
 hyprctl reload
 killall -SIGUSR2 waybar

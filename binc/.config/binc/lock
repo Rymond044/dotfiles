@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+"""Единая блокировка экрана — все точки вызова идут сюда.
+
+hypridle (lock_cmd) ← `loginctl lock-session` ← таймаут, сон/крышка (before_sleep_cmd), powermenu;
+автостарт зовёт напрямую. Перед запуском собирает ~/.config/hypr/hyprlock.conf из шаблона wallust
+(~/.cache/wallust/hyprlock.conf) под текущие мониторы: блок после «# @PER-MONITOR@» повторяется
+для каждого монитора, @MONITOR@ → имя, @N@ → N × scale. Если сборка не удалась — блокирует
+со старым конфигом: экран должен заблокироваться в любом случае.
+
+Фон подменяется уменьшенной копией (≤ BG_MAX px, кэш по mtime): он всё равно размыт, а полный
+PNG 3840×2160 на каждый монитор делал первый кадр таким тяжёлым, что fade-in успевал пройти
+до него, и блокировка появлялась рывком.
+
+Проверки «hyprlock уже запущен» (pidof) нет намеренно: если сессия уже заблокирована, Hyprland
+отвечает второму hyprlock `finished`, и тот сразу выходит. А pidof ловил зависший после разблокировки
+hyprlock и молча не блокировал вообще.
+
+  lock            — собрать конфиг и заблокировать
+  lock --prepare  — только собрать конфиг и фон (после смены обоев, чтобы блокировка не ждала)
+"""
+
+import hashlib
+import json
+import os
+import re
+import subprocess
+import sys
+
+HOME = os.path.expanduser("~")
+CACHE = os.environ.get("XDG_CACHE_HOME", f"{HOME}/.cache")
+TEMPLATE = f"{CACHE}/wallust/hyprlock.conf"
+BG_DIR = f"{CACHE}/hyprlock"
+CONFIG = f"{HOME}/.config/hypr/hyprlock.conf"
+MARKER = "# @PER-MONITOR@"
+BG_MAX = 1920
+
+
+def small_background(path: str) -> str:
+    """Уменьшенная копия обоев для hyprlock; при любой ошибке — исходный путь."""
+    try:
+        st = os.stat(path)
+        key = hashlib.sha1(f"{path}:{st.st_mtime_ns}:{st.st_size}:{BG_MAX}".encode()).hexdigest()[:16]
+        out = f"{BG_DIR}/bg-{key}.jpg"
+        if not os.path.exists(out):
+            os.makedirs(BG_DIR, exist_ok=True)
+            for old in os.listdir(BG_DIR):
+                os.remove(f"{BG_DIR}/{old}")
+            tmp = f"{out}.tmp.jpg"
+            subprocess.run(
+                ["magick", path, "-resize", f"{BG_MAX}x{BG_MAX}>", "-quality", "92", tmp],
+                check=True, timeout=10, capture_output=True,
+            )
+            os.replace(tmp, out)
+        return out
+    except Exception as e:  # noqa: BLE001
+        print(f"lock: фон не уменьшен ({e}), беру исходный", file=sys.stderr)
+        return path
+
+
+def build_config() -> None:
+    with open(TEMPLATE) as f:
+        head, sep, block = f.read().partition(MARKER)
+    if not sep:
+        raise ValueError(f"нет маркера {MARKER} в {TEMPLATE}")
+
+    head = re.sub(
+        r"^(\s*path\s*=\s*)(/\S+)\s*$",
+        lambda m: m.group(1) + small_background(m.group(2)),
+        head,
+        flags=re.M,
+    )
+
+    monitors = json.loads(
+        subprocess.run(["hyprctl", "monitors", "-j"], capture_output=True, text=True, timeout=2, check=True).stdout
+    )
+    parts = [head]
+    for m in monitors:
+        scale = m["scale"]
+        text = block.replace("@MONITOR@", m["name"])
+        text = re.sub(r"@(-?\d+(?:\.\d+)?)@", lambda x: str(round(float(x.group(1)) * scale)), text)
+        parts.append(f"# --- {m['name']} (scale {scale}) ---{text}")
+
+    tmp = f"{CONFIG}.tmp"
+    with open(tmp, "w") as f:
+        f.write("# Сгенерировано ~/.config/binc/lock из шаблона wallust. Не править руками.\n")
+        f.write("".join(parts))
+    os.replace(tmp, CONFIG)
+
+
+def main() -> None:
+    prepare = "--prepare" in sys.argv[1:]
+    try:
+        build_config()
+    except Exception as e:  # noqa: BLE001 — блокировка важнее красивой вёрстки
+        print(f"lock: не удалось собрать конфиг ({e}), блокирую со старым", file=sys.stderr)
+        if prepare:
+            sys.exit(1)
+    if prepare:
+        return
+    os.execvp("hyprlock", ["hyprlock", *sys.argv[1:]])
+
+
+if __name__ == "__main__":
+    main()

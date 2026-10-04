@@ -1,4 +1,4 @@
-# Генерируемое (wallust из wallust/templates/hyprlock.conf.j2)
+# Генерируемое (binc/lock из шаблона wallust/templates/hyprlock.conf.j2)
 hypr/.config/hypr/hyprlock.conf
 
 # Секреты и личное

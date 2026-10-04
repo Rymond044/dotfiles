@@ -169,7 +169,8 @@ hyprpm-плагины, oh-my-zsh, `~/.zshenv`, первый прогон wallust
 ## Что не в репо
 
 - `~/.zshenv`: там секреты (API-ключи).
-- `hypr/hyprlock.conf`: генерирует wallust из `wallust/templates/hyprlock.conf.j2`.
+- `hypr/hyprlock.conf`: собирает `~/.config/binc/lock` при каждой блокировке из шаблона wallust
+  (`wallust/templates/hyprlock.conf.j2` → `~/.cache/wallust/hyprlock.conf`) под текущие мониторы.
 - `~/.cache/wallust/*`: тоже генерирует wallust.
 - `binc/myvpn`.
 - `CLAUDE.md`: рабочий трекер (в `.gitignore`, лежит рядом локально).

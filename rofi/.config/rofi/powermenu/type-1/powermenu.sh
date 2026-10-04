@@ -90,11 +90,7 @@ case ${chosen} in
 		run_cmd --reboot
         ;;
     $lock)
-        if [[ -x '/usr/bin/hyprlock' ]]; then
-            pkill -x rofi
-            sleep 0.1
-            hyprlock
-        fi
+        loginctl lock-session
         ;;
     $screensaver)
 		run_cmd --screensaver

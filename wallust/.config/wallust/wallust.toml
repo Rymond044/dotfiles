@@ -14,6 +14,6 @@ waybar = {template = 'colors-waybar.css.j2', target = '~/.cache/wallust/colors-w
 kitty = {template = 'kitty.conf.j2', target = '~/.cache/wallust/kitty.conf'}
 swaync = {template = 'swaync.css.j2', target = '~/.cache/wallust/swaync.css'}
 rofi = {template = 'rofi-colors.rasi.j2', target = '~/.cache/wallust/rofi-colors.rasi'}
-hyprlock = {template = 'hyprlock.conf.j2', target = '~/.config/hypr/hyprlock.conf'}
+hyprlock = {template = 'hyprlock.conf.j2', target = '~/.cache/wallust/hyprlock.conf'}
 neopywal = {template = "neopywal.vim", target = "~/.cache/wallust/colors_neopywal.vim" }
 clipse = {template = "custom_theme.json.j2", target = "~/.cache/wallust/clipse/custom_theme.json"}
