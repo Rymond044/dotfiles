@@ -54,7 +54,7 @@ window#waybar {
 }
 
 #custom-playerctl-prev,
-#mpris,
+#custom-playerctl,
 #custom-playerctl-next {
     padding: 0 8px;
     border-radius: 100px;
@@ -127,7 +127,7 @@ window#waybar {
 }
 
 #custom-playerctl-prev:hover,
-#mpris:hover,
+#custom-playerctl:hover,
 #custom-playerctl-next:hover {
     padding: 0 8px;
     border-radius: 100px;

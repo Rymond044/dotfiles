@@ -10,7 +10,7 @@
   // Center
   "modules-center": [
     "custom/playerctl-prev",
-    "mpris",
+    "custom/playerctl",
     "custom/playerctl-next",
     "tray",
   ],

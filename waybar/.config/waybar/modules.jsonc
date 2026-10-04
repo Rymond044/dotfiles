@@ -66,18 +66,17 @@
     "on-click": "playerctl previous",
     "tooltip": false,
   },
-  "mpris": {
-    "format": "<span font='20px'>{status_icon}</span> <span rise='2000'>{dynamic}</span>",
-    "format-stopped": "",
-    "dynamic-order": ["artist", "title"],
-    "dynamic-separator": " - ",
-    "dynamic-len": 60,
+  "custom/playerctl": {
+    "format": "<span font='20px'>{icon}</span> <span rise='2000'>{text}</span>",
+    "return-type": "json",
+    "exec": "~/.config/waybar/scripts/player.sh",
+    "hide-empty-text": true, // иначе при пустом тексте остаётся пустая «таблетка» (формат не пустой)
     "max-length": 80,
-    "status-icons": {
-      "playing": "󰐊",
-      "paused": "󰏤",
+    "format-icons": {
+      "Playing": "󰐊",
+      "Paused": "󰏤",
     },
-    "tooltip-format": "{player} : {artist} - {title}",
+    "on-click": "playerctl play-pause",
     "on-scroll-up": "playerctl volume 0.05+",
     "on-scroll-down": "playerctl volume 0.05-",
   },
