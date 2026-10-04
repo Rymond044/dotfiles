@@ -37,6 +37,8 @@ hl.config({
 			debug_surface_logs = 0,
 			vim_keys = 1,
 			info_notifications = 0,
+			workspace_strip_center_active = 1,
+			workspace_strip_keyboard_nav = 1,
 		},
 	},
 })
