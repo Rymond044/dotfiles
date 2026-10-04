@@ -139,3 +139,19 @@ hl.window_rule({
 	float = 1,
 	size = { 1300, 750 },
 })
+
+hl.window_rule({
+	match = {
+		class = "^(chromium)$",
+		title = "^(Подтвердите действие|Confirm navigation)$",
+	},
+	float = 1,
+})
+
+hl.window_rule({
+	center = 1,
+	match = {
+		class = "^(chromium)$",
+		title = "^(Подтвердите действие|Confirm navigation)$",
+	},
+})

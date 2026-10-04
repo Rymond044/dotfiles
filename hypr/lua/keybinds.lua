@@ -64,12 +64,18 @@ hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:mag
 
 --Screenshots
 -- Сделать скриншот всего экрана и сразу открыть в Swappy
-hl.bind("Print", hl.dsp.exec_cmd(screenshot))
-hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd('wayfreeze & PID=$!; sleep 0.1; grim -g "$(slurp)" - | wl-copy'))
+-- hl.bind("Print", hl.dsp.exec_cmd(screenshot))
+--hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd('wayfreeze & PID=$!; sleep 0.1; grim -g "$(slurp)" - | wl-copy'))
 hl.bind(
 	mainMod .. " + O",
 	hl.dsp.exec_cmd('wayfreeze & PID=$!; sleep 0.1; grim -g "$(slurp)" - | tesseract stdin stdout -l eng+rus | wl-copy')
 )
+
+hl.bind("SUPER + SHIFT + s", hl.plugin.hyprcapture.open)
+
+hl.bind("Print", function()
+	hl.plugin.hyprcapture.open("fullscreen")
+end)
 
 --буфер обмена
 hl.bind(mainMod .. " + V", hl.dsp.exec_cmd(bufferman))
