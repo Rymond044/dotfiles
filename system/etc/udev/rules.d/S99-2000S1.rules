@@ -1,0 +1,47 @@
+# This file was automatically created based on description files (*.desc)
+# by sane-desc 3.5 from sane-backends 1.0.22 on Thu May 16 18:59:16 2013
+#
+# udev rules file for supported USB and SCSI devices
+#
+# The SCSI device support is very basic and includes only
+# scanners that mark themselves as type "scanner" or
+# SCSI-scanners from HP and other vendors that are entitled "processor"
+# but are treated accordingly.
+#
+# To add a USB device, add a rule to the list below between the
+# LABEL="libsane_usb_rules_begin" and LABEL="libsane_usb_rules_end" lines.
+#
+# To run a script when your device is plugged in, add RUN+="/path/to/script"
+# to the appropriate rule.
+#
+# If your scanner isn't listed below, you can add it as explained above.
+#
+# If your scanner is supported by some external backend (brother, epkowa,
+# hpaio, etc) please ask the author of the backend to provide proper
+# device detection support for your OS
+#
+# If the scanner is supported by sane-backends, please mail the entry to
+# the sane-devel mailing list (sane-devel@lists.alioth.debian.org).
+#
+ACTION!="add", GOTO="libsane_rules_end"
+ENV{DEVTYPE}=="usb_device", GOTO="libsane_create_usb_dev"
+SUBSYSTEM=="usb_device", GOTO="libsane_usb_rules_begin"
+SUBSYSTEM!="usb_device", GOTO="libsane_usb_rules_end"
+
+# Kernel >= 2.6.22 jumps here
+LABEL="libsane_create_usb_dev"
+
+# For Linux >= 2.6.22 without CONFIG_USB_DEVICE_CLASS=y
+# If the following rule does not exist on your system yet, uncomment it
+# ENV{DEVTYPE}=="usb_device", MODE="0664", OWNER="root", GROUP="root"
+
+# Kernel < 2.6.22 jumps here
+LABEL="libsane_usb_rules_begin"
+
+ATTRS{idVendor}=="03f0", ATTRS{idProduct}=="5905", MODE="0666", GROUP="scanner", ENV{libsane_matched}="yes"
+
+# The following rule will disable USB autosuspend for the device
+ENV{libsane_matched}=="yes", RUN+="/bin/sh -c 'test -e /sys/$env{DEVPATH}/power/level && echo on > /sys/$env{DEVPATH}/power/level'"
+
+LABEL="libsane_usb_rules_end"
+

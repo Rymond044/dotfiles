@@ -1,0 +1,2 @@
+# Disable D3cold for Intel Wi-Fi to prevent resume issues
+ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0x272b", ATTR{d3cold_allowed}="0"

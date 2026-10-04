@@ -1,0 +1,37 @@
+format = """
+$hostname\
+$directory\
+$git_branch\
+$git_status\
+$cmd_duration\
+$line_break\
+$character"""
+
+[hostname]
+ssh_only = false 
+format = "[$hostname](bold yellow) "
+disabled = false
+
+[directory]
+style = "bold cyan"
+truncation_length = 3
+truncate_to_repo = true
+read_only = " 🔒"
+
+[git_branch]
+symbol = " "
+style = "bold magenta"
+format = "[$symbol$branch]($style) "
+
+[git_status]
+style = "bold red"
+format = "([$all_status$ahead_behind]($style) )"
+
+[cmd_duration]
+min_time = 2_000
+style = "bold yellow"
+format = "took [$duration]($style) "
+
+[character]
+success_symbol = "[#](bold green)"
+error_symbol = "[#](bold red)"

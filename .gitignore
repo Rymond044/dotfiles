@@ -1,40 +1,16 @@
-# Ignore all
-*
+# Генерируемое (wallust из wallust/templates/hyprlock.conf.j2)
+hypr/.config/hypr/hyprlock.conf
 
-# Track gitignore
-!.gitignore
+# Секреты и личное
+binc/.config/binc/myvpn
 
-# Track folders
-!binc/
-!hypr/
-!kitty/
-!rofi/
-!swaync/
-!wallust/
-!waybar/
-!fastfetch/
-!fontconfig/
-!nvim/
-!btop/
-!clipse/
-#!walker/
+# Рантайм-данные приложений (на случай, если попадут в свёрнутую папку)
+clipse/.config/clipse/clipboard_history.json
+clipse/.config/clipse/clipse.log
+clipse/.config/clipse/tmp_files/
 
-# Track files inside folders
-!binc/**
-binc/myvpn
-!hypr/**
-!kitty/**
-!rofi/**
-!swaync/**
-!wallust/**
-!waybar/**
-!fastfetch/**
-!fontconfig/**
-!arch_logo.txt
-!nvim/**
-!btop/**
-!README.md
-hypr/plugins
-!clipse/config.json
-!clipse/custom_theme.json
-.gitmodules
+# Рабочие заметки Claude (локальные)
+CLAUDE.md
+
+# Закладки Nautilus (личные пути)
+gtk/.config/gtk-3.0/bookmarks

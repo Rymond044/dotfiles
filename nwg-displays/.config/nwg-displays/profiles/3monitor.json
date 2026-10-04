@@ -1,0 +1,67 @@
+{
+  "displays": [
+    {
+      "name": "eDP-1",
+      "description": "AU Optronics 0x83AD",
+      "x": 3590,
+      "y": 559,
+      "physical_width": 2880,
+      "physical_height": 1800,
+      "transform": "normal",
+      "scale": 2.0,
+      "scale_filter": null,
+      "refresh": 60.0,
+      "dpms": true,
+      "adaptive_sync": false,
+      "custom_mode": false,
+      "mirror": "",
+      "ten_bit": false,
+      "active": true
+    },
+    {
+      "name": "DP-1",
+      "description": "LG Electronics LG FHD 0x01010101",
+      "x": 462,
+      "y": 0,
+      "physical_width": 1920,
+      "physical_height": 1080,
+      "transform": "90",
+      "scale": 1.0,
+      "scale_filter": null,
+      "refresh": 74.97,
+      "dpms": true,
+      "adaptive_sync": false,
+      "custom_mode": false,
+      "mirror": "",
+      "ten_bit": false,
+      "active": true
+    },
+    {
+      "name": "HDMI-A-1",
+      "description": "Xiaomi Corporation Mi Monitor 7041110074940",
+      "x": 1542,
+      "y": 307,
+      "physical_width": 2560,
+      "physical_height": 1440,
+      "transform": "normal",
+      "scale": 1.25,
+      "scale_filter": null,
+      "refresh": 143.98,
+      "dpms": true,
+      "adaptive_sync": false,
+      "custom_mode": false,
+      "mirror": "",
+      "ten_bit": false,
+      "active": true
+    }
+  ],
+  "config": {
+    "view-scale": 0.3,
+    "snap-threshold": 10,
+    "indicator-timeout": 500,
+    "custom-mode": [],
+    "use-desc": false,
+    "confirm-timeout": 10,
+    "profile-bound-wallpapers": true
+  }
+}

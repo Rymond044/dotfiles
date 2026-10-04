@@ -1,0 +1,59 @@
+{
+  "displays": [
+    {
+      "name": "eDP-1",
+      "description": "AU Optronics 0x83AD",
+      "x": 235,
+      "y": 332,
+      "physical_width": 2880,
+      "physical_height": 1800,
+      "transform": "normal",
+      "scale": 2.0,
+      "scale_filter": null,
+      "refresh": 60.0,
+      "dpms": true,
+      "adaptive_sync": false,
+      "custom_mode": false,
+      "mirror": "",
+      "ten_bit": false,
+      "active": true
+    },
+    {
+      "name": "HDMI-A-1",
+      "description": "Microstep MSI MD272XP PB1HD25700170",
+      "x": 1675,
+      "y": 222,
+      "physical_width": 1920,
+      "physical_height": 1080,
+      "transform": "normal",
+      "scale": 1.0,
+      "scale_filter": null,
+      "refresh": 100.0,
+      "dpms": true,
+      "adaptive_sync": false,
+      "custom_mode": false,
+      "mirror": "",
+      "ten_bit": false,
+      "active": true
+    }
+  ],
+  "config": {
+    "view-scale": 0.4,
+    "snap-threshold": 10,
+    "indicator-timeout": 500,
+    "custom-mode": [],
+    "use-desc": false,
+    "confirm-timeout": 10,
+    "profile-bound-wallpapers": true
+  },
+  "wallpapers": {
+    "eDP-1": {
+      "path": "/home/rymond044/Wallpapers/current",
+      "mode": ""
+    },
+    "HDMI-A-1": {
+      "path": "/home/rymond044/Wallpapers/current",
+      "mode": ""
+    }
+  }
+}

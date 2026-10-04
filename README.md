@@ -25,20 +25,34 @@ https://github.com/user-attachments/assets/44e4d759-637e-4236-847c-cd813c1b8619
 
 ## Components
 
-| Directory        | Description                                     |
+Each top-level directory is a [GNU stow](https://www.gnu.org/software/stow/) package mirroring `$HOME`
+(e.g. `hypr/.config/hypr` → `~/.config/hypr`).
+
+| Package          | Description                                     |
 |------------------|-------------------------------------------------|
-| `hypr/`          | Hyprland, Hypridle, Hyprlock configurations     |
+| `hypr/`          | Hyprland (Lua config), Hypridle, Hyprlock       |
 | `waybar/`        | Navigation bar                                  |
 | `rofi/`          | App, powermenu, applets launcher                |
 | `swaync/`        | Notification daemon                             |
-| `kitty/`         | Terminal                                        |
+| `kitty/`, `ghostty/` | Terminals                                   |
 | `wallust/`       | Adaptive color palette picker                   |
-| `btop/`          | System monitor                                  |
-| `fastfetch/`     | Main system information                         |
-| `fontconfig/`    | Font settings                                   |
-| `binc/`          | Custom scripts                                  |
+| `nvim/`          | LazyVim                                         |
+| `zsh/`           | zshrc + starship                                |
+| `gtk/`, `qt/`    | GTK / Qt / Kvantum theming                      |
+| `session/`       | mimeapps, chromium/electron flags, user units   |
+| `btop/`, `fastfetch/`, `yazi/`, `clipse/` | TUI tools              |
+| `binc/`          | Custom scripts (`~/.config/binc`)               |
+| `system/`        | Files for `/etc` (copied, not linked)           |
+| `packages/`      | pacman / AUR package lists                      |
+
+## Install
+
+```sh
+git clone --recurse-submodules https://github.com/Rymond044/dotfiles.git ~/dotfiles
+~/dotfiles/bootstrap.sh
+```
+
+Day-to-day usage (`./dot link|check|adopt|sys|pkgs`) is described in [docs/STOW.md](docs/STOW.md).
 
 ---
 > _With great power comes great responsibility..._
-
-⚠️ **No installer provided** – I’m too lazy to write or generate one. Copy files carefully, as some scripts have dependencies and a few paths are hardcoded. Adjust them to your system before using.

@@ -1,0 +1,213 @@
+#!/usr/bin/env bash
+# dot — управление dotfiles (stow-пакеты, system/ для /etc, списки пакетов).
+# Подробности: docs/STOW.md
+set -euo pipefail
+
+DOT="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+TARGET="$HOME"
+NOT_PACKAGES=(system packages docs)
+
+c_red=$'\e[31m' c_grn=$'\e[32m' c_ylw=$'\e[33m' c_dim=$'\e[2m' c_off=$'\e[0m'
+say()  { printf '%s\n' "$*"; }
+warn() { printf '%s%s%s\n' "$c_ylw" "$*" "$c_off" >&2; }
+die()  { printf '%s%s%s\n' "$c_red" "$*" "$c_off" >&2; exit 1; }
+ask()  { local a; read -r -p "$1 [y/N] " a; [[ $a == [yYдД]* ]]; }
+
+need_stow() { command -v stow >/dev/null || die "stow не установлен: sudo pacman -S stow"; }
+
+all_packages() {
+  local d name
+  for d in "$DOT"/*/; do
+    name="$(basename "$d")"
+    [[ " ${NOT_PACKAGES[*]} " == *" $name "* ]] && continue
+    printf '%s\n' "$name"
+  done
+}
+
+pkgs_or_all() { if (($#)); then printf '%s\n' "$@"; else all_packages; fi; }
+
+stow_() { stow -d "$DOT" -t "$TARGET" "$@"; }
+
+# ---------- stow ----------
+
+cmd_link() {
+  need_stow
+  local p
+  while read -r p; do
+    [[ -d $DOT/$p ]] || die "нет пакета: $p"
+    stow_ --restow "$p" && say "${c_grn}✓${c_off} $p"
+  done < <(pkgs_or_all "$@")
+}
+
+cmd_unlink() {
+  need_stow
+  (($#)) || die "укажи пакет(ы): dot unlink <pkg>…"
+  local p; for p in "$@"; do stow_ --delete "$p" && say "✗ $p"; done
+}
+
+# Проверка: каждый файл пакета должен вести в репо. Приложения, которые сохраняют
+# конфиг через «временный файл + rename», заменяют симлинк обычным файлом — такие
+# файлы показываются как REPLACED, чинятся через `dot adopt <pkg>`.
+cmd_check() {
+  local p f rel tgt bad=0
+  while read -r p; do
+    while IFS= read -r -d '' f; do
+      rel="${f#"$DOT/$p/"}"
+      tgt="$TARGET/$rel"
+      if [[ ! -e $tgt && ! -L $tgt ]]; then
+        say "${c_ylw}MISSING${c_off}  $p: ~/$rel"; bad=1
+      elif [[ "$(readlink -f "$tgt")" != "$(readlink -f "$f")" ]]; then
+        if [[ -L $tgt ]]; then say "${c_red}FOREIGN${c_off}  $p: ~/$rel → $(readlink "$tgt")"
+        else say "${c_red}REPLACED${c_off} $p: ~/$rel (обычный файл вместо ссылки)"; fi
+        bad=1
+      fi
+    done < <(find "$DOT/$p" \( -type f -o -type l \) -not -path '*/.git/*' -not -name .git -print0)
+  done < <(pkgs_or_all "$@")
+  ((bad)) && { warn "Есть проблемы. REPLACED → dot adopt <pkg>; MISSING → dot link <pkg>"; return 1; }
+  say "${c_grn}Все ссылки на месте.${c_off}"
+}
+
+cmd_adopt() {
+  need_stow
+  (($#)) || die "укажи пакет(ы): dot adopt <pkg>…"
+  stow_ --adopt --restow "$@"
+  say "Файлы из \$HOME забраны в репо. Что изменилось:"
+  git -C "$DOT" status --short -- "$@"
+  say "${c_dim}Откатить чужие изменения: git -C $DOT checkout -- <файл>${c_off}"
+}
+
+# ---------- system/ (/etc и т. п.) ----------
+# Файлы копируются (не симлинкаются): /home может быть недоступен на раннем этапе
+# загрузки, а mkinitcpio/udev/systemd ждут обычные файлы root:root.
+
+sys_files() { (cd "$DOT/system" && find . -type f -printf '%P\n' | sort); }
+
+cmd_sys_diff() {
+  local rel changed=0
+  while read -r rel; do
+    if [[ ! -e /$rel ]]; then say "${c_ylw}+ /$rel${c_off} (нет в системе)"; changed=1
+    elif ! cmp -s "$DOT/system/$rel" "/$rel"; then
+      diff -u --label "/$rel (система)" --label "system/$rel (репо)" "/$rel" "$DOT/system/$rel" || true
+      changed=1
+    fi
+  done < <(sys_files)
+  ((changed)) || say "${c_grn}system/ совпадает с системой.${c_off}"
+  return 0
+}
+
+cmd_sys_install() {
+  local rel mode todo=()
+  while read -r rel; do
+    [[ -e /$rel ]] && cmp -s "$DOT/system/$rel" "/$rel" && continue
+    todo+=("$rel")
+  done < <(sys_files)
+  ((${#todo[@]})) || { say "${c_grn}Нечего ставить: system/ совпадает с системой.${c_off}"; return 0; }
+
+  cmd_sys_diff
+  say; say "Будут установлены:"; printf '  /%s\n' "${todo[@]}"
+  ask "Скопировать в систему (sudo)?" || { say "Отменено."; return 0; }
+
+  local hooks=()
+  for rel in "${todo[@]}"; do
+    mode="$(stat -c %a "$DOT/system/$rel")"
+    sudo install -D -o root -g root -m "$mode" "$DOT/system/$rel" "/$rel"
+    say "${c_grn}✓${c_off} /$rel"
+    case $rel in
+      etc/default/grub*)                        hooks+=("sudo grub-mkconfig -o /boot/grub/grub.cfg") ;;
+      etc/mkinitcpio*|etc/modprobe.d/*|etc/modules-load.d/*) hooks+=("sudo mkinitcpio -P") ;;
+      etc/udev/*)                               hooks+=("sudo udevadm control --reload") ;;
+      etc/systemd/*)                            hooks+=("sudo systemctl daemon-reload") ;;
+    esac
+  done
+
+  local h
+  while read -r h; do
+    [[ -n $h ]] || continue
+    ask "Выполнить: $h ?" && eval "$h"
+  done < <(printf '%s\n' "${hooks[@]}" | sort -u)
+}
+
+# Забрать в репо текущие версии файлов из системы (если правил /etc напрямую).
+cmd_sys_pull() {
+  local rel
+  while read -r rel; do
+    [[ -r /$rel ]] || { warn "нет /$rel"; continue; }
+    cmp -s "/$rel" "$DOT/system/$rel" || { install -m "$(stat -c %a "/$rel")" "/$rel" "$DOT/system/$rel"; say "↓ /$rel"; }
+  done < <(sys_files)
+  git -C "$DOT" status --short -- system
+}
+
+# Добавить новый файл из системы под учёт: dot sys add /etc/foo.conf
+cmd_sys_add() {
+  (($#)) || die "dot sys add /etc/<файл>…"
+  local f
+  for f in "$@"; do
+    f="$(readlink -f "$f")"
+    [[ -f $f ]] || die "нет файла: $f"
+    install -D -m "$(stat -c %a "$f")" "$f" "$DOT/system$f"
+    say "+ system$f"
+  done
+}
+
+# ---------- списки пакетов ----------
+
+cmd_pkgs_save() {
+  pacman -Qqen > "$DOT/packages/pkglist.txt"
+  pacman -Qqem > "$DOT/packages/aurlist.txt"
+  git -C "$DOT" diff --stat -- packages || true
+}
+
+cmd_pkgs_diff() {
+  say "Установлено, но нет в списках:"
+  comm -23 <(pacman -Qqe | sort) <(sort -u "$DOT"/packages/{pkglist,aurlist}.txt) | sed 's/^/  + /'
+  say "В списках, но не установлено:"
+  comm -13 <(pacman -Qq | sort) <(sort -u "$DOT"/packages/{pkglist,aurlist}.txt) | sed 's/^/  - /'
+}
+
+cmd_pkgs_install() {
+  sudo pacman -S --needed - < "$DOT/packages/pkglist.txt"
+  command -v yay >/dev/null || die "yay не найден (bootstrap.sh ставит его сам)"
+  yay -S --needed - < "$DOT/packages/aurlist.txt"
+}
+
+# ---------- main ----------
+
+usage() {
+  cat <<EOF
+dot — управление dotfiles ($DOT)
+
+  dot link   [pkg…]     застоуить пакеты (по умолчанию все)
+  dot unlink pkg…       убрать ссылки пакета
+  dot check  [pkg…]     проверить, что все ссылки на месте
+  dot adopt  pkg…       забрать в репо файлы, которые приложение заменило
+  dot list              список пакетов
+
+  dot sys diff          отличия system/ от /etc
+  dot sys install       скопировать system/ в систему (с подтверждением)
+  dot sys pull          забрать изменения из /etc в system/
+  dot sys add FILE…     поставить файл из системы на учёт
+
+  dot pkgs save         обновить packages/{pkglist,aurlist}.txt
+  dot pkgs diff         расхождение списков с системой
+  dot pkgs install      поставить пакеты из списков
+EOF
+}
+
+case "${1:-}" in
+  link)   shift; cmd_link "$@" ;;
+  unlink) shift; cmd_unlink "$@" ;;
+  check)  shift; cmd_check "$@" ;;
+  adopt)  shift; cmd_adopt "$@" ;;
+  list)   all_packages ;;
+  sys)
+    case "${2:-}" in
+      diff) cmd_sys_diff ;; install) cmd_sys_install ;; pull) cmd_sys_pull ;;
+      add) shift 2; cmd_sys_add "$@" ;; *) usage; exit 1 ;;
+    esac ;;
+  pkgs)
+    case "${2:-}" in
+      save) cmd_pkgs_save ;; diff) cmd_pkgs_diff ;; install) cmd_pkgs_install ;; *) usage; exit 1 ;;
+    esac ;;
+  ""|-h|--help|help) usage ;;
+  *) usage; exit 1 ;;
+esac

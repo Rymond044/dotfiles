@@ -1,0 +1,21 @@
+[user]
+	name = Rymond044
+	gmail = el.rymant@gmail.com
+	email = el.rymant@gmail.com
+[init]
+	defaultBranch = main
+[alias]
+	lg = log --graph --format=format:'%C(bold blue)%h%C(reset) %C(green)%cd%C(reset) %s %C(auto)%d%C(reset)' --date=format:'%d.%m' --all
+	ls = log --graph --pretty=format:'%C(yellow)%h%C(reset) %s %C(magenta)%cr%C(reset)%C(cyan)%d%C(reset)'
+[pager]
+	log = true
+[core]
+  pager = less -X
+  autocrlf = input
+[includeIf "gitdir:~/Work/Innowise/"]
+    path = ~/Work/Innowise/.gitconfig-work
+[filter "lfs"]
+	required = true
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
