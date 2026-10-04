@@ -37,17 +37,16 @@ hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({ mode = "fullscreen", actio
 
 -- bind = CTRL, Space, exec, kando --trigger menu1
 
--- Move focus with mainMod + arrow keys
-hl.bind(mainMod .. " + left", hl.dsp.focus({ direction = "left" }))
-hl.bind(mainMod .. " + right", hl.dsp.focus({ direction = "right" }))
-hl.bind(mainMod .. " + up", hl.dsp.focus({ direction = "up" }))
-hl.bind(mainMod .. " + down", hl.dsp.focus({ direction = "down" }))
-
--- Переключение рабочих столов с mainMod + [0-9]
-hl.bind(mainMod .. " + SHIFT + left", hl.dsp.window.move({ direction = "l" }))
-hl.bind(mainMod .. " + SHIFT + right", hl.dsp.window.move({ direction = "r" }))
-hl.bind(mainMod .. " + SHIFT + up", hl.dsp.window.move({ direction = "u" }))
-hl.bind(mainMod .. " + SHIFT + down", hl.dsp.window.move({ direction = "d" }))
+-- Фокус / перенос окна стрелками: внутри монитора, у края — на соседний (см. monitornav.lua)
+local nav = require("monitornav")
+for _, dir in ipairs({ "left", "right", "up", "down" }) do
+	hl.bind(mainMod .. " + " .. dir, function()
+		nav.focus(dir)
+	end)
+	hl.bind(mainMod .. " + SHIFT + " .. dir, function()
+		nav.move(dir)
+	end)
+end
 
 -- hl.bind("SUPER + Tab", function() hl.plugin.hyprtasking.toggle("all") end)
 hl.bind("SUPER + TAB", hl.plugin.hymission.toggle)
