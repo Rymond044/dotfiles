@@ -16,6 +16,7 @@ hl.on("hyprland.start", function()
 	daemon("hypridle")
 	daemon("awww-daemon") -- сам восстанавливает последние обои
 	daemon("swaync")
+	daemon("hyprsunset") -- ночной режим, расписание в hyprsunset.conf
 	-- polkit: один агент на сессию, обслуживает и KDE-приложения (btrfs-assistant). Бинарник не в PATH,
 	-- поэтому через юнит пакета (start, не enable).
 	hl.exec_cmd("systemctl --user start hyprpolkitagent.service")

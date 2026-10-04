@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Super+N: вкл/выкл тёплый свет вручную (до следующей смены профиля по расписанию,
+# см. ~/.config/hypr/hyprsunset.conf).
+warm=${1:-4500}
+
+pgrep -x hyprsunset >/dev/null || { notify-send -t 2000 "Night light" "hyprsunset не запущен"; exit 1; }
+
+cur=$(hyprctl hyprsunset temperature 2>/dev/null)
+if [[ $cur =~ ^[0-9]+$ ]] && ((cur < 6000)); then
+	hyprctl hyprsunset temperature 6000 >/dev/null # identity не меняет то, что отдаёт `temperature`
+	msg=Off
+else
+	hyprctl hyprsunset temperature "$warm" >/dev/null
+	msg="${warm}K"
+fi
+notify-send -t 1500 -h string:x-canonical-private-synchronous:nightlight "Night light" "$msg"

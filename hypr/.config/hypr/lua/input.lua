@@ -28,8 +28,8 @@ hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
 -- Example per-device config
 -- See https://wiki.hypr.land/Configuring/Keywords/#per-device-input-configs for more
 
-hl.device({
-    name = "msnb0001:00-04ca:2642-touchpad",
+-- Тачпад: имя и вкл/выкл (Super+T) — в touchpad.lua
+require("touchpad").apply({
     sensitivity = 0.25,
 })
 

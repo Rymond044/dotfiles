@@ -1,0 +1,32 @@
+/* Цвета libadwaita (Nautilus и прочие GTK4/Adwaita-приложения) из палитры wallust.
+ * Подключается из ~/.config/gtk-4.0/gtk.css (тема adw-gtk3 импортирует libadwaita.css).
+ * Новые цвета подхватываются при следующем запуске приложения. */
+:root {
+  --accent-bg-color: {{color1}};
+  --accent-fg-color: {{background}};
+  --accent-color: {{color1 | lighten(0.25)}};
+
+  --window-bg-color: {{background}};
+  --window-fg-color: {{foreground}};
+  --view-bg-color: {{background | lighten(0.03)}};
+  --view-fg-color: {{foreground}};
+
+  --headerbar-bg-color: {{background | darken(0.15)}};
+  --headerbar-fg-color: {{foreground}};
+  --headerbar-backdrop-color: {{background}};
+
+  --sidebar-bg-color: {{background | darken(0.15)}};
+  --sidebar-fg-color: {{foreground}};
+  --sidebar-backdrop-color: {{background | darken(0.1)}};
+  --secondary-sidebar-bg-color: {{background | darken(0.08)}};
+  --secondary-sidebar-fg-color: {{foreground}};
+
+  --card-bg-color: {{background | lighten(0.06)}};
+  --card-fg-color: {{foreground}};
+  --dialog-bg-color: {{background | lighten(0.04)}};
+  --dialog-fg-color: {{foreground}};
+  --popover-bg-color: {{background | lighten(0.06)}};
+  --popover-fg-color: {{foreground}};
+  --thumbnail-bg-color: {{background | lighten(0.06)}};
+  --thumbnail-fg-color: {{foreground}};
+}

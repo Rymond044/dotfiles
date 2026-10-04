@@ -87,6 +87,7 @@ hyprland
 hyprlang
 hyprlock
 hyprpolkitagent
+hyprsunset
 hyprutils
 imagemagick
 impala

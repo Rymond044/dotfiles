@@ -19,7 +19,6 @@ local powermenu = "~/.config/rofi/powermenu/type-1/powermenu.sh"
 local browser = "chromium --ozone-platform=wayland --enable-features=TouchpadOverscrollHistoryNavigation"
 local bufferman = "[float; size 900 550; center] kitty -e clipse"
 local screenshot = "grim /tmp/temp_screenshot.png && eog /tmp/temp_screenshot.png"
-local touchpadToggle = "~/.config/binc/touchpad_toggle"
 
 local mainMod = "SUPER" -- Sets "Windows" key as main modifier
 
@@ -114,7 +113,10 @@ hl.bind(
 )
 hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%+"), { locked = true, repeating = true })
 hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%-"), { locked = true, repeating = true })
-hl.bind(mainMod .. " + T", hl.dsp.exec_cmd(touchpadToggle), { locked = true, repeating = true })
+hl.bind(mainMod .. " + T", function()
+	require("touchpad").toggle()
+end, { locked = true })
+hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("~/.config/binc/nightlight"))
 
 -- Requires playerctl
 hl.bind("XF86AudioNext", hl.dsp.exec_cmd("playerctl next"), { locked = true }):remove()
