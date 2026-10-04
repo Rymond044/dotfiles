@@ -36,6 +36,7 @@ hl.config({
 			debug_logs = 0,
 			debug_surface_logs = 0,
 			vim_keys = 1,
+			info_notifications = 0,
 		},
 	},
 })
@@ -131,10 +132,10 @@ hl.plugin.hymission.gesture({
 local smw = require("plugins")
 smw.setup({
 	workspace_count = 9,
-	keep_focused = 1,
+	keep_focused = true,
 	enable_persistent_workspaces = true,
-	enable_notifications = 0,
-	enable_wrapping = 0,
+	enable_notifications = false,
+	enable_wrapping = false,
 })
 local mainMod = "SUPER"
 
