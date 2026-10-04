@@ -1,0 +1,8 @@
+# Перекрывает /usr/share/dbus-1/services/org.freedesktop.FileManager1.service.
+# «Показать в папке» через xdg-desktop-portal (OpenURI.OpenDirectory) при незапущенном
+# Nautilus висело 25 с: портал синхронно ждёт ответа на ShowItems, а Nautilus при старте
+# синхронно ходит в тот же портал (GTK — host.portal.Registry, libadwaita — Settings).
+# Без порталов в GTK/libadwaita Nautilus не ждёт портал; тёмная тема берётся из gsettings.
+[D-BUS Service]
+Name=org.freedesktop.FileManager1
+Exec=/usr/bin/env GDK_DEBUG=no-portals ADW_DISABLE_PORTAL=1 /usr/bin/nautilus --gapplication-service
