@@ -38,7 +38,8 @@ qt rofi session swaync wallust waybar waypaper yazi zsh`.
 
 - `gtk` — gtk-3.0/4.0, `.gtkrc-2.0`, nwg-look, xsettingsd
 - `qt` — qt5ct, qt6ct, Kvantum
-- `session` — mimeapps.list, chromium/electron-flags, user-dirs, MControlCenter.conf, systemd/user
+- `session` — mimeapps.list, chromium/electron-flags, user-dirs, MControlCenter.conf, systemd/user,
+  uwsm/env* (окружение сессии), ~/.local/share/dbus-1/services (перекрытие активации Nautilus)
 - `binc` — скрипты в `~/.config/binc` (путь оставлен прежним, на него ссылаются конфиги) + `arch_logo.txt`
 
 ## «Свёрнутые» папки (tree folding)

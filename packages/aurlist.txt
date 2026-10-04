@@ -47,7 +47,6 @@ python-git-dummy
 python312
 python313
 quickshell-git
-swww
 sysz
 terminaltexteffects-git
 ttf-meslo

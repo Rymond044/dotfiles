@@ -1,0 +1,12 @@
+# Окружение сессии: uwsm читает этот файл до запуска Hyprland и экспортирует переменные
+# в systemd/D-Bus activation environment (dbus-update-activation-environment не нужен).
+# XDG_CURRENT_DESKTOP, XDG_SESSION_TYPE, WAYLAND_DISPLAY uwsm/Hyprland выставляют сами.
+
+export XCURSOR_THEME=Bibata-Modern-Classic
+export XCURSOR_SIZE=20
+export QT_QPA_PLATFORMTHEME=qt6ct
+
+# VA-API на Arc (Meteor Lake)
+export LIBVA_DRIVER_NAME=iHD
+export TFA_DEVICE=/dev/dri/renderD128
+export ffmpeg_vaapi_device=/dev/dri/renderD128

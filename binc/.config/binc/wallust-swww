@@ -11,7 +11,7 @@ CURRENT_WALL="$HOME/Wallpapers/current"
 
 cp -f "$WALLPAPER" "$CURRENT_WALL"
 
-swww img "$CURRENT_WALL" --transition-type wipe
+awww img "$CURRENT_WALL" --transition-type wipe
 
 wallust run "$CURRENT_WALL"
 ~/.config/binc/lock --prepare &  # фон и конфиг hyprlock заранее, чтобы блокировка не ждала

@@ -6,7 +6,7 @@ threshold = 7
 
 
 [image]
-path = "~/Wallpapers/current.jpg"
+path = "~/Wallpapers/current"
 
 [templates]
 hyprland = { template = 'hyprland.lua.j2', target = '~/.cache/wallust/hyprland.lua' }

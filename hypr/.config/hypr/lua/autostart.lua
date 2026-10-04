@@ -4,27 +4,25 @@
 --## AUTOSTART ###
 --################
 
--- Autostart necessary processes (like notifications daemons, status bars, etc.)
--- Or execute your favorite apps at launch like this:
--- exec-once = nm-applet &
--- exec-once = waybar & hyprpaper & firefox
--- exec-once = walker --gapplication-service
+-- Сессия запускается через uwsm: окружение — в ~/.config/uwsm/env*, uwsm сам передаёт его
+-- в systemd/D-Bus. Демоны запускаем через `uwsm app -s b --`: каждый в своём юните в
+-- background.slice (видно в `systemctl --user status`, логи в journalctl).
+local function daemon(cmd)
+	hl.exec_cmd("uwsm app -s b -- " .. cmd)
+end
 
--- Autostart
 hl.on("hyprland.start", function()
-	hl.exec_cmd("hypridle")
-	hl.exec_cmd("~/.config/binc/lock")
+	hl.exec_cmd("~/.config/binc/lock") -- первым: сессия стартует заблокированной (autologin)
+	daemon("hypridle")
+	daemon("awww-daemon") -- сам восстанавливает последние обои
+	daemon("swaync")
+	-- polkit: один агент на сессию, обслуживает и KDE-приложения (btrfs-assistant). Бинарник не в PATH,
+	-- поэтому через юнит пакета (start, не enable).
+	hl.exec_cmd("systemctl --user start hyprpolkitagent.service")
+	daemon("clipse -listen")
+	daemon("mcontrolcenter")
 	hl.exec_cmd("~/.config/waybar/scripts/launch.sh --force")
 	hl.exec_cmd("hyprpm reload")
-	hl.exec_cmd("impala")
-	hl.exec_cmd("swaync")
-	hl.exec_cmd("clipse -listen")
-	hl.exec_cmd("swww-daemon")
-	hl.exec_cmd("waypaper --restore")
-	hl.exec_cmd("hyprpolkitagent")
-	hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
-	hl.exec_cmd("/usr/lib/polkit-kde-authentication-agent-1")
-	hl.exec_cmd("mcontrolcenter")
 end)
 
 -- Waybar: бар под ширину каждого монитора (полный/средний/компактный). Скрипт сам
