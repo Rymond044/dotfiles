@@ -11,9 +11,9 @@ hypridle (lock_cmd) ← `loginctl lock-session` ← таймаут, сон/кр�
 PNG 3840×2160 на каждый монитор делал первый кадр таким тяжёлым, что fade-in успевал пройти
 до него, и блокировка появлялась рывком.
 
-Проверки «hyprlock уже запущен» (pidof) нет намеренно: если сессия уже заблокирована, Hyprland
-отвечает второму hyprlock `finished`, и тот сразу выходит. А pidof ловил зависший после разблокировки
-hyprlock и молча не блокировал вообще.
+«Уже заблокировано?» спрашиваем у hypridle (D-Bus ScreenSaver.GetActive), а не через pidof: pidof ловил
+зависший hyprlock и молча не блокировал вообще. Второй hyprlock поверх блокировки запускать нельзя —
+он может зависнуть навсегда (см. main).
 
   lock            — собрать конфиг и заблокировать
   lock --prepare  — только собрать конфиг и фон (после смены обоев, чтобы блокировка не ждала)
@@ -87,8 +87,30 @@ def build_config() -> None:
     os.replace(tmp, CONFIG)
 
 
+def session_locked() -> bool:
+    """Сессия уже заблокирована? Спрашиваем hypridle (ScreenSaver.GetActive = его m_isLocked из
+    hyprland-lock-notify). Любая ошибка (hypridle ещё не запущен и т. п.) → False: лучше лишний раз
+    попытаться заблокировать, чем не заблокировать."""
+    try:
+        out = subprocess.run(
+            ["busctl", "--user", "--timeout=1", "call", "org.freedesktop.ScreenSaver",
+             "/org/freedesktop/ScreenSaver", "org.freedesktop.ScreenSaver", "GetActive"],
+            capture_output=True, text=True, timeout=2,
+        ).stdout
+        return out.strip() == "b true"
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def main() -> None:
     prepare = "--prepare" in sys.argv[1:]
+    # Второй hyprlock поверх заблокированной сессии получает от Hyprland `finished` и зовёт exit(1)
+    # при живых потоках (auth, Mesa) — и иногда виснет в дедлоке навсегда (~50–70 МБ каждый).
+    # Так бывает на каждом сне по таймауту hypridle: 600 с заблокировали, на 1200 с before_sleep_cmd
+    # снова шлёт lock-session.
+    if not prepare and session_locked():
+        print("lock: сессия уже заблокирована, второй hyprlock не нужен", file=sys.stderr)
+        return
     try:
         build_config()
     except Exception as e:  # noqa: BLE001 — блокировка важнее красивой вёрстки
