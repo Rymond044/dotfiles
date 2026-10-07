@@ -1,0 +1,9 @@
+[Unit]
+Description=Waybar: player state watcher (playerctl -F)
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+ExecStart=%h/.config/waybar/scripts/player-watch.sh
+Restart=always
+RestartSec=2

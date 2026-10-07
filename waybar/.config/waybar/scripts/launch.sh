@@ -39,6 +39,8 @@ if [[ ${1:-} != --force ]] && pgrep -x waybar >/dev/null && [[ -f $out ]] && [[ 
 fi
 
 printf '%s\n' "$new" >"$out"
+# Состояние плеера для custom/playerctl* (идемпотентно; юнит живёт до конца сессии).
+systemctl --user start waybar-player.service || true
 pkill -x waybar || true
 while pgrep -x waybar >/dev/null; do sleep 0.05; done
-setsid -f waybar -c "$out" -s "$conf_dir/style.css" >/dev/null 2>&1 9>&-
+setsid -f waybar -c "$out" -s "$conf_dir/style.css" </dev/null >/dev/null 2>&1 9>&-

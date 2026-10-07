@@ -59,17 +59,23 @@
     "show-passive-items": true,
     "tooltip": false,
   },
-  // Кнопки видны, только пока есть плеер (playing/paused); статус через playerctl -F, без поллинга.
+  // Плеер: состояние пишет один процесс на сессию (scripts/player-watch.sh, waybar-player.service)
+  // и шлёт SIGRTMIN+8 — модули только читают файл (своих долгоживущих процессов нет).
+  // Кнопки видны, только пока есть плеер (playing/paused): пустой text + hide-empty-text.
   "custom/playerctl-prev": {
-    "exec": "~/.config/waybar/scripts/player-button.sh prev",
+    "format": "󰒮",
+    "exec": "cat $XDG_RUNTIME_DIR/waybar-player.json",
+    "signal": 8,
     "return-type": "json",
+    "hide-empty-text": true,
     "on-click": "playerctl previous",
     "tooltip": false,
   },
   "custom/playerctl": {
     "format": "<span font='20px'>{icon}</span> <span rise='2000'>{text}</span>",
     "return-type": "json",
-    "exec": "~/.config/waybar/scripts/player.sh",
+    "exec": "cat $XDG_RUNTIME_DIR/waybar-player.json",
+    "signal": 8,
     "hide-empty-text": true, // иначе при пустом тексте остаётся пустая «таблетка» (формат не пустой)
     "max-length": 80,
     "format-icons": {
@@ -81,8 +87,11 @@
     "on-scroll-down": "playerctl volume 0.05-",
   },
   "custom/playerctl-next": {
-    "exec": "~/.config/waybar/scripts/player-button.sh next",
+    "format": "󰒭",
+    "exec": "cat $XDG_RUNTIME_DIR/waybar-player.json",
+    "signal": 8,
     "return-type": "json",
+    "hide-empty-text": true,
     "on-click": "playerctl next",
     "tooltip": false,
   },
