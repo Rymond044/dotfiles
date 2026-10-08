@@ -1,0 +1,10 @@
+[Unit]
+Description=MSI EC: режим (shift_mode/fan_mode) вслед за профилем power-profiles-daemon
+
+[Service]
+ExecStart=%h/.config/binc/power-mode watch
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

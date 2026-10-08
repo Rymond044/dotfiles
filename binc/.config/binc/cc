@@ -1,0 +1,3 @@
+#!/bin/sh
+# Control center (rofi): см. ~/.config/rofi/cc/cc
+exec ~/.config/rofi/cc/cc "$@"

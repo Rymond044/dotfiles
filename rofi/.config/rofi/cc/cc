@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# Control center на rofi: главный экран с состоянием и подменю разделов.
+#
+#   cc                       главный экран (Super+Shift+A, правый клик по 󰣇 в waybar)
+#   cc РАЗДЕЛ                сразу подменю (правые клики по модулям waybar); Esc закрывает
+#   cc РАЗДЕЛ ДЕЙСТВИЕ [АРГ] действие без rofi (функция РАЗДЕЛ_ДЕЙСТВИЕ) — для скриптов и тестов
+#
+# Разделы — sections/*.sh. Каждый определяет РАЗДЕЛ_status (короткий статус для главного
+# экрана) и РАЗДЕЛ_rows (заполняет строки подменю, может задать TITLE и MESG).
+set -uo pipefail
+
+CC_DIR=$(dirname "$(realpath "$0")")
+source "$CC_DIR/lib.sh"
+for f in "$CC_DIR"/sections/*.sh; do source "$f"; done
+
+SECTIONS=(wifi bt audio toggles monitors power system utils wall)
+
+# section РАЗДЕЛ — подменю в цикле: после действия перерисовывается со свежим статусом.
+section() {
+	local keep=$SEL
+	CC_SECTION=$1 SEL=0
+	while :; do
+		ROWS=() ACTS=() TITLE=$1 MESG=
+		"$1_rows"
+		pick "$TITLE" "$MESG" || break
+	done
+	CC_SECTION= SEL=$keep
+}
+
+main_rows() {
+	row "$(lbl 󰖩 Wi-Fi "$(wifi_status)")" section wifi
+	row "$(lbl 󰂯 Bluetooth "$(bt_status)")" section bt
+	row "$(lbl 󰕾 Sound "$(audio_status)")" section audio
+	row "$(lbl 󰔡 Toggles "$(toggles_status)")" section toggles
+	row "$(lbl 󰍹 Monitors "$(monitors_status)")" section monitors
+	row "$(lbl 󰂄 Power "$(power_status)")" section power
+	row "$(lbl 󰒓 System)" section system
+	row "$(lbl 󰆍 Utilities)" section utils
+	row "$(lbl 󰸉 Wallpaper)" section wall
+}
+
+main_mesg() {
+	local b=/sys/class/power_supply/BAT1 cap st
+	cap=$(<"$b/capacity") st=$(<"$b/status")
+	case $st in
+	Charging) st="charging" ;; Discharging) st="on battery" ;; Full) st="full" ;; *) st="plugged in" ;;
+	esac
+	local up
+	read -r up _ </proc/uptime
+	up=${up%.*}
+	printf '󰁹 %s %% · %s · up %s' "$cap" "$st" \
+		"$( ((up >= 86400)) && printf '%dd ' $((up / 86400)))$((up % 86400 / 3600))h $((up % 3600 / 60))m"
+}
+
+if (($# == 0)); then
+	while :; do
+		ROWS=() ACTS=()
+		main_rows
+		pick "Control center" "$(main_mesg)" || exit 0
+	done
+fi
+
+name=$1
+[[ " ${SECTIONS[*]} " == *" $name "* ]] || { echo "cc: no section '$name'. Sections: ${SECTIONS[*]}" >&2; exit 2; }
+if (($# == 1)); then
+	section "$name"
+	exit 0
+fi
+fn="${name}_$2"
+declare -F "$fn" >/dev/null || { echo "cc: no action '$2' in section '$name'" >&2; exit 2; }
+CC_SECTION=$name
+"$fn" "${@:3}"

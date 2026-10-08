@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+# Единый режим питания: профиль power-profiles-daemon + режим EC (msi_ec).
+# EC всегда подстраивается под ppd, откуда бы ни сменили профиль (control center, waybar,
+# powerprofilesctl) — это делает `watch` в юните ec-sync.service.
+# Запись в sysfs без sudo — udev-правило /etc/udev/rules.d/71-msi-ec.rules (группа wheel).
+#
+#   power-mode get                          профиль ppd: power-saver|balanced|performance
+#   power-mode set eco|balanced|performance сменить профиль и сразу записать EC
+#   power-mode apply                        записать EC по текущему профилю ppd
+#   power-mode watch                        apply на старте и на каждую смену профиля
+#   power-mode charge [toggle|80|100]       порог заряда; без аргумента — текущий
+#   power-mode boost [toggle|on|off]        Cooler Boost; без аргумента — текущий
+EC=/sys/devices/platform/msi-ec
+BAT=/sys/class/power_supply/BAT1
+
+notify() { notify-send -t 2000 -h string:x-canonical-private-synchronous:power-mode "$@"; }
+
+# Ошибку записи показываем уведомлением: из rofi/waybar stderr никто не видит.
+ec_write() { # файл значение
+	[[ $(<"$1") == "$2" ]] && return 0
+	echo "$2" 2>/dev/null >"$1" && return 0
+	echo "power-mode: no write access to $1" >&2
+	notify -u critical -t 6000 "Power" "No write access to $(basename "$1").
+Install the udev rule: ~/dotfiles/dot sys install"
+	return 1
+}
+
+apply() {
+	local profile shift fan
+	profile=$(powerprofilesctl get) || return 1
+	case $profile in
+	power-saver) shift=eco fan=silent ;;
+	balanced) shift=comfort fan=auto ;;
+	performance) shift=turbo fan=auto ;;
+	*) return 1 ;;
+	esac
+	ec_write "$EC/shift_mode" "$shift" && ec_write "$EC/fan_mode" "$fan"
+}
+
+case ${1:-get} in
+get) powerprofilesctl get ;;
+set)
+	case ${2:-} in
+	eco | power-saver) p=power-saver name=Eco ;;
+	balanced) p=balanced name=Balanced ;;
+	performance) p=performance name=Performance ;;
+	*) echo "power-mode set eco|balanced|performance" >&2; exit 2 ;;
+	esac
+	powerprofilesctl set "$p" && apply && notify "Power mode" "$name"
+	;;
+apply) apply ;;
+watch)
+	apply
+	# ppd шлёт PropertiesChanged с ActiveProfile; одно и то же событие может прийти дважды
+	# (ppd отвечает и под старым именем net.hadess) — apply идемпотентен.
+	gdbus monitor --system --dest org.freedesktop.UPower.PowerProfiles |
+		while read -r line; do
+			[[ $line == *"'ActiveProfile'"* ]] && apply
+		done
+	;;
+charge)
+	cur=$(<"$BAT/charge_control_end_threshold")
+	case ${2:-} in
+	'') echo "$cur"; exit ;;
+	toggle) new=$((cur < 100 ? 100 : 80)) ;;
+	80 | 100) new=$2 ;;
+	*) echo "power-mode charge [toggle|80|100]" >&2; exit 2 ;;
+	esac
+	# start msi_ec выставляет сам (end − 10)
+	ec_write "$BAT/charge_control_end_threshold" "$new" && notify "Charge limit" "$new %"
+	;;
+boost)
+	cur=$(<"$EC/cooler_boost")
+	case ${2:-} in
+	'') echo "$cur"; exit ;;
+	toggle) new=$([[ $cur == on ]] && echo off || echo on) ;;
+	on | off) new=$2 ;;
+	*) echo "power-mode boost [toggle|on|off]" >&2; exit 2 ;;
+	esac
+	ec_write "$EC/cooler_boost" "$new" && notify "Cooler Boost" "$new"
+	;;
+*) sed -n 's/^#   power-mode/power-mode/p' "$0" >&2; exit 2 ;;
+esac

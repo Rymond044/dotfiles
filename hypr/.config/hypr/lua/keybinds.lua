@@ -14,7 +14,7 @@
 local terminal = "kitty"
 local fileManager = "nautilus"
 local menu = "~/.config/rofi/launchers/type-2/launcher.sh"
-local appMenu = "~/.config/rofi/applets/bin/apps.sh"
+local controlCenter = "~/.config/binc/cc" -- rofi/cc: Wi-Fi, BT, звук, питание, система…
 local powermenu = "~/.config/rofi/powermenu/type-1/powermenu.sh"
 local browser = "chromium" -- флаги в ~/.config/chromium-flags.conf
 local bufferman = "[float; size 900 550; center] kitty -e clipse"
@@ -65,10 +65,7 @@ hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:mag
 -- Сделать скриншот всего экрана и сразу открыть в Swappy
 -- hl.bind("Print", hl.dsp.exec_cmd(screenshot))
 --hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd('wayfreeze & PID=$!; sleep 0.1; grim -g "$(slurp)" - | wl-copy'))
-hl.bind(
-	mainMod .. " + O",
-	hl.dsp.exec_cmd('wayfreeze & PID=$!; sleep 0.1; grim -g "$(slurp)" - | tesseract stdin stdout -l eng+rus | wl-copy')
-)
+hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("~/.config/binc/ocr"))
 
 hl.bind("SUPER + SHIFT + s", hl.plugin.hyprcapture.open)
 
@@ -79,8 +76,8 @@ end)
 --буфер обмена
 hl.bind(mainMod .. " + V", hl.dsp.exec_cmd(bufferman))
 
---меню приложений
-hl.bind(mainMod .. " + SHIFT + A", hl.dsp.exec_cmd(appMenu))
+--control center
+hl.bind(mainMod .. " + SHIFT + A", hl.dsp.exec_cmd(controlCenter))
 
 -- Scroll through existing workspaces with mainMod + scroll
 hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }))

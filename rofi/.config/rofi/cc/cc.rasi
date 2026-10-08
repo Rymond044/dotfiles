@@ -1,0 +1,106 @@
+/* Control center: тема на цветах wallust (~/.cache/wallust/rofi-colors.rasi). */
+
+configuration {
+    show-icons:                  false;
+}
+
+@import                          "~/.cache/wallust/rofi-colors.rasi"
+
+* {
+    font:                        "system-ui 11";
+}
+
+window {
+    transparency:                "real";
+    location:                    center;
+    anchor:                      center;
+    fullscreen:                  false;
+    width:                       520px;
+    border:                      1px solid;
+    border-radius:               12px;
+    border-color:                @selected;
+    cursor:                      "default";
+    background-color:            @background;
+}
+
+mainbox {
+    spacing:                     10px;
+    padding:                     18px;
+    background-color:            transparent;
+    children:                    [ "inputbar", "message", "listview" ];
+}
+
+inputbar {
+    spacing:                     10px;
+    background-color:            transparent;
+    text-color:                  @foreground;
+    children:                    [ "prompt", "entry" ];
+}
+
+prompt {
+    padding:                     8px 12px;
+    border-radius:               8px;
+    background-color:            @active;
+    text-color:                  @background;
+}
+
+entry {
+    padding:                     8px 0px;
+    background-color:            transparent;
+    text-color:                  inherit;
+    cursor:                      text;
+    placeholder:                 "Search…";
+    placeholder-color:           @background-alt;
+}
+
+message {
+    padding:                     8px 12px;
+    border-radius:               8px;
+    background-color:            @background-alt;
+    text-color:                  @foreground;
+}
+
+textbox {
+    background-color:            inherit;
+    text-color:                  inherit;
+    vertical-align:              0.5;
+    horizontal-align:            0.0;
+}
+
+listview {
+    columns:                     1;
+    lines:                       9;
+    cycle:                       true;
+    scrollbar:                   false;
+    layout:                      vertical;
+    fixed-height:                false;
+    spacing:                     4px;
+    background-color:            transparent;
+    cursor:                      "default";
+}
+
+element {
+    padding:                     8px 10px;
+    border-radius:               8px;
+    background-color:            transparent;
+    text-color:                  @foreground;
+    cursor:                      pointer;
+}
+
+element-text {
+    background-color:            transparent;
+    text-color:                  inherit;
+    cursor:                      inherit;
+    vertical-align:              0.5;
+}
+
+element normal.normal,
+element alternate.normal {
+    background-color:            transparent;
+    text-color:                  @foreground;
+}
+
+element selected.normal {
+    background-color:            @selected;
+    text-color:                  @background;
+}

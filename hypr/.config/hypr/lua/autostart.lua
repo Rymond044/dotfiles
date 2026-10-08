@@ -21,7 +21,6 @@ hl.on("hyprland.start", function()
 	-- поэтому через юнит пакета (start, не enable).
 	hl.exec_cmd("systemctl --user start hyprpolkitagent.service")
 	daemon("clipse -listen")
-	daemon("mcontrolcenter")
 	hl.exec_cmd("~/.config/waybar/scripts/launch.sh --force")
 	hl.exec_cmd("hyprpm reload")
 end)

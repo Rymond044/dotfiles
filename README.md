@@ -32,7 +32,7 @@ Each top-level directory is a [GNU stow](https://www.gnu.org/software/stow/) pac
 |------------------|-------------------------------------------------|
 | `hypr/`          | Hyprland (Lua config), Hypridle, Hyprlock       |
 | `waybar/`        | Navigation bar                                  |
-| `rofi/`          | App, powermenu, applets launcher                |
+| `rofi/`          | App launcher, powermenu, control center (`cc/`) |
 | `swaync/`        | Notification daemon                             |
 | `kitty/`, `ghostty/` | Terminals                                   |
 | `wallust/`       | Adaptive color palette picker                   |

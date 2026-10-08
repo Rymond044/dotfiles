@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Распознать текст в выделенной области (eng+rus) → буфер обмена. Super+O и control center.
+wayfreeze &
+freeze=$!
+sleep 0.1
+area=$(slurp)
+text=$([[ -n $area ]] && grim -g "$area" - | tesseract stdin stdout -l eng+rus 2>/dev/null)
+kill "$freeze" 2>/dev/null
+[[ -n $text ]] || exit 0
+wl-copy <<<"$text"
+notify-send -t 2000 "OCR" "Copied: $(head -c 80 <<<"$text")"

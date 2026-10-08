@@ -4,6 +4,7 @@
     "tooltip": true,
     "tooltip-format": "i use arch btw 󰣇",
     "on-click": "hyprctl dispatch 'hl.plugin.hymission.toggle'",
+    "on-click-right": "~/.config/binc/cc",
   },
   "hyprland/workspaces": {
     "format": "{icon}",
@@ -124,6 +125,7 @@
       ],
     },
     "on-click": "kitty --class wiremix -e wiremix",
+    "on-click-right": "~/.config/binc/cc audio",
   },
   "backlight": {
     "device": "intel_backlight",
@@ -142,6 +144,7 @@
     "tooltip": true,
     "tooltip-format": "{status}",
     "on-click": "kitty --class bluetui -e bluetui",
+    "on-click-right": "~/.config/binc/cc bt",
   },
   "network": {
     "interface": "wlan0",
@@ -151,7 +154,8 @@
     "format-ethernet": "",
     "format-disconnected": "",
     "interval": 10,
-    "on-click": "kitty --class impala -e sudo impala",
+    "on-click": "kitty --class impala -e impala",
+    "on-click-right": "~/.config/binc/cc wifi",
   },
   "custom/sysmon": {
     "format": "󰍛",
@@ -181,7 +185,8 @@
       "",
       ""
     ],
-    "on-click": "~/.config/waybar/scripts/power-profiles.sh",
+    "on-click": "~/.config/binc/cc power mode",
+    "on-click-right": "~/.config/binc/cc power",
   },
   "clock": {
     "format": "{:%H:%M  }",
@@ -200,6 +205,7 @@
     "format": "",
     "tooltip": false,
     "on-click": "~/.config/rofi/powermenu/type-1/powermenu.sh",
+    "on-click-right": "~/.config/binc/cc power",
   },
   "hyprland/language": {
     "format": "{}",

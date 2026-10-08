@@ -69,10 +69,9 @@ run_cmd() {
 		elif [[ $1 == '--logout' ]]; then
             hyprctl dispatch 'hl.dsp.exit()'
 		elif [[ $1 == '--screensaver' ]]; then
-			.config/binc/screensaver
+			~/.config/binc/screensaver
 		elif [[ $1 == '--suspend' ]]; then
-			mpc -q pause
-			amixer set Master mute
+			playerctl -a pause
 			systemctl suspend
 		fi
 	else

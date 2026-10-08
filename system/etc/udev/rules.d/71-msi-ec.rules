@@ -1,0 +1,5 @@
+# Режим EC и порог заряда без sudo: запись для группы wheel (binc/power-mode, control center).
+# Атрибуты порога у BAT1 добавляет сам msi_ec при привязке драйвера, поэтому всё в одном правиле.
+ACTION=="add|bind", SUBSYSTEM=="platform", KERNEL=="msi-ec", DRIVER=="msi-ec", \
+  RUN+="/bin/sh -c 'cd /sys%p && chgrp wheel shift_mode fan_mode cooler_boost && chmod g+w shift_mode fan_mode cooler_boost'", \
+  RUN+="/bin/sh -c 'cd /sys/class/power_supply/BAT1 && chgrp wheel charge_control_start_threshold charge_control_end_threshold && chmod g+w charge_control_start_threshold charge_control_end_threshold'"
