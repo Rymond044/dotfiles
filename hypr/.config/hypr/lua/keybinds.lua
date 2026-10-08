@@ -16,7 +16,7 @@ local fileManager = "nautilus"
 local menu = "~/.config/rofi/launchers/type-2/launcher.sh"
 local appMenu = "~/.config/rofi/applets/bin/apps.sh"
 local powermenu = "~/.config/rofi/powermenu/type-1/powermenu.sh"
-local browser = "chromium --ozone-platform=wayland --enable-features=TouchpadOverscrollHistoryNavigation"
+local browser = "chromium" -- флаги в ~/.config/chromium-flags.conf
 local bufferman = "[float; size 900 550; center] kitty -e clipse"
 local screenshot = "grim /tmp/temp_screenshot.png && eog /tmp/temp_screenshot.png"
 

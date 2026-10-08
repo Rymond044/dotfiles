@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+# Работает ли аппаратный декод видео: кто прямо сейчас грузит видеодвижок GPU (VCS).
+# Включи видео и запусти: hwdecode [секунды]. Источник — /proc/*/fdinfo (drm-cycles-vcs, драйвер xe).
+# У Chromium декодирует gpu-process; пусто при играющем видео → декод программный
+# (подробности: chrome://media-internals → kVideoDecoderName).
+import glob, sys, time
+
+
+def snap():
+    res = {}
+    for d in glob.glob("/proc/[0-9]*"):
+        clients = {}
+        for f in glob.glob(d + "/fdinfo/*"):
+            try:
+                txt = open(f).read()
+            except OSError:
+                continue
+            if "drm-cycles-vcs" not in txt:
+                continue
+            kv = dict(l.split(":", 1) for l in txt.splitlines() if ":" in l)
+            clients[kv.get("drm-client-id", "").strip()] = (
+                int(kv["drm-cycles-vcs"]), int(kv.get("drm-total-cycles-vcs", 0)))
+        if clients:
+            res[d] = clients
+    return res
+
+
+def name(d):
+    try:
+        # Chromium переписывает cmdline одной строкой через пробелы
+        args = open(d + "/cmdline").read().replace("\0", " ").split()
+    except OSError:
+        return "?"
+    t = next((a for a in args if a.startswith("--type=")), "")
+    return (args[0].rsplit("/", 1)[-1] + " " + t).strip()
+
+
+n = float(sys.argv[1]) if len(sys.argv) > 1 else 3
+a = snap()
+time.sleep(n)
+b = snap()
+rows = []
+for d, clients in b.items():
+    busy = total = 0
+    for cid, (c, tot) in clients.items():
+        c0, t0 = a.get(d, {}).get(cid, (c, tot))
+        busy += c - c0
+        total = max(total, tot - t0)
+    if busy > 0:
+        rows.append((busy / total * 100 if total else 0, d[6:], name(d)))
+if not rows:
+    print(f"видеодвижок GPU простаивал {n:g} с — аппаратного декода сейчас нет")
+for pct, pid, nm in sorted(rows, reverse=True):
+    print(f"{pct:5.1f}%  {pid:>8}  {nm}")

@@ -31,7 +31,7 @@ hl.config({
 			switch_release_key = "Super_L",
 			workspace_strip_anchor = "up",
 			hover_expand_scale = 1.18,
-			selected_expand_scale = 1.035,
+			selected_expand_scale = 1,
 			multi_workspace_sort_recent_first = 0,
 			debug_logs = 0,
 			debug_surface_logs = 0,
