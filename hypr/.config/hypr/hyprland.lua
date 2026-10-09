@@ -3,6 +3,7 @@ package.path = package.path .. ";" .. os.getenv("HOME") .. "/.config/hypr/lua/?.
 
 -- Инициализация модулей конфигурации
 require("monitors")
+require("monitorctl").setup() -- одиночный монитор → 0x0 (диалоги Chromium), см. monitorctl.lua
 require("env")
 require("autostart")
 require("input")

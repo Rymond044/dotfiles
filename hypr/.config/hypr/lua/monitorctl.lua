@@ -41,4 +41,52 @@ function M.all()
 	end
 end
 
+-- Одиночный монитор — в 0x0. Chromium 151 на Wayland считает своё окно стоящим в (0,0), а диалог
+-- закрытия вкладки («Leave site?») вписывает в рабочую область дисплея в глобальных координатах:
+-- на мониторе с позицией 3590x559 диалог уезжает за пределы окна и не виден (страница при этом
+-- ждёт ответа). Позиция одиночного монитора ни на что не влияет, поэтому двигаем его в начало;
+-- когда мониторов снова несколько — возвращаем позиции из monitors.lua.
+-- С несколькими мониторами баг остаётся для всех, кроме стоящего в 0x0 (это лечится только в Chromium).
+local function copy(t)
+	local r = {}
+	for k, v in pairs(t) do
+		r[k] = v
+	end
+	return r
+end
+
+function M.fix_origin()
+	local active = {}
+	for _, m in ipairs(hl.get_monitors()) do
+		if not m.is_mirror then
+			active[#active + 1] = m
+		end
+	end
+	local all = specs()
+	if #active == 1 then
+		local m = active[1]
+		if m.x ~= 0 or m.y ~= 0 then
+			local t = all[m.name] and copy(all[m.name])
+				or { output = m.name, mode = "preferred", scale = "auto" }
+			t.position = "0x0"
+			hl.monitor(t)
+		end
+		return
+	end
+	-- Несколько мониторов: вернуть позицию тем, кого раньше сдвинули в 0x0.
+	for _, m in ipairs(active) do
+		local spec = all[m.name]
+		local x, y = spec and tostring(spec.position or ""):match("^(-?%d+)x(-?%d+)$")
+		if x and (tonumber(x) ~= m.x or tonumber(y) ~= m.y) then
+			hl.monitor(copy(spec))
+		end
+	end
+end
+
+function M.setup()
+	for _, event in ipairs({ "hyprland.start", "config.reloaded", "monitor.added", "monitor.removed" }) do
+		hl.on(event, M.fix_origin)
+	end
+end
+
 return M
