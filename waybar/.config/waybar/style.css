@@ -222,3 +222,22 @@ window#waybar {
     background: @hover_pill;
     color: #61afef;
 }
+
+/* waybar 0.16: у custom-модулей id (#custom-…) висит на контейнере, а текст — во вложенном label.
+   Правило `*` задаёт label размер напрямую и перебивает наследование, поэтому размер иконок
+   повторяем здесь (только font-size: padding/margin остаются на контейнере). */
+#custom-playerctl-prev label {
+    font-size: 20px;
+}
+#custom-playerctl-next label {
+    font-size: 20px;
+}
+#custom-arch label {
+    font-size: 25px;
+}
+#custom-sysmon label {
+    font-size: 17px;
+}
+#custom-power label {
+    font-size: 17px;
+}

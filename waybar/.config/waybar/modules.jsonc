@@ -10,7 +10,6 @@
     "format": "{icon}",
     "all-outputs": false,
     "sort-by-number": true,
-    "active-only": true,
     "format-icons": {
       // smw: у каждого монитора свои 9 ws (1–9, 10–18, 19–27, …) — подпись по номеру внутри монитора
       "1": "一",
