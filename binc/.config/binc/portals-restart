@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Перезапуск xdg-desktop-portal при старте сессии (из autostart.lua).
+# При перелогине D-Bus поднимает порталы раньше, чем uwsm передаст в systemd окружение новой
+# сессии: xdph падает («Couldn't connect to a wayland compositor»), а фронтенд стартует без
+# бэкенда и запоминает ScreenCast без режимов курсора (AvailableCursorModes = 0) → OBS/Discord:
+# «Unavailable cursor mode 1», запись экрана не стартует до перезапуска фронтенда.
+
+# Ждём, пока в окружении systemd появится сигнатура именно этого Hyprland (до 10 с)
+for _ in $(seq 50); do
+	systemctl --user show-environment |
+		grep -qx "HYPRLAND_INSTANCE_SIGNATURE=$HYPRLAND_INSTANCE_SIGNATURE" && break
+	sleep 0.2
+done
+
+# Сначала бэкенды, потом фронтенд: он читает их свойства при старте
+systemctl --user restart xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
+systemctl --user restart xdg-desktop-portal

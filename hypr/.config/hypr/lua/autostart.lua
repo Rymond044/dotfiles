@@ -13,6 +13,7 @@ end
 
 hl.on("hyprland.start", function()
 	hl.exec_cmd("~/.config/binc/lock") -- первым: сессия стартует заблокированной (autologin)
+	hl.exec_cmd("~/.config/binc/portals-restart") -- иначе порталы могут остаться от «пустого» окружения
 	daemon("hypridle")
 	daemon("awww-daemon") -- сам восстанавливает последние обои
 	daemon("swaync")
