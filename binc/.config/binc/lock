@@ -33,6 +33,8 @@ BG_DIR = f"{CACHE}/hyprlock"
 CONFIG = f"{HOME}/.config/hypr/hyprlock.conf"
 MARKER = "# @PER-MONITOR@"
 BG_MAX = 1920
+WALLS_OUTPUTS = f"{CACHE}/walls/outputs.json"  # кадры для портретных мониторов от walls apply
+USED_BG: set[str] = set()
 
 
 def small_background(path: str) -> str:
@@ -41,10 +43,9 @@ def small_background(path: str) -> str:
         st = os.stat(path)
         key = hashlib.sha1(f"{path}:{st.st_mtime_ns}:{st.st_size}:{BG_MAX}".encode()).hexdigest()[:16]
         out = f"{BG_DIR}/bg-{key}.jpg"
+        USED_BG.add(out)
         if not os.path.exists(out):
             os.makedirs(BG_DIR, exist_ok=True)
-            for old in os.listdir(BG_DIR):
-                os.remove(f"{BG_DIR}/{old}")
             tmp = f"{out}.tmp.jpg"
             subprocess.run(
                 ["magick", path, "-resize", f"{BG_MAX}x{BG_MAX}>", "-quality", "92", tmp],
@@ -55,6 +56,32 @@ def small_background(path: str) -> str:
     except Exception as e:  # noqa: BLE001
         print(f"lock: фон не уменьшен ({e}), беру исходный", file=sys.stderr)
         return path
+
+
+def portrait_backgrounds(head: str) -> str:
+    """Свой фон для портретных мониторов — тот же кадр, что поставил на них walls apply.
+    Блок идёт после общего (monitor =) и рисуется поверх него. Только если кадры сделаны из
+    текущих обоев: обои могли поставить в обход walls (waypaper) — тогда остаётся общий фон."""
+    try:
+        with open(WALLS_OUTPUTS) as f:
+            outs = json.load(f)
+        with open(f"{HOME}/Wallpapers/current", "rb") as f:
+            if hashlib.sha1(f.read()).hexdigest() != outs["hash"]:
+                return ""
+        bg = re.search(r"^background\s*\{.*?^\}", head, flags=re.M | re.S)
+        if not bg:
+            return ""
+        extra = []
+        for name, path in outs["outputs"].items():
+            if path == outs["source"] or not os.path.exists(path):
+                continue
+            block = re.sub(r"^(\s*monitor\s*=).*$", rf"\1 {name}", bg.group(0), flags=re.M)
+            block = re.sub(r"^(\s*path\s*=).*$", rf"\1 {small_background(path)}", block, flags=re.M)
+            extra.append(f"\n# Портретный кадр для {name} (walls)\n{block}\n")
+        return "".join(extra)
+    except Exception as e:  # noqa: BLE001 — без портретного кадра блокировка всё равно работает
+        print(f"lock: портретные фоны пропущены ({e})", file=sys.stderr)
+        return ""
 
 
 def build_config() -> None:
@@ -69,6 +96,7 @@ def build_config() -> None:
         head,
         flags=re.M,
     )
+    head += portrait_backgrounds(head)
 
     monitors = json.loads(
         subprocess.run(["hyprctl", "monitors", "-j"], capture_output=True, text=True, timeout=2, check=True).stdout
@@ -79,6 +107,10 @@ def build_config() -> None:
         text = block.replace("@MONITOR@", m["name"])
         text = re.sub(r"@(-?\d+(?:\.\d+)?)@", lambda x: str(round(float(x.group(1)) * scale)), text)
         parts.append(f"# --- {m['name']} (scale {scale}) ---{text}")
+
+    for old in os.listdir(BG_DIR) if os.path.isdir(BG_DIR) else []:
+        if f"{BG_DIR}/{old}" not in USED_BG:
+            os.remove(f"{BG_DIR}/{old}")
 
     tmp = f"{CONFIG}.tmp"
     with open(tmp, "w") as f:

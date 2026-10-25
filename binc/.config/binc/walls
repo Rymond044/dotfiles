@@ -1,0 +1,769 @@
+#!/usr/bin/env python3
+"""Бэкенд выбиралки обоев (Quickshell, ~/.config/quickshell/walls).
+
+Данные:
+  ~/Wallpapers/.walls.json   — то, что нельзя пересчитать: ★, ручные теги/обрезка, теги gemma, история.
+                               Ключ — sha1 содержимого (переживает переименование).
+  ~/.cache/walls/index.json  — автоматическое: размеры, превью, палитры, корзины цветов, центр внимания.
+  ~/.cache/walls/view.json   — объединённый вид для QML (единственное, что читает UI).
+Пишем только отсюда и только под flock (~/.cache/walls/.lock): UI и разметка gemma работают параллельно.
+
+  walls index            — досчитать новые файлы (превью, цвета, внимание), пересобрать view
+  walls view             — только пересобрать view.json
+  walls apply FILE       — поставить обои (бывший wallust-swww): awww по мониторам + wallust + перекраска.
+                           Новый вызов отменяет незаконченный предыдущий (быстрые Enter подряд).
+  walls outputs          — только переставить обои по мониторам (хук monitor.added), без wallust
+  walls fav ID [on|off]  — ★ (без аргумента — переключить)
+  walls crop ID X|reset  — центр кадра для портретных мониторов, 0..1 по ширине
+  walls tags ID [--categories a,b] [--tags x,y] [--caption …] | --reset — ручные теги поверх gemma
+  walls tag [--limit N] [--all] — разметка gemma4 через Ollama (только вручную: кнопка T в выбиралке,
+                           там через `systemd-run --user --unit=walls-tag`). Сам поднимает `ollama serve`,
+                           если тот не запущен, и гасит в конце. Прогресс — в view.json (поле tagging).
+
+Портретные мониторы (по логической геометрии) получают кадр из альбомной картинки вокруг crop_x
+(ручной > центр внимания vips) — ~/.cache/walls/out/<монитор>.jpg; карта «монитор → файл» в
+~/.cache/walls/outputs.json (её читает binc/lock для фона hyprlock).
+"""
+
+import argparse
+import colorsys
+import contextlib
+import fcntl
+import hashlib
+import json
+import os
+import re
+import subprocess
+import sys
+import tempfile
+import time
+from concurrent.futures import ProcessPoolExecutor, as_completed
+
+import numpy as np
+from PIL import Image
+
+HOME = os.path.expanduser("~")
+CACHE_HOME = os.environ.get("XDG_CACHE_HOME", f"{HOME}/.cache")
+WALL_DIR = f"{HOME}/Wallpapers"
+CURRENT = f"{WALL_DIR}/current"
+DATA = f"{WALL_DIR}/.walls.json"
+CACHE = f"{CACHE_HOME}/walls"
+THUMBS = f"{CACHE}/thumbs"
+INDEX = f"{CACHE}/index.json"
+VIEW = f"{CACHE}/view.json"
+LOCK = f"{CACHE}/.lock"
+OUT_DIR = f"{CACHE}/out"
+OUTPUTS = f"{CACHE}/outputs.json"
+APPLY_PID = f"{CACHE}/apply.pid"
+BINC = f"{HOME}/.config/binc"
+RECENT_MAX = 30
+TAG_PROGRESS = f"{os.environ.get('XDG_RUNTIME_DIR', '/tmp')}/walls-tag.json"
+OLLAMA = os.environ.get("OLLAMA_HOST", "http://127.0.0.1:11434")
+MODEL = os.environ.get("WALLS_MODEL", "gemma4")
+
+# Категории (сайдбар). Черновик — утверждается после пробного прогона.
+CATEGORIES = [
+    "anime", "space", "city", "architecture", "nature", "mountains", "sea", "forest", "desert",
+    "abstract", "minimal", "cars", "cyberpunk", "fantasy", "animals", "people",
+]
+TAG_PROMPT = (
+    "You are tagging a desktop wallpaper for a searchable collection.\n"
+    "Return JSON with:\n"
+    f"- categories: 1 or 2 values from this list that best describe the main content: {', '.join(CATEGORIES)}\n"
+    "- tags: 5 to 10 short lowercase tags (single words or hyphenated): objects, setting, time of day, "
+    "weather, mood, art style (photo, illustration, 3d-render, painting, pixel-art)\n"
+    "- caption: one plain sentence describing the image (max 20 words)"
+)
+
+EXTS = re.compile(r"\.(jpe?g|png|webp|gif)$", re.I)
+THUMB_W, THUMB_H = 640, 360  # на eDP (scale 2) карточка ~300 логических px — 640 даёт резкость
+MID_W = 640                   # рабочая копия для центра внимания
+INDEX_VERSION = 1
+
+# Корзины оттенков (HSV, градусы): [начало, конец)
+HUES = [
+    ("red", 345, 15), ("orange", 15, 40), ("yellow", 40, 70), ("green", 70, 160),
+    ("teal", 160, 195), ("blue", 195, 255), ("purple", 255, 290), ("pink", 290, 345),
+]
+HUE_SHARE = 0.10   # корзина засчитана, если её пикселей ≥ 10% картинки
+MONO_SHARE = 0.12  # mono, если хроматических пикселей меньше 12%
+DARK_L = 45        # средний L* ниже — dark, иначе light
+
+
+# ---------------------------------------------------------------- общее
+
+def log(msg: str) -> None:
+    print(f"walls: {msg}", file=sys.stderr)
+
+
+def read_json(path: str, default):
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return default
+
+
+def write_json(path: str, data) -> None:
+    """Атомарная запись: UI читает файл по inotify и не должен увидеть половину."""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(path), prefix=".tmp-")
+    with os.fdopen(fd, "w") as f:
+        json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
+    os.replace(tmp, path)
+
+
+@contextlib.contextmanager
+def locked():
+    os.makedirs(CACHE, exist_ok=True)
+    with open(LOCK, "w") as f:
+        fcntl.flock(f, fcntl.LOCK_EX)
+        yield
+
+
+def sha1_file(path: str) -> str:
+    h = hashlib.sha1()
+    with open(path, "rb") as f:
+        while chunk := f.read(1 << 20):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def list_files() -> list[str]:
+    return sorted(
+        n for n in os.listdir(WALL_DIR)
+        if not n.startswith(".") and EXTS.search(n) and os.path.isfile(f"{WALL_DIR}/{n}")
+    )
+
+
+def load_data() -> dict:
+    data = read_json(DATA, {})
+    data.setdefault("version", 1)
+    data.setdefault("items", {})
+    data.setdefault("recent", [])
+    return data
+
+
+def load_index() -> dict:
+    idx = read_json(INDEX, {})
+    if idx.get("version") != INDEX_VERSION:
+        idx = {"version": INDEX_VERSION, "files": {}, "items": {}}
+    return idx
+
+
+# ---------------------------------------------------------------- анализ картинки
+
+def srgb_to_lab(rgb: np.ndarray) -> np.ndarray:
+    c = rgb.astype(np.float64) / 255
+    lin = np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
+    m = np.array([[0.4124, 0.3576, 0.1805], [0.2126, 0.7152, 0.0722], [0.0193, 0.1192, 0.9505]])
+    xyz = lin @ m.T / np.array([0.95047, 1.0, 1.08883])
+    f = np.where(xyz > 0.008856, np.cbrt(xyz), 7.787 * xyz + 16 / 116)
+    return np.stack([116 * f[:, 1] - 16, 500 * (f[:, 0] - f[:, 1]), 200 * (f[:, 1] - f[:, 2])], axis=1)
+
+
+def kmeans(x: np.ndarray, k: int, iters: int = 15) -> np.ndarray:
+    """k-means++ с фиксированным зерном (палитра не должна «прыгать» между прогонами)."""
+    rng = np.random.default_rng(0)
+    centers = [x[rng.integers(len(x))]]
+    for _ in range(1, k):
+        d = np.min(((x[:, None] - np.array(centers)[None]) ** 2).sum(-1), axis=1)
+        centers.append(x[rng.choice(len(x), p=d / d.sum())] if d.sum() > 0 else x[rng.integers(len(x))])
+    centers = np.array(centers)
+    for _ in range(iters):
+        labels = ((x[:, None] - centers[None]) ** 2).sum(-1).argmin(1)
+        for i in range(k):
+            if (labels == i).any():
+                centers[i] = x[labels == i].mean(0)
+    return labels
+
+
+def analyze_colors(thumb: str) -> dict:
+    img = Image.open(thumb).convert("RGB").resize((160, 90), Image.Resampling.BOX)
+    rgb = np.asarray(img).reshape(-1, 3)
+    lab = srgb_to_lab(rgb)
+
+    labels = kmeans(lab, 6)
+    palette = []
+    for i in range(6):
+        sel = labels == i
+        if not sel.any():
+            continue
+        r, g, b = rgb[sel].mean(0)
+        L, a, bb = lab[sel].mean(0)
+        palette.append({
+            "hex": f"#{int(r):02x}{int(g):02x}{int(b):02x}",
+            "share": round(float(sel.mean()), 3),
+            "lab": [round(float(L), 1), round(float(a), 1), round(float(bb), 1)],
+        })
+    palette.sort(key=lambda p: -p["share"])
+
+    hsv = np.asarray(img.convert("HSV")).reshape(-1, 3).astype(np.float64)
+    h, s, v = hsv[:, 0] * 360 / 255, hsv[:, 1] / 255, hsv[:, 2] / 255
+    chroma = (s > 0.28) & (v > 0.2)
+    hues = []
+    for name, lo, hi in HUES:
+        inb = (h >= lo) & (h < hi) if lo < hi else (h >= lo) | (h < hi)
+        if (chroma & inb).mean() >= HUE_SHARE:
+            hues.append(name)
+    if chroma.mean() < MONO_SHARE:
+        hues.append("mono")
+
+    mean_l = float(lab[:, 0].mean())
+    # Ключ радуги: оттенок самого весомого «цветного» цвета палитры; серые — в конец, от светлых к тёмным
+    rainbow = 400 + (100 - mean_l)
+    for p in palette:
+        L, a, b = p["lab"]
+        if (a * a + b * b) ** 0.5 > 15:
+            r, g, b2 = (int(p["hex"][i:i + 2], 16) / 255 for i in (1, 3, 5))
+            rainbow = (colorsys.rgb_to_hsv(r, g, b2)[0] * 360 + 15) % 360
+            break
+    return {
+        "palette": palette,
+        "hues": hues,
+        "lightness": round(mean_l, 1),
+        "tone": "dark" if mean_l < DARK_L else "light",
+        "rainbow": round(rainbow, 1),
+    }
+
+
+def vips(*args: str) -> str:
+    r = subprocess.run(["vips", *args], capture_output=True, text=True, timeout=60)
+    if r.returncode:
+        raise RuntimeError(f"vips {args[0]}: {r.stderr.strip().splitlines()[-1:]}")
+    return r.stdout
+
+
+def analyze(path: str, digest: str) -> dict:
+    """Всё автоматическое по одной картинке (выполняется в отдельном процессе)."""
+    os.makedirs(THUMBS, exist_ok=True)
+    thumb = f"{THUMBS}/{digest}.jpg"
+    with tempfile.TemporaryDirectory(prefix="walls-") as tmp:
+        mid = f"{tmp}/mid.v"
+        vips("thumbnail", path, mid, str(MID_W))
+        w, h = Image.open(path).size
+        r = subprocess.run(["vipsheader", "-f", "width", mid], capture_output=True, text=True, timeout=10)
+        mw = int(r.stdout)
+        r = subprocess.run(["vipsheader", "-f", "height", mid], capture_output=True, text=True, timeout=10)
+        mh = int(r.stdout)
+        vips("thumbnail", mid, f"{thumb}.tmp.jpg[Q=86,strip]", str(THUMB_W),
+             "--height", str(THUMB_H), "--crop", "centre")
+        os.replace(f"{thumb}.tmp.jpg", thumb)
+        # Центр внимания под портретный кадр 9:16 (вертикальный монитор)
+        cw = max(1, min(mw, round(mh * 9 / 16)))
+        out = vips("smartcrop", mid, f"{tmp}/crop.v", str(cw), str(mh), "--interesting", "attention",
+                   "--attention-x")
+        attention_x = round(int(out.split()[0]) / mw, 3)
+
+    item = {"w": w, "h": h, "attention_x": attention_x, **analyze_colors(thumb)}
+    # Палитра wallust (то, во что перекрасится система) — без применения: -s -T
+    try:
+        r = subprocess.run(["wallust", "run", "-s", "-T", "-q", "--no-hooks", "--print-scheme", path],
+                           capture_output=True, text=True, timeout=30)
+        scheme = re.findall(r"#[0-9A-Fa-f]{6}", r.stdout)
+        if len(scheme) >= 16:
+            item["wallust"] = scheme[:16]
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return item
+
+
+# ---------------------------------------------------------------- view
+
+def build_view(idx: dict, data: dict) -> dict:
+    by_hash = {}
+    for name, f in idx["files"].items():
+        if f["hash"] in idx["items"]:
+            by_hash.setdefault(f["hash"], name)
+    try:
+        current = sha1_file(CURRENT)
+    except OSError:
+        current = None
+
+    items = []
+    for digest, name in by_hash.items():
+        auto = idx["items"][digest]
+        user = data["items"].get(digest, {})
+        ai = user.get("ai") or {}
+        manual = user.get("manual") or {}
+        items.append({
+            "id": digest,
+            "file": name,
+            "path": f"{WALL_DIR}/{name}",
+            "thumb": f"{THUMBS}/{digest}.jpg",
+            "w": auto["w"], "h": auto["h"],
+            "palette": auto["palette"],
+            "wallust": auto.get("wallust", []),
+            "hues": auto["hues"],
+            "tone": auto["tone"],
+            "lightness": auto["lightness"],
+            "rainbow": auto["rainbow"],
+            "attention_x": auto["attention_x"],
+            "crop_x": user.get("crop_x"),
+            "fav": bool(user.get("fav")),
+            "tagged": bool(ai or manual),
+            "categories": manual.get("categories", ai.get("categories", [])),
+            "tags": manual.get("tags", ai.get("tags", [])),
+            "caption": manual.get("caption", ai.get("caption", "")),
+            "uses": user.get("uses", 0),
+            "last_used": user.get("last_used", 0),
+        })
+    items.sort(key=lambda i: i["file"].lower())
+    return {
+        "generated": time.time(),
+        "current": current,
+        "recent": [h for h in data["recent"] if h in by_hash],
+        "tagging": tag_progress(),
+        "items": items,
+    }
+
+
+def tag_progress() -> dict | None:
+    """Прогресс разметки, если процесс жив (после kill -9 файл может остаться — не верим ему)."""
+    p = read_json(TAG_PROGRESS, None)
+    if not p:
+        return None
+    try:
+        os.kill(p["pid"], 0)
+    except (OSError, KeyError, TypeError):
+        return None
+    return p
+
+
+def save_view(idx: dict | None = None, data: dict | None = None) -> None:
+    """Пересобрать view.json. Вызывать под locked()."""
+    write_json(VIEW, build_view(idx or load_index(), data or load_data()))
+
+
+# ---------------------------------------------------------------- команды
+
+def cmd_index(args) -> None:
+    idx = load_index()
+    names = list_files()
+
+    # Хеши: пересчитываем только изменившиеся файлы
+    files = {}
+    for n in names:
+        st = os.stat(f"{WALL_DIR}/{n}")
+        old = idx["files"].get(n)
+        if old and old["size"] == st.st_size and old["mtime_ns"] == st.st_mtime_ns:
+            files[n] = old
+        else:
+            files[n] = {"size": st.st_size, "mtime_ns": st.st_mtime_ns, "hash": sha1_file(f"{WALL_DIR}/{n}")}
+    idx["files"] = files
+
+    todo = {}
+    for n, f in files.items():
+        if f["hash"] not in idx["items"] or not os.path.exists(f"{THUMBS}/{f['hash']}.jpg"):
+            todo.setdefault(f["hash"], n)
+
+    with locked():
+        save_view(idx)
+    if todo:
+        log(f"новых: {len(todo)}")
+        done, last = 0, time.monotonic()
+        with ProcessPoolExecutor(max_workers=min(8, os.cpu_count() or 4)) as ex:
+            futs = {ex.submit(analyze, f"{WALL_DIR}/{n}", h): (h, n) for h, n in todo.items()}
+            for fut in as_completed(futs):
+                h, n = futs[fut]
+                try:
+                    idx["items"][h] = fut.result()
+                except Exception as e:  # noqa: BLE001 — один битый файл не должен ронять индекс
+                    log(f"{n}: {e}")
+                done += 1
+                # Промежуточные записи: открытый UI показывает новые карточки по мере готовности
+                if time.monotonic() - last > 1.5 or done == len(todo):
+                    with locked():
+                        write_json(INDEX, idx)
+                        save_view(idx)
+                    last = time.monotonic()
+                    if not args.quiet:
+                        log(f"{done}/{len(todo)}")
+
+    # Уборка: превью и записи удалённых файлов (ручные данные в .walls.json не трогаем)
+    alive = {f["hash"] for f in files.values()}
+    idx["items"] = {h: v for h, v in idx["items"].items() if h in alive}
+    for t in os.listdir(THUMBS) if os.path.isdir(THUMBS) else []:
+        if t.removesuffix(".jpg") not in alive:
+            os.remove(f"{THUMBS}/{t}")
+    with locked():
+        write_json(INDEX, idx)
+        save_view(idx)
+
+
+def cmd_view(_args) -> None:
+    with locked():
+        save_view()
+
+
+# ---------------------------------------------------------------- применение
+
+def monitors() -> list[dict]:
+    out = subprocess.run(["hyprctl", "monitors", "-j"], capture_output=True, text=True, timeout=3, check=True).stdout
+    mons = []
+    for m in json.loads(out):
+        w, h = m["width"], m["height"]
+        if m["transform"] % 2:
+            w, h = h, w
+        mons.append({"name": m["name"], "w": w, "h": h})
+    return mons
+
+
+def hash_of(path: str) -> str:
+    """Хеш через индекс (без чтения файла), если файл из ~/Wallpapers и не менялся."""
+    name = os.path.basename(path)
+    f = load_index()["files"].get(name)
+    st = os.stat(path)
+    if os.path.dirname(os.path.abspath(path)) == WALL_DIR and f and f["size"] == st.st_size \
+            and f["mtime_ns"] == st.st_mtime_ns:
+        return f["hash"]
+    return sha1_file(path)
+
+
+def crop_center(digest: str) -> float:
+    user = load_data()["items"].get(digest, {})
+    if user.get("crop_x") is not None:
+        return float(user["crop_x"])
+    return float(load_index()["items"].get(digest, {}).get("attention_x", 0.5))
+
+
+def portrait_frame(src: str, cx: float, w: int, h: int, out: str) -> None:
+    """Кадр w×h (портрет) из картинки вокруг центра cx (0..1 по ширине)."""
+    img = Image.open(src)
+    img.draft("RGB", (w * 2, h * 2))  # JPEG: декодировать сразу уменьшенным, 4K не нужен целиком
+    img = img.convert("RGB")
+    sw, sh = img.size
+    cw, ch = round(sh * w / h), sh
+    if cw > sw:
+        cw, ch = sw, round(sw * h / w)
+    x0 = min(max(round(cx * sw - cw / 2), 0), sw - cw)
+    y0 = (sh - ch) // 2
+    frame = img.crop((x0, y0, x0 + cw, y0 + ch)).resize((w, h), Image.Resampling.LANCZOS)
+    os.makedirs(OUT_DIR, exist_ok=True)
+    tmp = f"{out}.tmp.jpg"
+    frame.save(tmp, quality=92)
+    os.replace(tmp, out)
+
+
+def set_outputs(src: str, digest: str, transition: str) -> None:
+    """Обои по мониторам: альбомным — оригинал, портретным — кадр вокруг crop_x."""
+    mons = monitors()
+    cx = crop_center(digest)
+    plan: dict[str, list[str]] = {}
+    mapping = {}
+    for m in mons:
+        if m["h"] > m["w"]:
+            out = f"{OUT_DIR}/{m['name']}.jpg"
+            portrait_frame(src, cx, m["w"], m["h"], out)
+        else:
+            out = src
+        plan.setdefault(out, []).append(m["name"])
+        mapping[m["name"]] = out
+    procs = [
+        subprocess.Popen(["awww", "img", "-o", ",".join(names), "--transition-type", transition, img])
+        for img, names in plan.items()
+    ]
+    for p in procs:
+        p.wait()
+    write_json(OUTPUTS, {"source": src, "hash": digest, "outputs": mapping})
+
+
+def cancel_previous_apply() -> None:
+    """Предыдущий незаконченный apply (вместе с wallust и пр. — своя группа процессов) — прервать."""
+    try:
+        pid = int(open(APPLY_PID).read())
+        if pid != os.getpid():
+            os.killpg(pid, 15)
+    except (OSError, ValueError):
+        pass
+
+
+def cmd_apply(args) -> None:
+    src = os.path.abspath(os.path.expanduser(args.file))
+    if not os.path.isfile(src):
+        sys.exit(f"walls: нет файла {src}")
+    with contextlib.suppress(OSError):  # уже лидер группы (запуск из шелла) — pgid и так = pid
+        os.setsid()
+    os.makedirs(CACHE, exist_ok=True)
+    cancel_previous_apply()
+    with open(APPLY_PID, "w") as f:
+        f.write(str(os.getpid()))
+    digest = hash_of(src)
+
+    # Копия в единый путь (его читают wallust, hyprlock, waybar…)
+    if os.path.realpath(src) != os.path.realpath(CURRENT):
+        tmp = f"{CURRENT}.tmp"
+        with open(src, "rb") as a, open(tmp, "wb") as b:
+            while chunk := a.read(1 << 20):
+                b.write(chunk)
+        os.replace(tmp, CURRENT)
+    set_outputs(CURRENT, digest, args.transition)
+
+    subprocess.run(["wallust", "run", "-q", CURRENT])
+    subprocess.Popen([f"{BINC}/lock", "--prepare"])  # фон и конфиг hyprlock заранее
+    subprocess.run(["hyprctl", "reload"], capture_output=True)
+    subprocess.run(["killall", "-SIGUSR2", "waybar"], capture_output=True)
+    subprocess.run(["killall", "-USR1", "kitty"], capture_output=True)
+    subprocess.run("swaync-client -rs && swaync-client -t -sw && swaync-client -t",
+                   shell=True, capture_output=True)
+
+    with locked():
+        data = load_data()
+        item = data["items"].setdefault(digest, {})
+        item["file"] = os.path.basename(src)
+        item["uses"] = item.get("uses", 0) + 1
+        item["last_used"] = int(time.time())
+        data["recent"] = [digest] + [h for h in data["recent"] if h != digest][:RECENT_MAX - 1]
+        write_json(DATA, data)
+        save_view(data=data)
+    with contextlib.suppress(OSError):
+        if int(open(APPLY_PID).read()) == os.getpid():
+            os.remove(APPLY_PID)
+    print(f"Theme updated! Image saved to {CURRENT}")
+
+
+def cmd_outputs(args) -> None:
+    if os.path.isfile(CURRENT):
+        set_outputs(CURRENT, hash_of(CURRENT), args.transition)
+
+
+# ---------------------------------------------------------------- ручные данные
+
+def update_item(digest: str, fn) -> None:
+    with locked():
+        data = load_data()
+        item = data["items"].setdefault(digest, {})
+        fn(item)
+        write_json(DATA, data)
+        save_view(data=data)
+
+
+def cmd_fav(args) -> None:
+    def f(item):
+        item["fav"] = {"on": True, "off": False}.get(args.state, not item.get("fav"))
+    update_item(args.id, f)
+
+
+def cmd_crop(args) -> None:
+    def f(item):
+        if args.x == "reset":
+            item.pop("crop_x", None)
+        else:
+            item["crop_x"] = round(min(max(float(args.x), 0.0), 1.0), 3)
+    update_item(args.id, f)
+    # Если это текущие обои — сразу переставить кадр на портретных мониторах
+    try:
+        if read_json(OUTPUTS, {}).get("hash") == args.id:
+            set_outputs(CURRENT, args.id, "simple")
+            subprocess.Popen([f"{BINC}/lock", "--prepare"])
+    except Exception as e:  # noqa: BLE001
+        log(f"кадр не переставлен: {e}")
+
+
+def split_list(s: str | None) -> list[str] | None:
+    return None if s is None else [x.strip() for x in s.split(",") if x.strip()]
+
+
+def cmd_tags(args) -> None:
+    def f(item):
+        if args.reset:
+            item.pop("manual", None)
+            return
+        manual = item.setdefault("manual", {})
+        for key, val in (("categories", split_list(args.categories)), ("tags", split_list(args.tags)),
+                         ("caption", args.caption)):
+            if val is not None:
+                manual[key] = val
+    update_item(args.id, f)
+
+
+# ---------------------------------------------------------------- разметка gemma
+
+def ollama(path: str, payload: dict | None = None, timeout: float = 5) -> dict:
+    import urllib.request
+    req = urllib.request.Request(
+        f"{OLLAMA}{path}", data=None if payload is None else json.dumps(payload).encode(),
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return json.loads(r.read())
+
+
+def ensure_ollama() -> subprocess.Popen | None:
+    """Поднять `ollama serve`, если сервер не отвечает. Возвращает процесс, если поднимали сами."""
+    try:
+        ollama("/api/tags")
+        return None
+    except OSError:
+        pass
+    # Одна модель и один запрос: без этого ollama поднимал второй раннер gemma4 (2 × 9,4 ГБ при 15 ГБ RAM → своп)
+    # Vulkan + iGPU — считать на Arc (пакет ollama-vulkan; по умолчанию встроенная графика выключена)
+    env = dict(os.environ, OLLAMA_MAX_LOADED_MODELS="1", OLLAMA_NUM_PARALLEL="1",
+               OLLAMA_VULKAN="1", OLLAMA_IGPU_ENABLE="1")
+    proc = subprocess.Popen(["ollama", "serve"], env=env, stdout=subprocess.DEVNULL,
+                            stderr=open(f"{CACHE}/ollama.log", "w"))
+    for _ in range(100):
+        time.sleep(0.2)
+        try:
+            ollama("/api/tags")
+            return proc
+        except OSError:
+            if proc.poll() is not None:
+                break
+    proc.terminate()
+    raise RuntimeError("ollama serve не поднялся")
+
+
+def image_b64(path: str, side: int = 768) -> str:
+    import base64
+    import io
+    img = Image.open(path)
+    img.draft("RGB", (side, side))
+    img = img.convert("RGB")
+    img.thumbnail((side, side), Image.Resampling.LANCZOS)
+    buf = io.BytesIO()
+    img.save(buf, "JPEG", quality=88)
+    return base64.b64encode(buf.getvalue()).decode()
+
+
+def ask_gemma(path: str) -> dict:
+    schema = {
+        "type": "object",
+        "properties": {
+            "categories": {"type": "array", "items": {"type": "string", "enum": CATEGORIES},
+                           "minItems": 1, "maxItems": 2},
+            "tags": {"type": "array", "items": {"type": "string"}, "minItems": 3, "maxItems": 10},
+            "caption": {"type": "string"},
+        },
+        "required": ["categories", "tags", "caption"],
+    }
+    r = ollama("/api/chat", {
+        "model": MODEL,
+        "messages": [{"role": "user", "content": TAG_PROMPT, "images": [image_b64(path)]}],
+        "format": schema,
+        "stream": False,
+        "think": False,
+        "keep_alive": "2m",
+        "options": {"temperature": 0.2},
+    }, timeout=300)
+    out = json.loads(r["message"]["content"])
+    cats = [c for c in dict.fromkeys(out.get("categories", [])) if c in CATEGORIES][:2]
+    tags = []
+    for t in out.get("tags", []):
+        t = re.sub(r"\s+", "-", str(t).strip().lower().lstrip("#"))
+        if t and t not in tags and t not in cats:
+            tags.append(t)
+    return {"categories": cats, "tags": tags[:10], "caption": str(out.get("caption", "")).strip(),
+            "model": MODEL, "ts": int(time.time())}
+
+
+def notify(body: str, urgency: str = "normal") -> None:
+    subprocess.run(["notify-send", "-a", "Wallpapers", "-u", urgency, "Wallpapers", body], capture_output=True)
+
+
+def cmd_tag(args) -> None:
+    import signal
+
+    idx, data = load_index(), load_data()
+    todo = {}
+    for name, f in sorted(idx["files"].items()):
+        h = f["hash"]
+        user = data["items"].get(h, {})
+        if h in idx["items"] and h not in todo and (args.all or not (user.get("ai") or user.get("manual"))):
+            todo[h] = name
+    todo = list(todo.items())[: args.limit or None]
+    if not todo:
+        log("размечать нечего")
+        return
+
+    stop = False
+
+    def on_term(*_):
+        nonlocal stop
+        stop = True
+    signal.signal(signal.SIGTERM, on_term)
+    signal.signal(signal.SIGINT, on_term)
+
+    server = None
+    done = 0
+    try:
+        server = ensure_ollama()
+        names = {m["name"].split(":")[0] for m in ollama("/api/tags")["models"]}
+        if MODEL.split(":")[0] not in names:
+            raise RuntimeError(f"нет модели {MODEL} (ollama pull {MODEL})")
+        t0 = time.monotonic()
+        for i, (h, name) in enumerate(todo):
+            if stop:
+                break
+            write_json(TAG_PROGRESS, {"pid": os.getpid(), "done": i, "total": len(todo), "file": name})
+            with locked():
+                save_view()
+            try:
+                tags = ask_gemma(f"{WALL_DIR}/{name}")
+            except Exception as e:  # noqa: BLE001 — одна картинка не должна останавливать прогон
+                log(f"{name}: {e}")
+                continue
+            with locked():
+                data = load_data()
+                item = data["items"].setdefault(h, {})
+                item["file"] = name
+                item["ai"] = tags
+                write_json(DATA, data)
+                save_view(data=data)
+            done += 1
+            log(f"{i + 1}/{len(todo)} {name}: {tags['categories']} {tags['tags']} ({time.monotonic() - t0:.0f}s)")
+    except Exception as e:  # noqa: BLE001
+        log(str(e))
+        notify(f"Tagging failed: {e}", "critical")
+    finally:
+        with contextlib.suppress(OSError):
+            os.remove(TAG_PROGRESS)
+        with locked():
+            save_view()
+        if server:
+            server.terminate()
+            with contextlib.suppress(subprocess.TimeoutExpired):
+                server.wait(timeout=10)
+    if done:
+        notify(f"Tagged {done} of {len(todo)} wallpapers" + (" (stopped)" if stop else ""))
+
+
+def main() -> None:
+    p = argparse.ArgumentParser(prog="walls")
+    sub = p.add_subparsers(dest="cmd", required=True)
+    s = sub.add_parser("index")
+    s.add_argument("-q", "--quiet", action="store_true")
+    s.set_defaults(fn=cmd_index)
+    sub.add_parser("view").set_defaults(fn=cmd_view)
+    s = sub.add_parser("apply")
+    s.add_argument("file")
+    s.add_argument("-t", "--transition", default="random")
+    s.set_defaults(fn=cmd_apply)
+    s = sub.add_parser("outputs")
+    s.add_argument("-t", "--transition", default="simple")
+    s.set_defaults(fn=cmd_outputs)
+    s = sub.add_parser("fav")
+    s.add_argument("id")
+    s.add_argument("state", nargs="?", choices=["on", "off"])
+    s.set_defaults(fn=cmd_fav)
+    s = sub.add_parser("crop")
+    s.add_argument("id")
+    s.add_argument("x")
+    s.set_defaults(fn=cmd_crop)
+    s = sub.add_parser("tags")
+    s.add_argument("id")
+    s.add_argument("--categories")
+    s.add_argument("--tags")
+    s.add_argument("--caption")
+    s.add_argument("--reset", action="store_true")
+    s.set_defaults(fn=cmd_tags)
+    s = sub.add_parser("tag")
+    s.add_argument("--limit", type=int, default=0)
+    s.add_argument("--all", action="store_true", help="переразметить и уже размеченные")
+    s.set_defaults(fn=cmd_tag)
+    args = p.parse_args()
+    args.fn(args)
+
+
+if __name__ == "__main__":
+    main()

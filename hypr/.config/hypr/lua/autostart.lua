@@ -33,3 +33,11 @@ for _, event in ipairs({ "monitor.added", "monitor.removed", "monitor.layout_cha
 		hl.exec_cmd("~/.config/waybar/scripts/launch.sh")
 	end)
 end
+
+-- Обои: новый или повёрнутый монитор получает свой кадр (портретным — обрезка от walls).
+-- Пауза — awww-daemon должен успеть создать поверхность на новом выходе.
+for _, event in ipairs({ "monitor.added", "monitor.layout_changed" }) do
+	hl.on(event, function()
+		hl.exec_cmd("sleep 1 && ~/.config/binc/walls outputs")
+	end)
+end

@@ -1,9 +1,9 @@
-# Обои: выбор с превью (позже — селектор из задачи 4) и случайные.
+# Обои: выбиралка на Quickshell (quickshell/.config/quickshell/walls, бэкенд binc/walls) и случайные.
 WALLS=~/Wallpapers
 
 wall_rows() {
 	TITLE=Wallpaper
-	row "$(lbl 󰸉 "Choose wallpaper")" launch ~/.config/rofi/scripts/wall-selector.sh
+	row "$(lbl 󰸉 "Choose wallpaper")" launch qs -c walls -n
 	row "$(lbl 󰒝 "Random wallpaper")" wall_random
 }
 

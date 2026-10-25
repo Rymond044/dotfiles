@@ -180,6 +180,7 @@ qemu-desktop
 qt5-wayland
 qt6-multimedia
 qt6-wayland
+quickshell
 rofi
 rofi-calc
 samba

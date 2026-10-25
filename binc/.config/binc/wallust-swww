@@ -1,24 +1,8 @@
 #!/usr/bin/env bash
-
-WALLPAPER="$1"
-
-if [ -z "$WALLPAPER" ]; then
-  echo "Использование: ./script.sh /путь/к/обоям"
+# Поставить обои и перекрасить всё. Логика переехала в walls apply (обрезка под портретные
+# мониторы, отмена предыдущего незаконченного применения, история для выбиралки).
+if [ -z "$1" ]; then
+  echo "Usage: wallust-swww /path/to/wallpaper" >&2
   exit 1
 fi
-
-CURRENT_WALL="$HOME/Wallpapers/current"
-
-cp -f "$WALLPAPER" "$CURRENT_WALL"
-
-awww img "$CURRENT_WALL" --transition-type wipe
-
-wallust run "$CURRENT_WALL"
-~/.config/binc/lock --prepare &  # фон и конфиг hyprlock заранее, чтобы блокировка не ждала
-
-hyprctl reload
-killall -SIGUSR2 waybar
-killall -USR1 kitty
-swaync-client -rs && swaync-client -t -sw && swaync-client -t
-
-echo "Theme updated! Image saved to $CURRENT_WALL"
+exec ~/.config/binc/walls apply "$@"
