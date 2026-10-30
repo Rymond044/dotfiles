@@ -1,0 +1,6 @@
+/* Liquid glass (hyprglass): полупрозрачные пилюли, под ними стекло.
+   Подключается через ~/.cache/glass/waybar.css командой `glass on`, `glass off` — исходный вид. */
+@define-color main_pill alpha(@background, 0.12);
+@define-color hover_pill alpha(@foreground, 0.18);
+/* Трей и колокольчик лежат внутри пилюли: свой фон поверх полупрозрачного дал бы тёмное пятно */
+@define-color inner_pill transparent;

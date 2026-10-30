@@ -1,0 +1,5 @@
+/* Liquid glass (hyprglass): полупрозрачные карточки, под ними стекло.
+   Подключается через ~/.cache/glass/swaync.css командой `glass on`, `glass off` — исходный вид. */
+@define-color cc-bg alpha(@glass-bg, 0.3);
+@define-color noti-bg alpha(@glass-bg-alt, 0.3);
+@define-color noti-bg-darker alpha(@glass-bg, 0.3);

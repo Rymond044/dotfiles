@@ -14,6 +14,8 @@ conf_dir="$HOME/.config/waybar"
 cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/waybar"
 out="$cache_dir/config.jsonc"
 mkdir -p "$cache_dir"
+# style.css импортирует ~/.cache/glass/waybar.css (стекло вкл/выкл, binc/glass)
+[[ -e ${XDG_CACHE_HOME:-$HOME/.cache}/glass/waybar.css ]] || ~/.config/binc/glass sync
 
 exec 9>"$cache_dir/launch.lock"
 flock 9

@@ -1,9 +1,14 @@
 /* ~/.config/wallust/rofi-colors.rasi.j2 */
 * {
     background:     {{background}}CC;
+    background-solid: {{background}}; /* текст на выделенных пунктах (background в стекле прозрачный) */
+    background-glass: {{background}}55; /* для ~/.config/rofi/glass.rasi */
     background-alt: {{color0}};
     foreground:     {{foreground}};
     selected:       {{color1}};
     active:         {{color2}};
     urgent:         {{color1}};
 }
+
+/* Liquid glass: binc/glass переключает этот файл (пустой или @import ~/.config/rofi/glass.rasi) */
+@import "~/.cache/glass/rofi.rasi"

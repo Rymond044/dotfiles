@@ -37,7 +37,7 @@ window {
     cursor:                      "default";
     width:            650px;       /* Увеличим ширину для стиля Spotlight [cite: 8] */
     border:           2px solid;   /* Сделаем рамку чуть заметнее [cite: 14] */
-    border-radius:    16px;
+    border-radius:    10px; /* как decoration.rounding в Hyprland */
 }
 
 /*****----- Main Box -----*****/
@@ -62,7 +62,7 @@ inputbar {
     border:                      0px solid;
     border-color:                @selected;
     background-color:            @selected;
-    text-color:                  @background;
+    text-color:                  @background-solid;
     children:                    [ "prompt", "entry" ];
 }
 
@@ -140,7 +140,7 @@ element alternate.normal {
 
 element selected.normal {
     background-color:            @selected;
-    text-color:                  @background;
+    text-color:                  @background-solid;
 }
 
 element normal.urgent,

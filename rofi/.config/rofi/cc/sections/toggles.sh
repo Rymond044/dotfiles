@@ -1,4 +1,4 @@
-# Переключатели: ночной свет, тачпад, «Не беспокоить», «Не засыпать».
+# Переключатели: ночной свет, тачпад, «Не беспокоить», «Не засыпать», стекло (binc/glass).
 # «Не засыпать» — systemd-блокировка idle в юните cc-caffeine: hypridle её видит
 # («systemd idle inhibit active») и не гасит/не блокирует/не усыпляет. Крышку не трогает.
 
@@ -10,6 +10,7 @@ toggles_night() {
 toggles_touchpad_off() { [[ -e ${XDG_RUNTIME_DIR:-/tmp}/hypr-touchpad-disabled ]]; }
 toggles_dnd() { [[ $(swaync-client -D 2>/dev/null) == true ]]; }
 toggles_caffeine() { systemctl --user -q is-active cc-caffeine.service; }
+toggles_glass() { [[ $(~/.config/binc/glass status) == on ]]; }
 
 toggles_status() {
 	local on=()
@@ -17,6 +18,7 @@ toggles_status() {
 	toggles_touchpad_off && on+=("touchpad off")
 	toggles_dnd && on+=("DND")
 	toggles_caffeine && on+=("keep awake")
+	toggles_glass && on+=("glass")
 	local IFS=,
 	echo "${on[*]}" | sed 's/,/, /g'
 }
@@ -32,13 +34,15 @@ toggles_rows() {
 	toggles_row 󰟸 "Touchpad" "$(toggles_touchpad_off && echo 0 || echo 1)" toggles_toggle touchpad
 	toggles_row 󰂛 "Do not disturb" "$(toggles_dnd && echo 1 || echo 0)" toggles_toggle dnd
 	toggles_row 󰅶 "Keep awake" "$(toggles_caffeine && echo 1 || echo 0)" toggles_toggle caffeine
+	toggles_row 󰂵 "Liquid glass" "$(toggles_glass && echo 1 || echo 0)" toggles_toggle glass
 }
 
-toggles_toggle() { # night|touchpad|dnd|caffeine
+toggles_toggle() { # night|touchpad|dnd|caffeine|glass
 	case $1 in
 	night) ~/.config/binc/nightlight ;;
 	touchpad) ~/.config/binc/touchpad_toggle ;;
 	dnd) swaync-client -d >/dev/null ;;
+	glass) ~/.config/binc/glass ;;
 	caffeine)
 		if toggles_caffeine; then
 			systemctl --user stop cc-caffeine.service

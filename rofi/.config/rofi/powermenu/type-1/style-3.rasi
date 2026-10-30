@@ -32,7 +32,7 @@ window {
     margin:                      0px;
     padding:                     0px;
     border:                      1px solid;
-    border-radius:               12px;
+    border-radius:               10px; /* как decoration.rounding в Hyprland */
     border-color:                @selected;
     cursor:                      "default";
     background-color:            @background;
@@ -73,7 +73,7 @@ textbox-prompt-colon {
     margin:                      0px 0px 2px 0px;
     border-radius:               8px;
     background-color:            @urgent;
-    text-color:                  @background;
+    text-color:                  @background-solid;
 }
 prompt {
     enabled:                     true;
@@ -81,7 +81,7 @@ prompt {
     margin:                      0px 0px 2px 0px;
     border-radius:               8px;
     background-color:            @active;
-    text-color:                  @background;
+    text-color:                  @background-solid;
 }
 
 /*****----- Message -----*****/

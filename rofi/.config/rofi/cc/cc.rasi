@@ -17,7 +17,7 @@ window {
     fullscreen:                  false;
     width:                       520px;
     border:                      1px solid;
-    border-radius:               12px;
+    border-radius:               10px; /* как decoration.rounding в Hyprland */
     border-color:                @selected;
     cursor:                      "default";
     background-color:            @background;
@@ -41,7 +41,7 @@ prompt {
     padding:                     8px 12px;
     border-radius:               8px;
     background-color:            @active;
-    text-color:                  @background;
+    text-color:                  @background-solid;
 }
 
 entry {
@@ -102,5 +102,5 @@ element alternate.normal {
 
 element selected.normal {
     background-color:            @selected;
-    text-color:                  @background;
+    text-color:                  @background-solid;
 }

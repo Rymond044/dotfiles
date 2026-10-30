@@ -1,0 +1,5 @@
+/* Liquid glass (hyprglass): полупрозрачный фон, под ним стекло.
+   Подключается через ~/.cache/glass/rofi.rasi командой `glass on`, `glass off` — исходный вид. */
+* {
+    background: @background-glass;
+}
