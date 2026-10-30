@@ -126,6 +126,9 @@ PATH="$HOME/.local/bin:${PATH}"
 export PATH
 bindkey -v
 
+# Без писка на Tab при неоднозначном/пустом автодополнении
+unsetopt BEEP
+
 # NPM global bin (added by Qwen Code installer)
 export PATH="$HOME/.npm-global/bin:$PATH"
 
