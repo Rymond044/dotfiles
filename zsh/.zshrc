@@ -121,7 +121,8 @@ source <(kubectl completion zsh)
 alias ls='eza'
 alias rm='trash-put'
 alias clean='sudo pacman -Rns $(pacman -Qtdq); yay -Scc'
-
+alias core='docker compose -f deploy/compose.yaml exec -T core gungnir-core'
+alias dc='docker compose -f deploy/compose.yaml'
 PATH="$HOME/.local/bin:${PATH}"
 export PATH
 bindkey -v

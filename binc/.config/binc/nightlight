@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Super+N: вкл/выкл тёплый свет вручную (до следующей смены профиля по расписанию,
-# см. ~/.config/hypr/hyprsunset.conf).
+# Super+N: вкл/выкл тёплый свет вручную (расписания нет, см. ~/.config/hypr/hyprsunset.conf).
 warm=${1:-4500}
 
 pgrep -x hyprsunset >/dev/null || { notify-send -t 2000 "Night light" "hyprsunset не запущен"; exit 1; }
