@@ -38,7 +38,7 @@ Each top-level directory is a [GNU stow](https://www.gnu.org/software/stow/) pac
 | `wallust/`       | Adaptive color palette picker                   |
 | `nvim/`          | LazyVim                                         |
 | `zsh/`           | zshrc + starship                                |
-| `gtk/`, `qt/`    | GTK / Qt / Kvantum theming                      |
+| `gtk/`, `qt/`    | GTK / Qt theming (colors: `binc/theme`)         |
 | `session/`       | mimeapps, chromium/electron flags, user units   |
 | `btop/`, `fastfetch/`, `yazi/`, `clipse/` | TUI tools              |
 | `binc/`          | Custom scripts (`~/.config/binc`)               |

@@ -212,6 +212,16 @@ Singleton {
     }
 
     function fav(it) { if (it) run(["fav", it.id]); }
+
+    // Тема для этих обоев: auto → light → dark → auto. Для текущих — сразу применить (binc/theme wall)
+    function cycleTheme(it) {
+        if (!it) return;
+        const next = { auto: "light", light: "dark", dark: "auto" }[it.theme || "auto"];
+        if (it.id === current)
+            Quickshell.execDetached([home + "/.config/binc/theme", "wall", next]);
+        else
+            run(["theme", it.id, next]);
+    }
     function crop(it, x) { if (it) run(["crop", it.id, x === null ? "reset" : x.toFixed(3)]); }
 
     function saveTags(it, categories, tags, caption) {

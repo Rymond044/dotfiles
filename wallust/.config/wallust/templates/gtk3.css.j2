@@ -1,0 +1,31 @@
+{% set light = ((background|red|int) + (background|green|int) + (background|blue|int)) > 384 -%}
+/* Сгенерировано wallust (wallust/templates/gtk3.css.j2) → ~/.cache/wallust/gtk3.css,
+ * его подключают темы-обёртки Wallust-* над adw-gtk3 (binc/theme). Цвета те же, что в libadwaita.css. */
+@define-color accent_bg_color {{color1}};
+@define-color accent_fg_color {{background}};
+@define-color window_bg_color {{background}};
+@define-color window_fg_color {{foreground}};
+@define-color view_fg_color {{foreground}};
+@define-color headerbar_fg_color {{foreground}};
+@define-color headerbar_backdrop_color {{background}};
+@define-color sidebar_fg_color {{foreground}};
+@define-color card_fg_color {{foreground}};
+@define-color dialog_fg_color {{foreground}};
+@define-color popover_fg_color {{foreground}};
+{% if light %}
+@define-color accent_color {{color1}};
+@define-color view_bg_color {{background | lighten(0.6)}};
+@define-color headerbar_bg_color {{background | lighten(0.6)}};
+@define-color sidebar_bg_color {{background | darken(0.05)}};
+@define-color card_bg_color {{background | lighten(0.6)}};
+@define-color dialog_bg_color {{background}};
+@define-color popover_bg_color {{background | lighten(0.6)}};
+{% else %}
+@define-color accent_color {{color1 | lighten(0.25)}};
+@define-color view_bg_color {{background | lighten(0.03)}};
+@define-color headerbar_bg_color {{background | darken(0.15)}};
+@define-color sidebar_bg_color {{background | darken(0.15)}};
+@define-color card_bg_color {{background | lighten(0.06)}};
+@define-color dialog_bg_color {{background | lighten(0.04)}};
+@define-color popover_bg_color {{background | lighten(0.06)}};
+{% endif %}

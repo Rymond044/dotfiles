@@ -1,9 +1,39 @@
+{% set light = ((background|red|int) + (background|green|int) + (background|blue|int)) > 384 -%}
 /* Цвета libadwaita (Nautilus и прочие GTK4/Adwaita-приложения) из палитры wallust.
- * Подключается из ~/.config/gtk-4.0/gtk.css (тема adw-gtk3 импортирует libadwaita.css).
- * Новые цвета подхватываются при следующем запуске приложения. */
+ * Это кусок для одной палитры: binc/theme рендерит его для светлой и тёмной и собирает
+ * ~/.config/gtk-4.0/libadwaita.css с обоими под @media (prefers-color-scheme) — смена режима
+ * видна в запущенных приложениях. В светлой поверхности как в Adwaita light: содержимое
+ * и шапка почти белые, сайдбар чуть темнее окна. */
 :root {
   --accent-bg-color: {{color1}};
   --accent-fg-color: {{background}};
+{% if light %}
+  --accent-color: {{color1}};
+
+  --window-bg-color: {{background}};
+  --window-fg-color: {{foreground}};
+  --view-bg-color: {{background | lighten(0.6)}};
+  --view-fg-color: {{foreground}};
+
+  --headerbar-bg-color: {{background | lighten(0.6)}};
+  --headerbar-fg-color: {{foreground}};
+  --headerbar-backdrop-color: {{background}};
+
+  --sidebar-bg-color: {{background | darken(0.05)}};
+  --sidebar-fg-color: {{foreground}};
+  --sidebar-backdrop-color: {{background | darken(0.03)}};
+  --secondary-sidebar-bg-color: {{background | darken(0.03)}};
+  --secondary-sidebar-fg-color: {{foreground}};
+
+  --card-bg-color: {{background | lighten(0.6)}};
+  --card-fg-color: {{foreground}};
+  --dialog-bg-color: {{background}};
+  --dialog-fg-color: {{foreground}};
+  --popover-bg-color: {{background | lighten(0.6)}};
+  --popover-fg-color: {{foreground}};
+  --thumbnail-bg-color: {{background | lighten(0.6)}};
+  --thumbnail-fg-color: {{foreground}};
+{% else %}
   --accent-color: {{color1 | lighten(0.25)}};
 
   --window-bg-color: {{background}};
@@ -29,4 +59,5 @@
   --popover-fg-color: {{foreground}};
   --thumbnail-bg-color: {{background | lighten(0.06)}};
   --thumbnail-fg-color: {{foreground}};
+{% endif %}
 }

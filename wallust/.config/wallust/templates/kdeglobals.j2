@@ -1,0 +1,58 @@
+{% set light = ((background|red|int) + (background|green|int) + (background|blue|int)) > 384 -%}
+# Цвета Qt (QT_QPA_PLATFORMTHEME=kde, стиль Breeze) из палитры wallust.
+# Не сам kdeglobals: binc/theme вливает эти группы/ключи в ~/.config/kdeglobals (остальное там не трогает)
+# и шлёт KGlobalSettings.notifyChange — запущенные Qt-приложения перекрашиваются сразу.
+{%- if light %}
+{%- set view = background | lighten(0.6) %}
+{%- set alt = background | darken(0.04) %}
+{%- set button = background | darken(0.03) %}
+{%- set header = background | lighten(0.6) %}
+{%- set neg = "192,28,40" %}{% set neu = "156,110,3" %}{% set pos = "38,162,105" %}
+{%- else %}
+{%- set view = background | lighten(0.03) %}
+{%- set alt = background | lighten(0.06) %}
+{%- set button = background | lighten(0.08) %}
+{%- set header = background | darken(0.15) %}
+{%- set neg = "246,97,81" %}{% set neu = "248,228,92" %}{% set pos = "143,240,164" %}
+{%- endif %}
+{%- macro group(name, bg, bgalt, fg) %}
+[Colors:{{name}}]
+BackgroundAlternate={{bgalt | rgb}}
+BackgroundNormal={{bg | rgb}}
+DecorationFocus={{color1 | rgb}}
+DecorationHover={{color1 | rgb}}
+ForegroundActive={{color1 | rgb}}
+ForegroundInactive={{color8 | rgb}}
+ForegroundLink={{color4 | rgb}}
+ForegroundNegative={{neg}}
+ForegroundNeutral={{neu}}
+ForegroundNormal={{fg | rgb}}
+ForegroundPositive={{pos}}
+ForegroundVisited={{color5 | rgb}}
+{% endmacro %}
+{{ group("Window", background, alt, foreground) }}
+{{ group("View", view, alt, foreground) }}
+{{ group("Button", button, alt, foreground) }}
+{{ group("Tooltip", background, alt, foreground) }}
+{{ group("Header", header, alt, foreground) }}
+{{ group("Complementary", background, alt, foreground) }}
+[Colors:Selection]
+BackgroundAlternate={{color1 | rgb}}
+BackgroundNormal={{color1 | rgb}}
+DecorationFocus={{color1 | rgb}}
+DecorationHover={{color1 | rgb}}
+ForegroundActive={{background | rgb}}
+ForegroundInactive={{background | rgb}}
+ForegroundLink={{background | rgb}}
+ForegroundNegative={{background | rgb}}
+ForegroundNeutral={{background | rgb}}
+ForegroundNormal={{background | rgb}}
+ForegroundPositive={{background | rgb}}
+ForegroundVisited={{background | rgb}}
+
+[General]
+ColorScheme=Wallust
+AccentColor={{color1 | rgb}}
+
+[KDE]
+widgetStyle=Breeze

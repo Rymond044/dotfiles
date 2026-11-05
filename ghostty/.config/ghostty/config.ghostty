@@ -1,0 +1,2 @@
+# Цвета из wallust (светлая/тёмная тема — binc/theme), шаблон wallust/templates/ghostty.j2
+config-file = ?~/.cache/wallust/ghostty

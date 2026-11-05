@@ -90,6 +90,8 @@ def build_config() -> None:
     if not sep:
         raise ValueError(f"нет маркера {MARKER} в {TEMPLATE}")
 
+    # @WALLPAPER@ — текущие обои (wallust cs подставил бы в {{wallpaper}} путь к файлу схемы)
+    head = head.replace("@WALLPAPER@", f"{HOME}/Wallpapers/current")
     head = re.sub(
         r"^(\s*path\s*=\s*)(/\S+)\s*$",
         lambda m: m.group(1) + small_background(m.group(2)),

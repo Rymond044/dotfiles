@@ -12,7 +12,7 @@
 -- не показывают — как и в iOS, где стекло на «хроме», а контент непрозрачный.
 --
 -- Вкл/выкл целиком (плагин + прозрачность waybar/swaync/rofi): `~/.config/binc/glass [on|off]`,
--- CC → Toggles. Выключено, если есть ~/.local/state/glass/off — тогда всё как до стекла.
+-- CC → Appearance. Выключено, если есть ~/.local/state/glass/off — тогда всё как до стекла.
 
 if not hl.plugin.hyprglass then
 	return
@@ -28,6 +28,18 @@ local function glass_off()
 		return true
 	end
 	return false
+end
+
+-- Светлая/тёмная тема (binc/theme пишет ~/.cache/theme/mode): ветки light/dark у пресетов
+local function theme_mode()
+	local cache = os.getenv("XDG_CACHE_HOME") or (os.getenv("HOME") .. "/.cache")
+	local f = io.open(cache .. "/theme/mode")
+	if not f then
+		return "dark"
+	end
+	local m = f:read("l")
+	f:close()
+	return m == "light" and "light" or "dark"
 end
 
 if glass_off() then
@@ -107,7 +119,7 @@ hg.preset("ios_window", {
 
 hg.config({
 	enabled = true,
-	default_theme = "dark",
+	default_theme = theme_mode(),
 	default_preset = "ios_window",
 
 	-- Кэш стекла пересобирается, только когда фон меняется; 30 fps хватает и бережёт батарею

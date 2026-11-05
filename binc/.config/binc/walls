@@ -14,6 +14,7 @@
                            Новый вызов отменяет незаконченный предыдущий (быстрые Enter подряд).
   walls outputs          — только переставить обои по мониторам (хук monitor.added), без wallust
   walls fav ID [on|off]  — ★ (без аргумента — переключить)
+  walls theme ID auto|light|dark — пометка: какую тему ставить с этими обоями (binc/theme)
   walls crop ID X|reset  — центр кадра для портретных мониторов, 0..1 по ширине
   walls tags ID [--categories a,b] [--tags x,y] [--caption …] | --reset — ручные теги поверх gemma
   walls tag [--limit N] [--all] — разметка gemma4 через Ollama (только вручную: кнопка T в выбиралке,
@@ -296,6 +297,7 @@ def build_view(idx: dict, data: dict) -> dict:
             "wallust": auto.get("wallust", []),
             "hues": auto["hues"],
             "tone": auto["tone"],
+            "theme": user.get("theme", "auto"),  # пометка: auto | light | dark
             "lightness": auto["lightness"],
             "rainbow": auto["rainbow"],
             "attention_x": auto["attention_x"],
@@ -499,13 +501,9 @@ def cmd_apply(args) -> None:
         os.replace(tmp, CURRENT)
     set_outputs(CURRENT, digest, args.transition)
 
-    subprocess.run(["wallust", "run", "-q", CURRENT])
-    subprocess.Popen([f"{BINC}/lock", "--prepare"])  # фон и конфиг hyprlock заранее
-    subprocess.run(["hyprctl", "reload"], capture_output=True)
-    subprocess.run(["killall", "-SIGUSR2", "waybar"], capture_output=True)
-    subprocess.run(["killall", "-USR1", "kitty"], capture_output=True)
-    subprocess.run("swaync-client -rs && swaync-client -t -sw && swaync-client -t",
-                   shell=True, capture_output=True)
+    # Палитра (светлая/тёмная — авто, пометка обоев или глобальный режим), GTK/Qt/иконки/курсор,
+    # перезагрузка hyprland/waybar/kitty/swaync/hyprlock — всё в binc/theme
+    subprocess.run([f"{BINC}/theme", "apply", "--id", digest])
 
     with locked():
         data = load_data()
@@ -541,6 +539,15 @@ def update_item(digest: str, fn) -> None:
 def cmd_fav(args) -> None:
     def f(item):
         item["fav"] = {"on": True, "off": False}.get(args.state, not item.get("fav"))
+    update_item(args.id, f)
+
+
+def cmd_theme(args) -> None:
+    def f(item):
+        if args.mode == "auto":
+            item.pop("theme", None)
+        else:
+            item["theme"] = args.mode
     update_item(args.id, f)
 
 
@@ -746,6 +753,10 @@ def main() -> None:
     s.add_argument("id")
     s.add_argument("state", nargs="?", choices=["on", "off"])
     s.set_defaults(fn=cmd_fav)
+    s = sub.add_parser("theme")
+    s.add_argument("id")
+    s.add_argument("mode", choices=["auto", "light", "dark"])
+    s.set_defaults(fn=cmd_theme)
     s = sub.add_parser("crop")
     s.add_argument("id")
     s.add_argument("x")

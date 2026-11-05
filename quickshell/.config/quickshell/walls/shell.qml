@@ -137,6 +137,7 @@ ShellRoot {
                     else if (k === Qt.Key_K || k === Qt.Key_Up) { look.flush(); grid.moveBy(-1); }
                     else if (k === Qt.Key_Return || k === Qt.Key_Enter) { look.flush(); Store.apply(it); }
                     else if (k === Qt.Key_F) Store.fav(it);
+                    else if (k === Qt.Key_D && !ctrl) Store.cycleTheme(it);
                     else if (k === Qt.Key_E && it) { look.flush(); win.setMode("edit"); editor.open(it); }
                     else if ([Qt.Key_Space, Qt.Key_Escape, Qt.Key_Q].includes(k)) win.setMode("grid");
                     else handled = false;
@@ -165,6 +166,7 @@ ShellRoot {
                     else if (k === Qt.Key_Return || k === Qt.Key_Enter) Store.apply(it);
                     else if (k === Qt.Key_Space && it) win.setMode("look");
                     else if (k === Qt.Key_F) Store.fav(it);
+                    else if (k === Qt.Key_D) Store.cycleTheme(it);
                     else if (k === Qt.Key_R) win.randomFromFilter();
                     else if (k === Qt.Key_C && it) Store.similar(it.id);
                     else if (k === Qt.Key_S) Store.cycleSort();

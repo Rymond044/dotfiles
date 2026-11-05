@@ -1,7 +1,7 @@
 
 {
     "useCustom": true,
-    "TitleFore": "{{foreground}}",
+    "TitleFore": "{% if ((background|red|int) + (background|green|int) + (background|blue|int)) > 384 %}{{background}}{% else %}{{foreground}}{% endif %}",
     "TitleBack": "{{color4}}",
     "TitleInfo": "{{color6}}",
     "NormalTitle": "{{foreground}}",

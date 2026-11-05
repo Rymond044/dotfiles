@@ -82,7 +82,9 @@ Rectangle {
                 font { family: Theme.font; pointSize: Theme.fontSize + 2; weight: Font.DemiBold }
             }
             Text {
-                text: ql.item ? `${ql.item.w}×${ql.item.h} · ${ql.item.tone}` + (ql.item.fav ? " · ★" : "")
+                text: ql.item ? `${ql.item.w}×${ql.item.h} · ${ql.item.tone}`
+                      + (ql.item.theme && ql.item.theme !== "auto" ? ` → ${ql.item.theme} (d)` : "")
+                      + (ql.item.fav ? " · ★" : "")
                     + (ql.item.uses ? ` · used ${ql.item.uses}×` : "") : ""
                 color: Theme.dim
                 font { family: Theme.font; pointSize: Theme.fontSize - 1 }

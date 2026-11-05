@@ -13,6 +13,7 @@ Rectangle {
         ["h j k l", "move"], ["gg / G", "first / last"],
         ["Ctrl+d / Ctrl+u", "half page"], ["Enter", "apply (stays open)"],
         ["Space", "quick look"], ["f", "favorite"],
+        ["d", "theme: auto → light → dark"],
         ["r", "random from filter"], ["c", "similar colors"],
         ["s", "cycle sort"], ["e", "edit tags"],
         ["/", "search (#tag exact)"], ["Tab", "sidebar filters"],

@@ -1,8 +1,21 @@
+{% set light = ((background|red|int) + (background|green|int) + (background|blue|int)) > 384 -%}
 @define-color background {{background}};
 @define-color foreground {{foreground}};
 @define-color main_pill {{background}};
+{% if light -%}
+@define-color hover_pill {{background | darken(0.1)}};
+{%- else -%}
 @define-color hover_pill {{color8}};
+{%- endif %}
 @define-color inner_pill {{background}}; /* трей и колокольчик внутри пилюли (стекло делает прозрачным) */
 @define-color accent {{color1}};
+{% if light -%}
+@define-color text_dark {{background}}; /* текст на акценте: в светлой теме акцент тёмный */
+{%- else -%}
 @define-color text_dark {{color0}};
+{%- endif %}
 @define-color critical {{color1}};
+{% if light %}
+/* Светлая тема: монохромные белые иконки трея (Telegram и т. п.) не видны на светлой пилюле — тёмная обводка */
+#tray image { -gtk-icon-shadow: 0 0 1px alpha(black, 0.9), 0 0 2px alpha(black, 0.6); }
+{% endif %}

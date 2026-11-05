@@ -4,7 +4,11 @@
 
 export XCURSOR_THEME=Bibata-Modern-Classic
 export XCURSOR_SIZE=20
-export QT_QPA_PLATFORMTHEME=qt6ct
+# Курсор под светлую/тёмную тему (Classic ↔ Ice): binc/theme пишет этот файл при каждом применении
+[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/theme/env" ] && . "${XDG_CACHE_HOME:-$HOME/.cache}/theme/env"
+# Qt: платформенная тема KDE (plasma-integration) — палитра из ~/.config/kdeglobals (её пишет binc/theme
+# из wallust), стиль Breeze, перекрашивается на лету по KGlobalSettings.notifyChange. qt6ct/Kvantum не стоят.
+export QT_QPA_PLATFORMTHEME=kde
 
 # VA-API на Arc (Meteor Lake)
 export LIBVA_DRIVER_NAME=iHD

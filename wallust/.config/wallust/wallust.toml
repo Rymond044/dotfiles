@@ -17,5 +17,8 @@ rofi = {template = 'rofi-colors.rasi.j2', target = '~/.cache/wallust/rofi-colors
 hyprlock = {template = 'hyprlock.conf.j2', target = '~/.cache/wallust/hyprlock.conf'}
 neopywal = {template = "neopywal.vim", target = "~/.cache/wallust/colors_neopywal.vim" }
 clipse = {template = "custom_theme.json.j2", target = "~/.cache/wallust/clipse/custom_theme.json"}
-libadwaita = {template = 'libadwaita.css.j2', target = '~/.config/gtk-4.0/libadwaita.css'}
+libadwaita = {template = 'libadwaita.css.j2', target = '~/.cache/wallust/libadwaita.css'}  # binc/theme собирает ~/.config/gtk-4.0/libadwaita.css (обе палитры)
 quickshell = {template = 'quickshell.json.j2', target = '~/.cache/wallust/quickshell.json'}
+gtk3 = {template = 'gtk3.css.j2', target = '~/.cache/wallust/gtk3.css'}  # подключают темы Wallust-* (binc/theme)
+kdeglobals = {template = 'kdeglobals.j2', target = '~/.cache/wallust/kdeglobals'}
+ghostty = {template = 'ghostty.j2', target = '~/.cache/wallust/ghostty'}

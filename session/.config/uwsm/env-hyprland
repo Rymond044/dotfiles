@@ -1,3 +1,4 @@
 # Только для Hyprland (uwsm читает env-<desktop> после env).
 export HYPRCURSOR_THEME=Bibata-Modern-Classic
 export HYPRCURSOR_SIZE=20
+[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/theme/env" ] && . "${XDG_CACHE_HOME:-$HOME/.cache}/theme/env"

@@ -29,13 +29,35 @@ hl.config({
 
 -- https://wiki.hypr.land/Configuring/Variables/#decoration
 
+-- Прозрачность окон без фокуса: тёмная тема — 0.95; светлая — 0.97 без стекла и 0.8 со стеклом
+-- (тест пользователя). Режим пишет ~/.config/binc/theme, стекло — ~/.config/binc/glass; оба делают reload.
+local function inactive_opacity()
+	local home = os.getenv("HOME")
+	local cache = os.getenv("XDG_CACHE_HOME") or (home .. "/.cache")
+	local state = os.getenv("XDG_STATE_HOME") or (home .. "/.local/state")
+	local f = io.open(cache .. "/theme/mode")
+	local mode = f and f:read("l") or "dark"
+	if f then
+		f:close()
+	end
+	if mode ~= "light" then
+		return 0.95
+	end
+	local off = io.open(state .. "/glass/off")
+	if off then
+		off:close()
+		return 0.97
+	end
+	return 0.8
+end
+
 hl.config({
 	decoration = {
 		rounding = 10,
 		rounding_power = 3,
 		-- Change transparency of focused and unfocused windows
 		active_opacity = 1.0,
-		inactive_opacity = 0.95,
+		inactive_opacity = inactive_opacity(),
 
 		-- https://wiki.hypr.land/Configuring/Variables/#blur
 		blur = {

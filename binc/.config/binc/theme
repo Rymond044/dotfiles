@@ -1,0 +1,677 @@
+#!/usr/bin/env python3
+"""Светлая/тёмная тема под обои: палитра wallust + GTK/Qt/иконки/курсор/портал/перезагрузка.
+
+Кто решает, светлая или тёмная (по приоритету):
+  1. глобальный режим  ~/.local/state/theme/mode: auto | light | dark   (theme set …)
+  2. пометка обоев     ~/Wallpapers/.walls.json → items[sha1].theme       (theme wall …, пишет walls)
+  3. авто              ~/.cache/walls/index.json → items[sha1].tone (средний L* < 45 → dark)
+
+  theme apply [--id SHA1]     — применить к ~/Wallpapers/current (зовёт walls apply)
+  theme set auto|light|dark|cycle    — глобальный режим + применить
+  theme wall auto|light|dark|cycle   — пометка текущих обоев + применить
+  theme status [--json]       — что сейчас (для CC)
+
+Палитра: wallust считает схему (`-p dark` — как было всегда, `-p light` для светлой) в отдельном
+каталоге конфига ~/.cache/theme/wallust (только шаблон-дамп), светлая дообрабатывается здесь
+(фон почти белый с оттенком обоев, акценты затемняются до читаемого контраста), затем
+`wallust cs` раскладывает итог по обычным шаблонам. Шаблоны узнают режим по яркости background.
+Результат: ~/.cache/theme/current.json (режим, источник, акцент, иконки, курсор).
+"""
+
+import argparse
+import contextlib
+import json
+import math
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+import tomllib
+
+HOME = os.path.expanduser("~")
+CACHE_HOME = os.environ.get("XDG_CACHE_HOME", f"{HOME}/.cache")
+STATE_HOME = os.environ.get("XDG_STATE_HOME", f"{HOME}/.local/state")
+CONFIG_HOME = os.environ.get("XDG_CONFIG_HOME", f"{HOME}/.config")
+CURRENT = f"{HOME}/Wallpapers/current"
+WALLS_DATA = f"{HOME}/Wallpapers/.walls.json"
+WALLS_INDEX = f"{CACHE_HOME}/walls/index.json"
+WALLS_OUTPUTS = f"{CACHE_HOME}/walls/outputs.json"
+BINC = f"{CONFIG_HOME}/binc"
+
+STATE = f"{STATE_HOME}/theme"
+GLOBAL_MODE = f"{STATE}/mode"
+CACHE = f"{CACHE_HOME}/theme"
+DUMP_DIR = f"{CACHE}/wallust"
+SCHEME = f"{CACHE}/scheme.json"
+CURRENT_JSON = f"{CACHE}/current.json"
+MODE_FILE = f"{CACHE}/mode"  # одно слово light|dark — для glass.lua, nvim и пр.
+ENV_FILE = f"{CACHE}/env"  # курсор для uwsm (session/.config/uwsm/env)
+
+MODES = ("auto", "light", "dark")
+DARK_L = 45  # как в walls: средний L* ниже — dark
+
+# GTK3: свои темы-обёртки над adw-gtk3 с цветами wallust. GTK3 читает пользовательский gtk.css один раз
+# при старте, а CSS темы — заново при смене её имени: поэтому у каждой темы два одинаковых слота
+# a/b, и каждое применение переключает слот → запущенные GTK3-приложения перечитывают цвета.
+GTK_BASE = {"light": "adw-gtk3", "dark": "adw-gtk3-dark"}
+GTK_THEMES_DIR = f"{HOME}/.local/share/themes"
+TEMPLATES = f"{CONFIG_HOME}/wallust/templates"
+COLOR_SCHEME = {"light": "prefer-light", "dark": "prefer-dark"}
+CURSOR = {"light": "Bibata-Modern-Classic", "dark": "Bibata-Modern-Ice"}
+CURSOR_SIZE = 20
+
+# Цветные наборы adwaita-colors-icon-theme (Adwaita-<name>) и опорные цвета GNOME-акцентов.
+# slate — для бесцветных обоев. brown есть только у иконок; accent-color GNOME его не знает.
+ICON_COLORS = {
+    "blue": "#3584e4", "teal": "#2190a4", "green": "#3a944a", "yellow": "#c88800",
+    "orange": "#ed5b00", "red": "#e62d42", "pink": "#d56199", "purple": "#9141ac",
+    "brown": "#986a44",
+}
+GNOME_ACCENTS = {"blue", "teal", "green", "yellow", "orange", "red", "pink", "purple", "slate"}
+ICON_MIN_CHROMA = 18  # LCh-хрома акцента ниже — slate («не вычурно»)
+
+
+def log(msg: str) -> None:
+    print(f"theme: {msg}", file=sys.stderr)
+
+
+def read_json(path: str, default):
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return default
+
+
+def write_text(path: str, text: str) -> None:
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(path), prefix=".tmp-")
+    with os.fdopen(fd, "w") as f:
+        f.write(text)
+    os.replace(tmp, path)
+
+
+def run(*cmd: str, **kw) -> subprocess.CompletedProcess:
+    return subprocess.run(cmd, capture_output=True, text=True, **kw)
+
+
+# ---------------------------------------------------------------- цвет (sRGB ↔ CIE Lab/LCh, D65)
+
+def hex_to_rgb(h: str) -> tuple[float, float, float]:
+    h = h.lstrip("#")
+    return tuple(int(h[i:i + 2], 16) / 255 for i in (0, 2, 4))
+
+
+def rgb_to_hex(rgb) -> str:
+    return "#" + "".join(f"{round(min(max(c, 0.0), 1.0) * 255):02X}" for c in rgb)
+
+
+def _lin(c: float) -> float:
+    return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+
+
+def _gam(c: float) -> float:
+    return 12.92 * c if c <= 0.0031308 else 1.055 * c ** (1 / 2.4) - 0.055
+
+
+def hex_to_lab(h: str) -> tuple[float, float, float]:
+    r, g, b = (_lin(c) for c in hex_to_rgb(h))
+    x = (0.4124 * r + 0.3576 * g + 0.1805 * b) / 0.95047
+    y = 0.2126 * r + 0.7152 * g + 0.0722 * b
+    z = (0.0193 * r + 0.1192 * g + 0.9505 * b) / 1.08883
+    f = lambda t: t ** (1 / 3) if t > 0.008856 else 7.787 * t + 16 / 116  # noqa: E731
+    fx, fy, fz = f(x), f(y), f(z)
+    return 116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)
+
+
+def lab_to_hex(L: float, a: float, b: float) -> str:
+    fy = (L + 16) / 116
+    fx, fz = fy + a / 500, fy - b / 200
+    inv = lambda t: t ** 3 if t ** 3 > 0.008856 else (t - 16 / 116) / 7.787  # noqa: E731
+    x, y, z = inv(fx) * 0.95047, inv(fy), inv(fz) * 1.08883
+    r = 3.2406 * x - 1.5372 * y - 0.4986 * z
+    g = -0.9689 * x + 1.8758 * y + 0.0415 * z
+    bb = 0.0557 * x - 0.2040 * y + 1.0570 * z
+    return rgb_to_hex((_gam(max(c, 0.0)) for c in (r, g, bb)))
+
+
+def lch(h: str) -> tuple[float, float, float]:
+    L, a, b = hex_to_lab(h)
+    return L, math.hypot(a, b), math.degrees(math.atan2(b, a)) % 360
+
+
+def from_lch(L: float, C: float, H: float) -> str:
+    """LCh → hex; хрома ужимается, пока цвет не влезет в sRGB (оттенок и светлота сохраняются)."""
+    for _ in range(40):
+        a, b = C * math.cos(math.radians(H)), C * math.sin(math.radians(H))
+        fy = (L + 16) / 116
+        fx, fz = fy + a / 500, fy - b / 200
+        inv = lambda t: t ** 3 if t ** 3 > 0.008856 else (t - 16 / 116) / 7.787  # noqa: E731
+        x, y, z = inv(fx) * 0.95047, inv(fy), inv(fz) * 1.08883
+        rgb = (3.2406 * x - 1.5372 * y - 0.4986 * z, -0.9689 * x + 1.8758 * y + 0.0415 * z,
+               0.0557 * x - 0.2040 * y + 1.0570 * z)
+        if all(-0.001 <= c <= 1.001 for c in rgb) or C < 0.5:
+            return rgb_to_hex(_gam(max(c, 0.0)) for c in rgb)
+        C *= 0.9
+    return lab_to_hex(L, 0, 0)
+
+
+def luminance(h: str) -> float:
+    r, g, b = (_lin(c) for c in hex_to_rgb(h))
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def contrast(a: str, b: str) -> float:
+    la, lb = sorted((luminance(a), luminance(b)), reverse=True)
+    return (la + 0.05) / (lb + 0.05)
+
+
+def with_contrast(color: str, bg: str, ratio: float) -> str:
+    """Уводить светлоту от фона (на светлом — темнее, на тёмном — светлее), пока контраст ≥ ratio."""
+    L, C, H = lch(color)
+    step = -2 if luminance(bg) > 0.18 else 2
+    out = color
+    while contrast(out, bg) < ratio and 5 < L < 95:
+        L += step
+        out = from_lch(L, C, H)
+    return out
+
+
+def dark_scheme(raw: dict) -> dict:
+    """Тёмная — как выдал wallust, только слишком тёмные акценты (у тёмно-красных/синих обоев
+    акцент сливался с фоном: текст на выделении не читался) осветляются до контраста 4.5."""
+    s = dict(raw)
+    for i in (*range(1, 7), *range(9, 15)):
+        s[f"color{i}"] = with_contrast(raw[f"color{i}"], raw["background"], 4.5)
+    return s
+
+
+# ---------------------------------------------------------------- режим
+
+def wall_id(given: str | None = None) -> str | None:
+    """sha1 текущих обоев: из аргумента или из walls/outputs.json (пишет walls apply)."""
+    if given:
+        return given
+    out = read_json(WALLS_OUTPUTS, {})
+    return out.get("hash")
+
+
+def global_mode() -> str:
+    try:
+        m = open(GLOBAL_MODE).read().strip()
+    except OSError:
+        return "auto"
+    return m if m in MODES else "auto"
+
+
+def wall_pin(digest: str | None) -> str:
+    if not digest:
+        return "auto"
+    m = read_json(WALLS_DATA, {}).get("items", {}).get(digest, {}).get("theme")
+    return m if m in ("light", "dark") else "auto"
+
+
+def auto_tone(digest: str | None) -> tuple[str, float | None]:
+    item = read_json(WALLS_INDEX, {}).get("items", {}).get(digest or "", {})
+    if "tone" in item:
+        return item["tone"], item.get("lightness")
+    # Не проиндексированы (обои не из ~/Wallpapers) — посчитать на месте по уменьшенной копии
+    try:
+        from PIL import Image
+        img = Image.open(CURRENT)
+        img.draft("RGB", (320, 180))
+        px = img.convert("RGB").resize((96, 54)).getdata()
+        mean_l = sum(hex_to_lab("#%02x%02x%02x" % p)[0] for p in px) / len(px)
+        return ("dark" if mean_l < DARK_L else "light"), round(mean_l, 1)
+    except Exception as e:  # noqa: BLE001
+        log(f"яркость обоев не посчитана ({e}) — dark")
+        return "dark", None
+
+
+def resolve(digest: str | None) -> dict:
+    g = global_mode()
+    pin = wall_pin(digest)
+    tone, lightness = auto_tone(digest)
+    if g != "auto":
+        mode, source = g, "global"
+    elif pin != "auto":
+        mode, source = pin, "wallpaper"
+    else:
+        mode, source = tone, "auto"
+    return {"mode": mode, "source": source, "global": g, "wallpaper": pin,
+            "auto": tone, "lightness": lightness, "id": digest}
+
+
+# ---------------------------------------------------------------- палитра
+
+DUMP_TEMPLATE = (
+    '{"background":"{{background}}","foreground":"{{foreground}}","cursor":"{{cursor}}"'
+    '{% for i in range(16) %},"color{{i}}":"{{ colors[i] }}"{% endfor %}}\n'
+)
+
+
+def wallust_settings() -> dict:
+    """Настройки из основного wallust.toml без [templates] (backend, threshold, palette…)."""
+    try:
+        with open(f"{CONFIG_HOME}/wallust/wallust.toml", "rb") as f:
+            conf = tomllib.load(f)
+    except (OSError, tomllib.TOMLDecodeError):
+        conf = {}
+    return {k: v for k, v in conf.items() if not isinstance(v, dict)}
+
+
+def toml_value(v) -> str:
+    if isinstance(v, bool):
+        return "true" if v else "false"
+    if isinstance(v, (int, float)):
+        return str(v)
+    return json.dumps(str(v))
+
+
+def wallust_scheme(image: str, palette: str) -> dict:
+    """Схема wallust для картинки (без шаблонов и терминальных последовательностей)."""
+    settings = wallust_settings()
+    settings.pop("palette", None)
+    out = f"{DUMP_DIR}/scheme.json"
+    lines = [f"{k} = {toml_value(v)}" for k, v in settings.items()]
+    lines += ["", "[templates]", f"dump = {{ template = 'dump.j2', target = '{out}' }}", ""]
+    write_text(f"{DUMP_DIR}/wallust.toml", "\n".join(lines))
+    write_text(f"{DUMP_DIR}/templates/dump.j2", DUMP_TEMPLATE)
+    with contextlib.suppress(OSError):
+        os.remove(out)
+    r = run("wallust", "run", "-q", "-s", "--no-hooks", "-d", DUMP_DIR, "-p", palette, image)
+    scheme = read_json(out, None)
+    if not scheme:
+        raise RuntimeError(f"wallust не дал схему: {r.stderr.strip()}")
+    return scheme
+
+
+def render(scheme: dict, templates: dict[str, str], name: str) -> None:
+    """Отрисовать шаблоны wallust (имя файла в wallust/templates → цель) для произвольной схемы,
+    не трогая остальные цели основного конфига."""
+    d = f"{CACHE}/{name}"
+    path = f"{d}/scheme.json"
+    write_text(path, pywal_json(scheme))
+    lines = ["[templates]"] + [f"t{i} = {{ template = '{TEMPLATES}/{t}', target = '{out}' }}"
+                               for i, (t, out) in enumerate(templates.items())]
+    write_text(f"{d}/wallust.toml", "\n".join(lines) + "\n")
+    r = run("wallust", "cs", "-q", "-s", "-d", d, "-f", "pywal", path)
+    if r.returncode:
+        log(f"wallust cs ({name}): {r.stderr.strip()}")
+
+
+def pywal_json(scheme: dict) -> str:
+    """pywal-формат: так wallust cs берёт и special-цвета."""
+    return json.dumps({
+        "wallpaper": CURRENT,
+        "special": {k: scheme[k] for k in ("background", "foreground", "cursor")},
+        "colors": {f"color{i}": scheme[f"color{i}"] for i in range(16)},
+    }, indent=1)
+
+
+def write_libadwaita(mode: str, other: dict) -> None:
+    """~/.config/gtk-4.0/libadwaita.css с обеими палитрами под @media (prefers-color-scheme):
+    libadwaita читает его один раз при старте, а media query переключается на лету вместе с
+    color-scheme — так смена светлой/тёмной видна в уже открытых Nautilus и пр. (смена обоев —
+    по-прежнему после перезапуска приложения)."""
+    other_mode = "dark" if mode == "light" else "light"
+    other_css = f"{CACHE}/libadwaita-{other_mode}.css"
+    render(other, {"libadwaita.css.j2": other_css}, "other")
+    parts = ["/* Сгенерировано ~/.config/binc/theme из wallust/templates/libadwaita.css.j2. Не править. */\n"]
+    for m, path in ((mode, f"{CACHE_HOME}/wallust/libadwaita.css"), (other_mode, other_css)):
+        try:
+            css = open(path).read()
+        except OSError as e:
+            log(f"libadwaita.css: {e}")
+            continue
+        parts.append(f"@media (prefers-color-scheme: {m}) {{\n{css}}}\n")
+    write_text(f"{CONFIG_HOME}/gtk-4.0/libadwaita.css", "\n".join(parts))
+
+
+def gtk3_theme(mode: str) -> str:
+    """Тема-обёртка Wallust-<mode>-<a|b> (слот — не тот, что сейчас) — создать, вернуть имя."""
+    cur = run("gsettings", "get", "org.gnome.desktop.interface", "gtk-theme").stdout.strip().strip("'")
+    slot = "b" if cur == f"Wallust-{mode}-a" else "a"
+    name = f"Wallust-{mode}-{slot}"
+    base = f"/usr/share/themes/{GTK_BASE[mode]}"
+    d = f"{GTK_THEMES_DIR}/{name}"
+    colors = f"{CACHE_HOME}/wallust/gtk3.css"
+    files = {
+        "index.theme": f"[Desktop Entry]\nType=X-GNOME-Metatheme\nName={name}\n"
+                       f"Comment={GTK_BASE[mode]} + цвета wallust (~/.config/binc/theme)\n",
+        "gtk-3.0/gtk.css": f'@import url("file://{base}/gtk-3.0/gtk.css");\n@import url("file://{colors}");\n',
+        "gtk-3.0/gtk-dark.css": f'@import url("file://{base}/gtk-3.0/gtk-dark.css");\n'
+                                f'@import url("file://{colors}");\n',
+        "gtk-4.0/gtk.css": f'@import url("file://{base}/gtk-4.0/gtk.css");\n',
+        "gtk-4.0/gtk-dark.css": f'@import url("file://{base}/gtk-4.0/gtk-dark.css");\n',
+    }
+    for rel, text in files.items():
+        path = f"{d}/{rel}"
+        try:
+            if open(path).read() == text:
+                continue
+        except OSError:
+            pass
+        write_text(path, text)
+    return name
+
+
+def tint_hue(digest: str | None, scheme: dict) -> tuple[float, float]:
+    """Оттенок обоев для «почти белого» фона: самый весомый заметно цветной цвет картинки."""
+    pal = read_json(WALLS_INDEX, {}).get("items", {}).get(digest or "", {}).get("palette") or []
+    best = None
+    for p in pal:
+        L, a, b = p["lab"]
+        C = math.hypot(a, b)
+        if C > 8 and (best is None or p["share"] * C > best[0]):
+            best = (p["share"] * C, C, math.degrees(math.atan2(b, a)) % 360)
+    if best:
+        return best[2], best[1]
+    L, C, H = lch(scheme["color1"])
+    return H, C
+
+
+LIGHT_VARIANTS = ("neutral", "tinted", "material", "paper")
+LIGHT_VARIANT_FILE = f"{STATE}/light-variant"
+
+
+def light_variant() -> str:
+    """Вариант светлой палитры: THEME_LIGHT_VARIANT (для сравнения) > ~/.local/state/theme/light-variant,
+    по умолчанию material (Material You от matugen)."""
+    v = os.environ.get("THEME_LIGHT_VARIANT")
+    if not v:
+        try:
+            v = open(LIGHT_VARIANT_FILE).read().strip()
+        except OSError:
+            v = ""
+    return v if v in LIGHT_VARIANTS else "material"  # выбор пользователя 2026-11-05
+
+
+def finish_light(bg: str, fg: str, accents: list[str], hue: float, tint: float,
+                 surface: str | None = None, muted: str | None = None) -> dict:
+    """Собрать светлую схему в pywal-раскладке (так её ждут btop/TTY, neopywal и шаблоны):
+    color0 — светлая поверхность, color7/15 — тёмный текст, color8 — приглушённый.
+    Все цвета, которые бывают текстом (1–6, 9–14, 8), — с контрастом ≥ 4.5 к фону."""
+    accents = [with_contrast(c, bg, 4.5) for c in accents]
+    bright = []
+    for c in accents:  # «яркие» — чуть светлее и сочнее, но тоже читаемые
+        L, C, H = lch(c)
+        bright.append(with_contrast(from_lch(L + 8, C * 1.1, H), bg, 4.5))
+    surface = surface or from_lch(lch(bg)[0] - 5, lch(bg)[1], lch(bg)[2])
+    muted = with_contrast(muted or from_lch(50, min(5.0, tint * 0.5), hue), bg, 4.5)
+    s = {"background": bg, "foreground": fg, "cursor": accents[0], "color0": surface}
+    for i, c in enumerate(accents, 1):
+        s[f"color{i}"] = c
+    for i, c in enumerate(bright, 9):
+        s[f"color{i}"] = c
+    s["color7"] = fg
+    s["color8"] = muted
+    s["color15"] = from_lch(max(lch(fg)[0] - 8, 4), lch(fg)[1], lch(fg)[2])
+    return s
+
+
+def wallust_accents(raw: dict) -> list[str]:
+    """Акценты wallust (light): самый цветной — первым (color1 = главный акцент)."""
+    acc = [raw[f"color{i}"] for i in range(1, 7)]
+    acc.sort(key=lambda c: -lch(c)[1])
+    return acc
+
+
+def matugen_colors(image: str) -> dict | None:
+    """Material You (matugen, scheme tonal-spot, светлая): {роль: hex} или None."""
+    # matugen определяет формат по расширению — у ~/Wallpapers/current его нет
+    src = read_json(WALLS_OUTPUTS, {}).get("source")
+    path = image
+    with contextlib.suppress(OSError):
+        from PIL import Image
+        fmt = (Image.open(image).format or "png").lower()
+        path = f"{CACHE}/matugen-src.{ 'jpg' if fmt == 'jpeg' else fmt }"
+        if not os.path.exists(path) or os.path.getmtime(path) < os.path.getmtime(image):
+            shutil.copyfile(image, path)
+    r = run("matugen", "image", path, "-m", "light", "-j", "hex", "--dry-run", "--prefer", "saturation",
+            timeout=30)
+    try:
+        c = json.loads(r.stdout)["colors"]
+        return {k: v["light"]["color"] for k, v in c.items()}
+    except (ValueError, KeyError, TypeError):
+        log(f"matugen: {r.stderr.strip()[:200]} ({src})")
+        return None
+
+
+def light_scheme(raw: dict, digest: str | None, variant: str | None = None) -> dict:
+    """Светлая палитра. Варианты (задача 11, сравнение на скриншотах):
+    neutral  — фон почти белый (L 97.5) с едва заметным оттенком обоев, акценты wallust;
+    tinted   — фон заметно окрашен в главный цвет обоев (L 94, хрома ~10), панели тоже;
+    material — Material You от matugen (surface / on_surface / primary / secondary / tertiary);
+    paper    — тёплый кремовый фон для всех обоев (как Solarized/Gruvbox light), акценты wallust."""
+    variant = variant or light_variant()
+    hue, chroma = tint_hue(digest, raw)
+    acc = wallust_accents(raw)
+    if variant == "tinted":
+        bg = from_lch(94, min(10.0, chroma * 0.35), hue)
+        fg = from_lch(18, min(10.0, chroma * 0.3), hue)
+        surface = from_lch(88, min(14.0, chroma * 0.45), hue)
+        return finish_light(bg, fg, acc, hue, min(10.0, chroma * 0.35), surface)
+    if variant == "paper":
+        bg, fg = "#F5F0E6", "#3C3836"
+        return finish_light(bg, fg, acc, 80, 6, surface="#EBE3D3", muted="#7C6F64")
+    if variant == "material":
+        m = matugen_colors(CURRENT)
+        if m:
+            accents = [m["primary"], m["tertiary"], m["secondary"]] + acc[:3]
+            return finish_light(m["surface"], m["on_surface"], accents, hue, chroma,
+                                surface=m["surface_container_high"], muted=m["outline"])
+    # neutral (и запасной путь для material без matugen)
+    bg = from_lch(97.5, min(3.5, chroma * 0.12), hue)
+    fg = from_lch(16, min(6.0, chroma * 0.15), hue)
+    return finish_light(bg, fg, acc, hue, min(3.5, chroma * 0.12))
+
+
+def icon_color(scheme: dict) -> str:
+    """Ближайший цветной набор Adwaita к акценту (color1), у бесцветного — slate."""
+    cand = [scheme["color1"]] + [scheme[f"color{i}"] for i in range(2, 7)]
+    L, C, H = lch(cand[0])
+    if C < ICON_MIN_CHROMA:  # главный акцент серый — взять самый цветной из остальных
+        L, C, H = max((lch(c) for c in cand), key=lambda x: x[1])
+    if C < ICON_MIN_CHROMA:
+        return "slate"
+
+    def dist(ref: str) -> float:
+        rl, rc, rh = lch(ref)
+        dh = min(abs(H - rh), 360 - abs(H - rh))
+        return dh + 0.3 * abs(L - rl)  # по оттенку, светлота отделяет brown от orange/yellow
+
+    return min(ICON_COLORS, key=lambda n: dist(ICON_COLORS[n]))
+
+
+# ---------------------------------------------------------------- применение
+
+def gsettings(key: str, value: str, schema: str = "org.gnome.desktop.interface") -> None:
+    r = run("gsettings", "set", schema, key, value)
+    if r.returncode:
+        log(f"gsettings {key}: {r.stderr.strip()}")
+
+
+def parse_kconfig(text: str) -> list[tuple[str, list[tuple[str, str]]]]:
+    """KConfig (kdeglobals): [(группа, [(ключ, значение)])], группа — строка заголовка как есть."""
+    groups: list[tuple[str, list[tuple[str, str]]]] = [("", [])]
+    for line in text.splitlines():
+        if line.startswith("["):
+            groups.append((line.strip(), []))
+        elif "=" in line and not line.lstrip().startswith("#"):
+            k, v = line.split("=", 1)
+            groups[-1][1].append((k, v))
+    return groups
+
+
+def merge_kdeglobals(generated: str, extra: dict) -> None:
+    """Влить группы/ключи из сгенерированного файла в ~/.config/kdeglobals, остальное не трогать."""
+    path = f"{CONFIG_HOME}/kdeglobals"
+    try:
+        new = parse_kconfig(open(generated).read())
+    except OSError:
+        return
+    for g, kv in extra.items():
+        new.append((f"[{g}]", list(kv.items())))
+    try:
+        old = parse_kconfig(open(path).read())
+    except OSError:
+        old = [("", [])]
+    merged = {g: dict(kv) for g, kv in old}
+    order = [g for g, _ in old]
+    for g, kv in new:
+        if not g:
+            continue
+        if g not in merged:
+            merged[g] = {}
+            order.append(g)
+        merged[g].update(kv)
+    out = []
+    for g in order:
+        if not merged[g] and not g:
+            continue
+        if g:
+            out.append(g)
+        out += [f"{k}={v}" for k, v in merged[g].items()]
+        out.append("")
+    write_text(path, "\n".join(out))
+
+
+def apply_desktop(mode: str, icons: str) -> None:
+    """GTK, libadwaita, портал (color-scheme), иконки, курсор, Qt (kdeglobals)."""
+    gsettings("gtk-theme", gtk3_theme(mode))
+    gsettings("color-scheme", COLOR_SCHEME[mode])
+    gsettings("icon-theme", f"Adwaita-{icons}")
+    gsettings("accent-color", icons if icons in GNOME_ACCENTS else "orange")
+    gsettings("cursor-theme", CURSOR[mode])
+    gsettings("cursor-size", str(CURSOR_SIZE))
+    run("hyprctl", "setcursor", CURSOR[mode], str(CURSOR_SIZE))
+    # Новые процессы из systemd/D-Bus (uwsm app …) — с новым курсором
+    run("systemctl", "--user", "set-environment", f"XCURSOR_THEME={CURSOR[mode]}")
+    run("dbus-update-activation-environment", "--systemd", f"XCURSOR_THEME={CURSOR[mode]}")
+    # Курсор для следующего входа: uwsm/env подключает этот файл (до Hyprland и приложений)
+    write_text(ENV_FILE, f"export XCURSOR_THEME={CURSOR[mode]}\nexport HYPRCURSOR_THEME={CURSOR[mode]}\n")
+    # Qt (QT_QPA_PLATFORMTHEME=kde): цвета из wallust + иконки → kdeglobals, сигнал «перечитать»
+    merge_kdeglobals(f"{CACHE_HOME}/wallust/kdeglobals", {"Icons": {"Theme": f"Adwaita-{icons}"}})
+    run("dbus-send", "--session", "--type=signal", "/KGlobalSettings",
+        "org.kde.KGlobalSettings.notifyChange", "int32:0", "int32:0")  # палитра
+    run("dbus-send", "--session", "--type=signal", "/KIconLoader",
+        "org.kde.KIconLoader.iconChanged", "int32:0")
+
+
+def reload_apps() -> None:
+    """Всё, что держит цвета в памяти."""
+    subprocess.Popen([f"{BINC}/lock", "--prepare"])  # фон и конфиг hyprlock заранее
+    run("hyprctl", "reload")  # hyprland.lua из wallust + glass.lua читает режим
+    run("pkill", "-USR2", "-x", "waybar")
+    run("pkill", "-USR1", "-x", "kitty")
+    run("pkill", "-USR2", "-x", "ghostty")  # ghostty: перечитать конфиг
+    run("pkill", "-USR1", "-x", "nvim")  # autocmd Signal в nvim: перечитать neopywal
+    subprocess.run("swaync-client -rs && swaync-client -t -sw && swaync-client -t",
+                   shell=True, capture_output=True)
+
+
+def apply(digest: str | None, reload: bool = True) -> dict:
+    digest = wall_id(digest)
+    st = resolve(digest)
+    mode = st["mode"]
+    # Обе палитры: текущая — во все шаблоны, вторая — в libadwaita.css (переключение на лету)
+    schemes = {
+        "dark": dark_scheme(wallust_scheme(CURRENT, wallust_settings().get("palette", "dark"))),
+        "light": light_scheme(wallust_scheme(CURRENT, "light"), digest),
+    }
+    scheme = schemes[mode]
+
+    write_text(SCHEME, pywal_json(scheme))
+    # -s: без escape-последовательностей в терминалы — в светлой теме ANSI раскладывают шаблоны
+    # kitty/ghostty (в палитре wallust color0 — светлая поверхность), терминалы перечитают конфиг.
+    r = run("wallust", "cs", "-q", "-s", "-f", "pywal", SCHEME)
+    if r.returncode:
+        log(f"wallust cs: {r.stderr.strip()}")
+    write_libadwaita(mode, schemes["light" if mode == "dark" else "dark"])
+
+    icons = icon_color(scheme)
+    st.update({"icons": icons, "accent": scheme["color1"], "cursor": CURSOR[mode],
+               "background": scheme["background"]})
+    write_text(MODE_FILE, mode + "\n")
+    write_text(CURRENT_JSON, json.dumps(st, indent=1) + "\n")
+    apply_desktop(mode, icons)
+    if reload:
+        reload_apps()
+    return st
+
+
+# ---------------------------------------------------------------- команды
+
+def next_mode(cur: str) -> str:
+    return MODES[(MODES.index(cur) + 1) % len(MODES)]
+
+
+def cmd_apply(args) -> None:
+    st = apply(args.id, reload=not args.no_reload)
+    print(f"{st['mode']} ({st['source']}), icons {st['icons']}")
+
+
+def cmd_set(args) -> None:
+    mode = next_mode(global_mode()) if args.mode == "cycle" else args.mode
+    os.makedirs(STATE, exist_ok=True)
+    write_text(GLOBAL_MODE, mode + "\n")
+    st = apply(None)
+    notify(st)
+
+
+def cmd_wall(args) -> None:
+    digest = wall_id(None)
+    if not digest:
+        sys.exit("theme: текущие обои неизвестны (нет ~/.cache/walls/outputs.json)")
+    mode = next_mode(wall_pin(digest)) if args.mode == "cycle" else args.mode
+    r = run(f"{BINC}/walls", "theme", digest, mode)  # .walls.json пишет только walls (под flock)
+    if r.returncode:
+        sys.exit(f"theme: walls theme: {r.stderr.strip()}")
+    st = apply(digest)
+    notify(st)
+
+
+def notify(st: dict) -> None:
+    src = {"global": "always", "wallpaper": "this wallpaper", "auto": "auto"}[st["source"]]
+    run("notify-send", "-a", "Theme", "-t", "1500", "-h", "string:x-canonical-private-synchronous:theme",
+        "Theme", f"{st['mode'].capitalize()} ({src})")
+
+
+def cmd_status(args) -> None:
+    st = resolve(wall_id(None))
+    cur = read_json(CURRENT_JSON, {})
+    st["applied"] = cur.get("mode")
+    st["icons"] = cur.get("icons")
+    if args.json:
+        print(json.dumps(st))
+    else:
+        for k in ("mode", "source", "global", "wallpaper", "auto", "lightness", "applied", "icons"):
+            print(f"{k}\t{st.get(k)}")
+
+
+def main() -> None:
+    p = argparse.ArgumentParser(prog="theme")
+    sub = p.add_subparsers(dest="cmd", required=True)
+    s = sub.add_parser("apply")
+    s.add_argument("--id", help="sha1 обоев (иначе — из walls/outputs.json)")
+    s.add_argument("--no-reload", action="store_true", help="не перезагружать приложения")
+    s.set_defaults(fn=cmd_apply)
+    s = sub.add_parser("set")
+    s.add_argument("mode", choices=[*MODES, "cycle"])
+    s.set_defaults(fn=cmd_set)
+    s = sub.add_parser("wall")
+    s.add_argument("mode", choices=[*MODES, "cycle"])
+    s.set_defaults(fn=cmd_wall)
+    s = sub.add_parser("status")
+    s.add_argument("--json", action="store_true")
+    s.set_defaults(fn=cmd_status)
+    args = p.parse_args()
+    if not shutil.which("wallust"):
+        sys.exit("theme: нет wallust")
+    args.fn(args)
+
+
+if __name__ == "__main__":
+    main()

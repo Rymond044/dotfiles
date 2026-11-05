@@ -1,7 +1,8 @@
+{% set light = ((background|red|int) + (background|green|int) + (background|blue|int)) > 384 -%}
 # Шаблон hyprlock. wallust → ~/.cache/wallust/hyprlock.conf, а ~/.config/binc/lock при каждой
 # блокировке собирает из него ~/.config/hypr/hyprlock.conf под текущие мониторы:
 # блок после маркера @PER-MONITOR@ повторяется для каждого монитора, @MONITOR@ → имя монитора,
-# @N@ → N × scale монитора (hyprlock считает в физических пикселях, а размеры здесь логические —
+# @WALLPAPER@ → ~/Wallpapers/current, @N@ → N × scale монитора (hyprlock считает в физических пикселях, а размеры здесь логические —
 # так виджеты одинаковые на eDP ×2, HDMI ×1.25 и вертикальном DP-1 ×1).
 
 # GENERAL & ANIMATIONS (общие настройки)
@@ -29,10 +30,14 @@ auth {
 # Фон — на все мониторы
 background {
     monitor =
-    path = {{wallpaper}}
+    path = @WALLPAPER@
     blur_passes = 2
     contrast = 0.8916
+{% if light %}
+    brightness = 0.95
+{% else %}
     brightness = 0.8172
+{% endif %}
     vibrancy = 0.1696
     vibrancy_darkness = 0.0
 }

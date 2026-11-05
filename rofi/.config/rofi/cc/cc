@@ -13,7 +13,7 @@ CC_DIR=$(dirname "$(realpath "$0")")
 source "$CC_DIR/lib.sh"
 for f in "$CC_DIR"/sections/*.sh; do source "$f"; done
 
-SECTIONS=(wifi bt audio toggles monitors power system utils wall)
+SECTIONS=(wifi bt audio toggles monitors power system utils appearance)
 
 # section РАЗДЕЛ — подменю в цикле: после действия перерисовывается со свежим статусом.
 section() {
@@ -36,7 +36,7 @@ main_rows() {
 	row "$(lbl 󰂄 Power "$(power_status)")" section power
 	row "$(lbl 󰒓 System)" section system
 	row "$(lbl 󰆍 Utilities)" section utils
-	row "$(lbl 󰸉 Wallpaper)" section wall
+	row "$(lbl 󰸉 Appearance "$(appearance_status)")" section appearance
 }
 
 main_mesg() {

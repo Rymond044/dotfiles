@@ -15,5 +15,5 @@ CLAUDE.md
 # Закладки Nautilus (личные пути)
 gtk/.config/gtk-3.0/bookmarks
 
-# Генерируемое wallust (шаблон wallust/templates/libadwaita.css.j2)
+# Генерируемое binc/theme (из wallust/templates/libadwaita.css.j2, обе палитры)
 gtk/.config/gtk-4.0/libadwaita.css

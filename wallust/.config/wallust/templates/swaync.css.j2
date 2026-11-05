@@ -1,3 +1,4 @@
+{% set light = ((background|red|int) + (background|green|int) + (background|blue|int)) > 384 -%}
 /* ~/.config/wallust/swaync.css.j2 */
 
 /* Базовые цвета для стекла (swaync/glass.css) */
@@ -9,9 +10,13 @@
 
 @define-color noti-border-color {{color8}};
 @define-color noti-bg-darker rgba({{background | rgb}}, 0.9);
+{% if light -%}
+@define-color noti-bg-hover rgba({{background | darken(0.1) | rgb}}, 0.9);
+{%- else -%}
 @define-color noti-bg-hover rgba({{color8 | rgb}}, 0.8);
+{%- endif %}
 @define-color text-color {{foreground}};
-@define-color text-color-disabled {{color7}};
+@define-color text-color-disabled {% if light %}{{color8}}{% else %}{{color7}}{% endif %};
 @define-color bg-selected {{color1}};
 @define-color border-green {{color2}};
 @define-color red-base {{color1}};

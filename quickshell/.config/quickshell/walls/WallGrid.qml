@@ -70,13 +70,16 @@ GridView {
                 Behavior on opacity { NumberAnimation { duration: 160 } }
             }
 
-            // Бейджи: текущие обои, ★, «применяется»
+            // Бейджи: текущие обои, ★, «применяется», пометка темы
             Row {
                 anchors { top: parent.top; right: parent.right; margins: 8 }
                 spacing: 4
                 Badge { visible: cell.modelData.id === Store.applying; text: "󰔟"; fg: Theme.active }
                 Badge { visible: cell.modelData.id === Store.current; text: "󰄬"; fg: Theme.active }
                 Badge { visible: cell.modelData.fav; text: ""; fg: "#ffc53d" }
+                // Пометка темы (d): солнце — всегда светлая, луна — всегда тёмная
+                Badge { visible: cell.modelData.theme === "light" || cell.modelData.theme === "dark"
+                        text: cell.modelData.theme === "light" ? "󰖨" : "󰖔"; fg: Theme.foreground }
             }
         }
 
