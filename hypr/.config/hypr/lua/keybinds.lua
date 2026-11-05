@@ -71,7 +71,7 @@ hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("~/.config/binc/ocr"))
 hl.bind("SUPER + SHIFT + s", hl.plugin.hyprcapture.open)
 
 hl.bind("Print", function()
-	hl.plugin.hyprcapture.open("fullscreen")
+	hl.plugin.hyprcapture.open_editor("fullscreen")
 end)
 
 --буфер обмена
