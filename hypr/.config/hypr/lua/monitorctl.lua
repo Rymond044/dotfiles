@@ -83,7 +83,29 @@ function M.fix_origin()
 	end
 end
 
+-- Правила из monitors.lua. Если подключён ровно один монитор, его позиция сразу 0x0: иначе
+-- при `hyprctl reload` монитор уезжал на позицию из monitors.lua, а fix_origin возвращал его —
+-- курсор при этом прижимался к краю (оказывался справа), а открытый слой (quickseek) терял фокус.
+-- При первом старте мониторов ещё нет — тогда как раньше, поправит хук hyprland.start.
+function M.load()
+	local connected = {}
+	for _, m in ipairs(hl.get_monitors({ all = true })) do
+		if not m.is_mirror then
+			connected[#connected + 1] = m.name
+		end
+	end
+	for name, spec in pairs(specs()) do
+		local t = spec
+		if #connected == 1 and connected[1] == name then
+			t = copy(spec)
+			t.position = "0x0"
+		end
+		hl.monitor(t)
+	end
+end
+
 function M.setup()
+	M.load()
 	for _, event in ipairs({ "hyprland.start", "config.reloaded", "monitor.added", "monitor.removed" }) do
 		hl.on(event, M.fix_origin)
 	end
