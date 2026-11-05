@@ -1,0 +1,395 @@
+#!/usr/bin/env python3
+"""Liquid glass для hyprlock: стекло рисуем сами, заранее.
+
+hyprglass до экрана блокировки не дотягивается (session-lock — не окно и не слой, и Hyprland
+не показывает под ним ничего), поэтому стекло рисуем в картинки, как пресет `ios` из
+hypr/lua/glass.lua: размытие, линза по ободу (фон за краем «затягивается» внутрь),
+хроматическая аберрация, тонкая светлая кромка сверху-слева, лёгкая тень.
+
+Фон монитора (prepare, заранее: смена обоев, glass on, тема) = размытые и притемнённые обои + стеклянная
+пилюля под полем ввода; hyprlock показывает его 1:1 (blur_passes = 0). Часы — отдельная картинка с
+прозрачностью (image): watch рисует её параллельно запуску hyprlock и в начале каждой минуты, hyprlock
+раз в секунду сверяет её mtime (reload_time, без reload_cmd — без fork). Так блокировка ничего не ждёт.
+
+Задание пишет ~/.config/binc/lock в ~/.cache/hyprlock/glass/job.json:
+  {"monitors": [{name, width, height, scale, transform, source}], "glass": {clock: {...}, pill: {...}}}
+
+  lockglass prepare      — собрать фоны (долго, если обои новые) и вывести пути (JSON)
+  lockglass paths        — пути, если всё готово (быстро, без numpy); иначе код 3
+  lockglass clock        — нарисовать часы на текущую минуту
+  lockglass watch PID    — часы сейчас и каждую минуту, пока жив PID (hyprlock)
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import math
+import os
+import select
+import subprocess
+import sys
+import time
+
+if sys.argv[1:2] != ["paths"]:  # paths зовётся при каждой блокировке — без numpy (~0,1 с импорта)
+    import numpy as np
+    from PIL import Image, ImageChops, ImageDraw, ImageEnhance, ImageFilter, ImageFont, ImageOps
+
+HOME = os.path.expanduser("~")
+CACHE = os.environ.get("XDG_CACHE_HOME", f"{HOME}/.cache")
+DIR = f"{CACHE}/hyprlock/glass"
+JOB = f"{DIR}/job.json"
+STATE = f"{DIR}/state.json"
+VERSION = 5  # менять при правке рисования фона — сбрасывает кэш
+NOT_READY = 3
+
+# Фон (как было в hyprlock: blur_passes 2, contrast 0.89, brightness 0.82, vibrancy 0.17)
+BG_BLUR = 14  # σ в логических px
+BG_CONTRAST = 0.8916
+BG_BRIGHTNESS = 0.8172
+BG_VIBRANCY = 0.17
+BG_MAX_MEAN = 0.5  # светлые обои притемняем сильнее: текст на экране блокировки всегда светлый
+
+# Стекло (по мотивам пресетов ios / ios_small)
+REFRACTION = 1.15  # сдвиг выборки у самого края, в долях ширины обода
+CHROMA = 0.22
+GLASS_BLUR = 2.0  # доп. размытие под стеклом, логические px
+# Тонировка: часы — светлое стекло (текст всегда светлый), пилюля — притемнённое, под белый текст поля ввода
+STYLES = {
+    "clock": {"brightness": 1.2, "saturation": 1.05, "tint": 0.42},
+    "pill": {"brightness": 0.78, "saturation": 1.3, "tint": 0.04},
+}
+BEVEL = 0.9  # тонкая светлая кромка со стороны света
+GLOW = 0.28  # широкий блик по ободу со стороны света
+SHADE = 0.16  # притемнение обода с теневой стороны (объём)
+FRESNEL = 0.08
+SHADOW = 0.32  # мягкая тень под стеклом
+LIGHT = (-math.sqrt(0.5), -math.sqrt(0.5))  # свет сверху-слева (x вправо, y вниз)
+DIGITS = "0123456789:"  # высота картинки часов — по всем цифрам, чтобы size в hyprlock был постоянным
+
+
+# --- примитивы -----------------------------------------------------------------------------
+
+def _boxes(sigma: float, n: int = 3) -> list[int]:
+    w = int(np.sqrt(12 * sigma * sigma / n + 1))
+    if w % 2 == 0:
+        w -= 1
+    m = round((12 * sigma * sigma - n * w * w - 4 * n * w - 3 * n) / (-4 * w - 4))
+    return [w if i < m else w + 2 for i in range(n)]
+
+
+def _box(a: np.ndarray, w: int, axis: int) -> np.ndarray:
+    if w <= 1:
+        return a
+    a = np.moveaxis(a, axis, 0)
+    r = w // 2
+    p = np.pad(a, [(r + 1, r)] + [(0, 0)] * (a.ndim - 1), mode="edge")
+    c = np.cumsum(p, axis=0, dtype=np.float32)
+    return np.moveaxis((c[w:] - c[:-w]) / w, 0, axis)
+
+
+def blur(a: np.ndarray, sigma: float) -> np.ndarray:
+    """Гаусс тремя box-фильтрами (scipy нет), float32, 2D или HxWxC."""
+    if sigma < 0.3:
+        return a
+    for w in _boxes(sigma):
+        a = _box(_box(a, w, 0), w, 1)
+    return a
+
+
+def sample(img: np.ndarray, x: np.ndarray, y: np.ndarray) -> np.ndarray:
+    """Билинейная выборка img (HxW) в точках x, y."""
+    h, w = img.shape[:2]
+    x = np.clip(x, 0, w - 1.001)
+    y = np.clip(y, 0, h - 1.001)
+    x0 = x.astype(np.int32)
+    y0 = y.astype(np.int32)
+    fx = x - x0
+    fy = y - y0
+    a, b = img[y0, x0], img[y0, x0 + 1]
+    c, d = img[y0 + 1, x0], img[y0 + 1, x0 + 1]
+    return (a * (1 - fx) + b * fx) * (1 - fy) + (c * (1 - fx) + d * fx) * fy
+
+
+def saturate(rgb: np.ndarray, k: float) -> np.ndarray:
+    lum = rgb[..., 0] * 0.2126 + rgb[..., 1] * 0.7152 + rgb[..., 2] * 0.0722
+    return lum[..., None] + (rgb - lum[..., None]) * k
+
+
+def glass(region: np.ndarray, mask: np.ndarray, edge: float, scale: float, style: dict):
+    """Стекло формы mask (0..1, со сглаживанием) поверх region (HxWx3, 0..1).
+    edge — ширина обода-линзы в физических px; вокруг формы нужен запас ≥ 2·edge.
+    Возвращает (цвет стекла, тень): итог = mask·цвет + (1 − mask)·region·(1 − тень)."""
+    sigma = max(edge / 2, 1.0)
+    s = blur(mask, sigma)
+    gy, gx = np.gradient(s)
+    gn = np.sqrt(gx * gx + gy * gy) + 1e-6
+    nx, ny = gx / gn, gy / gn  # нормаль внутрь формы
+    t = np.clip((s - 0.5) * 2, 0, 1)  # 0 на кромке → 1 в глубине
+    rim = (1 - t) ** 2
+    dist = np.clip((s - 0.5) * 2.5066 * sigma, 0, None)  # ≈ расстояние до кромки у края
+
+    # Линза: у края берём фон снаружи формы — он «затягивается» в обод
+    src = blur(region, GLASS_BLUR * scale)
+    xx, yy = np.meshgrid(np.arange(region.shape[1], dtype=np.float32), np.arange(region.shape[0], dtype=np.float32))
+    mag = REFRACTION * edge * rim
+    out = np.empty_like(region)
+    for ch, k in enumerate((1 + CHROMA, 1.0, 1 - CHROMA)):
+        out[..., ch] = sample(src[..., ch], xx - nx * mag * k, yy - ny * mag * k)
+
+    out = saturate(out, style["saturation"]) * style["brightness"]
+    out = out + (1 - out) * style["tint"]
+
+    # Свет: наружная нормаль = −n
+    lit = np.clip(-(nx * LIGHT[0] + ny * LIGHT[1]), 0, 1)
+    dark = np.clip(nx * LIGHT[0] + ny * LIGHT[1], 0, 1)
+    thin = np.clip(1 - dist / (1.3 * scale), 0, 1)
+    light = BEVEL * lit**1.5 * thin + GLOW * lit * rim**1.5 + FRESNEL * rim**2
+    out = out * (1 - SHADE * dark * rim)[..., None]
+    out = np.clip(out + (1 - out) * np.clip(light, 0, 1)[..., None], 0, 1)
+
+    # Мягкая тень под формой (сдвиг вниз)
+    shadow = blur(np.roll(mask, int(round(3 * scale)), axis=0), 8 * scale) * SHADOW
+    return out, shadow
+
+
+# --- геометрия -----------------------------------------------------------------------------
+
+def viewport(m: dict) -> tuple[int, int]:
+    """Размер поверхности блокировки в физических px (как getViewport у hyprlock)."""
+    w, h = m["width"], m["height"]
+    return (h, w) if m.get("transform", 0) % 2 else (w, h)
+
+
+def crop(base: np.ndarray, x0: int, y0: int, w: int, h: int) -> np.ndarray:
+    """Кусок кадра (float 0..1); за краем кадра — повтор крайних пикселей."""
+    bh, bw = base.shape[:2]
+    cx0, cy0, cx1, cy1 = max(x0, 0), max(y0, 0), min(x0 + w, bw), min(y0 + h, bh)
+    reg = np.asarray(base[cy0:cy1, cx0:cx1], np.float32) / 255
+    pad = ((cy0 - y0, y0 + h - cy1), (cx0 - x0, x0 + w - cx1), (0, 0))
+    return np.pad(reg, pad, mode="edge") if any(a or b for a, b in pad) else reg
+
+
+def margin(edge: float, scale: float) -> int:
+    return int(edge * 2 + 12 * scale)  # запас вокруг формы под линзу и тень
+
+
+def pill_mask(w: int, h: int) -> np.ndarray:
+    ss = 4
+    im = Image.new("L", (w * ss, h * ss), 0)
+    ImageDraw.Draw(im).rounded_rectangle((0, 0, w * ss - 1, h * ss - 1), radius=h * ss // 2, fill=255)
+    return np.asarray(im.resize((w, h), Image.Resampling.LANCZOS), np.float32) / 255
+
+
+_fonts: dict = {}
+
+
+def font(spec: str, px: int) -> ImageFont.FreeTypeFont:
+    if (spec, px) not in _fonts:
+        path = subprocess.run(["fc-match", "-f", "%{file}", spec], capture_output=True, text=True, timeout=3).stdout
+        _fonts[spec, px] = ImageFont.truetype(path, px)
+    return _fonts[spec, px]
+
+
+def clock_geometry(m: dict, c: dict):
+    """Шрифт, края обода и картинки часов. Высота картинки постоянная (по всем цифрам) и чётная:
+    hyprlock масштабирует image так, чтобы меньшая сторона = size, — значит, 1:1 при size = высоте."""
+    scale = m["scale"]
+    f = font(c.get("font", "sans:bold"), round(c["size"] * scale))
+    edge = c.get("edge", 0.05) * f.size
+    _, top, _, bottom = f.getbbox(DIGITS)
+    pad = margin(edge, scale)
+    h = bottom - top + 2 + 2 * pad
+    return f, edge, pad, top, h + h % 2
+
+
+# --- фон -----------------------------------------------------------------------------------
+
+def monitor_key(m: dict, spec: dict) -> str:
+    st = os.stat(m["source"])
+    raw = json.dumps([VERSION, m["source"], st.st_mtime_ns, st.st_size, viewport(m), m["scale"], spec])
+    return hashlib.sha1(raw.encode()).hexdigest()[:16]
+
+
+def files(m: dict, key: str) -> dict:
+    return {
+        "bg": f"{DIR}/bg-{m['name']}-{key}.jpg",  # имя меняется с обоями — hyprlock не возьмёт старое из кэша
+        "base": f"{DIR}/base-{m['name']}-{key}.npy",  # то же без сжатия: из него рисуются часы
+        "clock": f"{DIR}/clock-{m['name']}.png",
+    }
+
+
+_sources: dict = {}
+
+
+def build_base(m: dict, spec: dict) -> np.ndarray:
+    vw, vh = viewport(m)
+    scale = m["scale"]
+    if m["source"] not in _sources:  # PNG 4K декодируется ~0,4 с — один раз на все мониторы
+        _sources[m["source"]] = Image.open(m["source"]).convert("RGB")
+    im = ImageOps.fit(_sources[m["source"]], (vw, vh), Image.Resampling.BILINEAR)
+    im = im.filter(ImageFilter.GaussianBlur(BG_BLUR * scale))
+    im = ImageEnhance.Color(im).enhance(1 + BG_VIBRANCY)
+    k = BG_BRIGHTNESS
+    mean = float(np.asarray(im.reduce(8), np.float32).mean()) / 255
+    mean = (mean - 0.5) * BG_CONTRAST + 0.5
+    if mean * k > BG_MAX_MEAN:
+        k = BG_MAX_MEAN / mean
+    lut = [round(min(max(((v / 255 - 0.5) * BG_CONTRAST + 0.5) * k, 0), 1) * 255) for v in range(256)]
+    im = im.point(lut * 3)
+    # Шум против полос в JPEG (как noise у hyprlock)
+    noise = Image.effect_noise((vw, vh), 0.8)
+    im = Image.merge("RGB", [ImageChops.add(c, noise, 1, -128) for c in im.split()])
+    base = np.array(im)
+
+    if p := spec.get("pill"):
+        w, h = round(p["w"] * scale), round(p["h"] * scale)
+        edge = p.get("edge", 10) * scale
+        pad = margin(edge, scale)
+        x0 = round(vw / 2 - w / 2) - pad
+        y0 = round(vh / 2 - p["y"] * scale - h / 2) - pad  # hyprlock: y вверх от центра
+        mask = np.pad(pill_mask(w, h), pad)
+        region = crop(base, x0, y0, mask.shape[1], mask.shape[0])
+        g, sh = glass(region, mask, edge, scale, STYLES["pill"])
+        a = mask[..., None]
+        out = g * a + region * (1 - sh * (1 - mask))[..., None] * (1 - a)
+        cy0, cx0 = max(y0, 0), max(x0, 0)
+        cy1, cx1 = min(y0 + mask.shape[0], vh), min(x0 + mask.shape[1], vw)
+        base[cy0:cy1, cx0:cx1] = (out[cy0 - y0:cy1 - y0, cx0 - x0:cx1 - x0] * 255 + 0.5).astype(np.uint8)
+    return base
+
+
+def load_job() -> dict:
+    with open(JOB) as f:
+        return json.load(f)
+
+
+def result(job: dict, state: dict) -> dict:
+    return {m["name"]: state[m["name"]] for m in job["monitors"]}
+
+
+def prepare() -> dict:
+    job = load_job()
+    state, keep = {}, {JOB, STATE}
+    for m in job["monitors"]:
+        key = monitor_key(m, job["glass"])
+        fs = files(m, key)
+        if not (os.path.exists(fs["bg"]) and os.path.exists(fs["base"])):
+            base = build_base(m, job["glass"])
+            np.save(f"{fs['base']}.tmp.npy", base)
+            Image.fromarray(base).save(f"{fs['bg']}.tmp", "JPEG", quality=93, subsampling=0)
+            os.replace(f"{fs['base']}.tmp.npy", fs["base"])
+            os.replace(f"{fs['bg']}.tmp", fs["bg"])
+        size = clock_geometry(m, job["glass"]["clock"])[4] if job["glass"].get("clock") else 0
+        state[m["name"]] = {"key": key, "bg": fs["bg"], "clock": fs["clock"], "clock_size": size}
+        keep |= {fs["bg"], fs["base"], fs["clock"]}
+    with open(f"{STATE}.tmp", "w") as f:
+        json.dump(state, f)
+    os.replace(f"{STATE}.tmp", STATE)
+    for name in os.listdir(DIR):
+        if f"{DIR}/{name}" not in keep:
+            os.remove(f"{DIR}/{name}")
+    return result(job, state)
+
+
+def paths() -> dict:
+    """Пути из state.json, если фоны собраны под текущие обои и мониторы; иначе SystemExit(3)."""
+    job = load_job()
+    try:
+        with open(STATE) as f:
+            state = json.load(f)
+        for m in job["monitors"]:
+            st = state[m["name"]]
+            if st["key"] != monitor_key(m, job["glass"]) or not os.path.exists(st["bg"]):
+                raise KeyError(m["name"])
+    except (OSError, ValueError, KeyError):
+        sys.exit(NOT_READY)
+    return result(job, state)
+
+
+# --- часы ----------------------------------------------------------------------------------
+
+def render_clock(m: dict, spec: dict, st: dict) -> None:
+    """Картинка часов с прозрачностью: стекло цифр + тень, ровно над тем же местом фона."""
+    c = spec["clock"]
+    scale = m["scale"]
+    vw, vh = viewport(m)
+    f, edge, pad, top, h = clock_geometry(m, c)
+    text = time.strftime(c.get("format", "%H:%M"))
+    left, _, right, _ = f.getbbox(text)
+    w = right - left + 2 + 2 * pad
+    w += w % 2
+    im = Image.new("L", (w, h), 0)
+    ImageDraw.Draw(im).text((pad + 1 - left, pad + 1 - top), text, font=f, fill=255)
+    mask = np.asarray(im, np.float32) / 255
+
+    # Позиция как у hyprlock (posFromHVAlign + round, y вверх): image по центру со сдвигом position
+    oy = round(c["y"] * scale)
+    x0 = math.floor(vw / 2 - w / 2 + 0.5)
+    y0 = vh - math.floor(oy + vh / 2 - h / 2 + 0.5) - h
+    base = np.load(files(m, st["key"])["base"], mmap_mode="r")
+    region = crop(base, x0, y0, w, h)
+    g, sh = glass(region, mask, edge, scale, STYLES["clock"])
+
+    # mask·g + (1 − mask)·фон·(1 − sh) = alpha·C + (1 − alpha)·фон
+    alpha = mask + (1 - mask) * sh
+    color = g * (mask / np.maximum(alpha, 1e-6))[..., None]
+    rgba = np.dstack([color, alpha])
+    out = st["clock"]
+    Image.fromarray((np.clip(rgba, 0, 1) * 255 + 0.5).astype(np.uint8), "RGBA").save(f"{out}.tmp", "PNG", compress_level=1)
+    os.replace(f"{out}.tmp", out)
+
+
+def clocks() -> None:
+    job = load_job()
+    if not job["glass"].get("clock"):
+        return
+    with open(STATE) as f:
+        state = json.load(f)
+    for m in job["monitors"]:
+        if m["name"] in state:
+            render_clock(m, job["glass"], state[m["name"]])
+
+
+def watch(pid: int) -> None:
+    """Часы сразу и в начале каждой минуты, пока жив hyprlock. Таймер по CLOCK_REALTIME с абсолютным
+    сроком: после сна срабатывает сразу (монотонный таймер «проспал» бы всё время сна)."""
+    try:
+        pidfd = os.pidfd_open(pid)
+    except OSError:
+        return
+    tfd = os.timerfd_create(time.CLOCK_REALTIME)
+    flags = os.TFD_TIMER_ABSTIME | os.TFD_TIMER_CANCEL_ON_SET
+    while True:
+        try:
+            clocks()
+        except Exception as e:  # noqa: BLE001 — часы застынут, блокировка продолжит работать
+            print(f"lockglass: {e}", file=sys.stderr)
+        os.timerfd_settime(tfd, flags=flags, initial=(int(time.time()) // 60 + 1) * 60 + 0.05)
+        ready, _, _ = select.select([pidfd, tfd], [], [])
+        if pidfd in ready:
+            return
+        try:
+            os.read(tfd, 8)
+        except OSError:  # часы перевели (ECANCELED) — просто перерисовать
+            pass
+
+
+def main() -> None:
+    os.makedirs(DIR, exist_ok=True)
+    cmd = sys.argv[1] if len(sys.argv) > 1 else ""
+    if cmd == "prepare":
+        print(json.dumps(prepare()))
+    elif cmd == "paths":
+        print(json.dumps(paths()))
+    elif cmd == "clock":
+        clocks()
+    elif cmd == "watch" and len(sys.argv) > 2:
+        watch(int(sys.argv[2]))
+    else:
+        print(__doc__, file=sys.stderr)
+        sys.exit(2)
+
+
+if __name__ == "__main__":
+    main()

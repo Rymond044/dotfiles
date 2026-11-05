@@ -1,9 +1,15 @@
-{% set light = ((background|red|int) + (background|green|int) + (background|blue|int)) > 384 -%}
 # Шаблон hyprlock. wallust → ~/.cache/wallust/hyprlock.conf, а ~/.config/binc/lock при каждой
 # блокировке собирает из него ~/.config/hypr/hyprlock.conf под текущие мониторы:
 # блок после маркера @PER-MONITOR@ повторяется для каждого монитора, @MONITOR@ → имя монитора,
 # @WALLPAPER@ → ~/Wallpapers/current, @N@ → N × scale монитора (hyprlock считает в физических пикселях, а размеры здесь логические —
 # так виджеты одинаковые на eDP ×2, HDMI ×1.25 и вертикальном DP-1 ×1).
+# Liquid glass (binc/glass on): блоки между «# @IF-GLASS@» и «# @END@» остаются только со стеклом,
+# «# @IF-NOGLASS@» … «# @END@» — только без него. Со стеклом кадр фона каждого монитора рисует
+# ~/.config/binc/lockglass: фон (@FRAME@) = обои + стеклянная пилюля под полем ввода, часы (@CLOCK@) — картинка
+# из стеклянных цифр; геометрия — в строке @GLASS@ (логические px, y вверх от центра, как position у hyprlock;
+# y часов продублирован в position у image).
+# Текст всегда светлый, от темы не зависит: фон притемняется (светлые обои — сильнее).
+# @GLASS@ {"clock": {"y": 290, "size": 120, "font": "SF Pro Display:style=Bold", "format": "%-I:%M"}, "pill": {"y": -178, "w": 230, "h": 44}}
 
 # GENERAL & ANIMATIONS (общие настройки)
 general {
@@ -27,27 +33,49 @@ auth {
     }
 }
 
+# @IF-NOGLASS@
 # Фон — на все мониторы
 background {
     monitor =
     path = @WALLPAPER@
     blur_passes = 2
     contrast = 0.8916
-{% if light %}
-    brightness = 0.95
-{% else %}
     brightness = 0.8172
-{% endif %}
     vibrancy = 0.1696
     vibrancy_darkness = 0.0
 }
+# @END@
 
 # @PER-MONITOR@
 
+# @IF-GLASS@
+# Фон со стеклянной пилюлей от lockglass (готовится заранее, уже размыт)
+background {
+    monitor = @MONITOR@
+    path = @FRAME@
+    blur_passes = 0
+}
+
+# Стеклянные цифры: картинка ровно над тем же местом фона (size = её высота → 1:1). lockglass watch
+# рисует её при запуске и в начале каждой минуты, hyprlock раз в секунду сверяет mtime
+image {
+    monitor = @MONITOR@
+    path = @CLOCK@
+    size = @CLOCKSIZE@
+    rounding = 0
+    border_size = 0
+    reload_time = 1
+    position = 0, @290@
+    halign = center
+    valign = center
+}
+# @END@
+
+# @IF-NOGLASS@
 label {
     monitor = @MONITOR@
     text = cmd[update:1000] echo "$(date +"%-I:%M%p")"
-    color = rgba({{foreground | rgb}}, 0.75)
+    color = rgba(255, 255, 255, 0.85)
     font_size = @70@
     font_family = SF Pro Display Bold
     # от центра, как и дата: при привязке к верху на высоком DP-1 часы уезжали от даты
@@ -55,22 +83,23 @@ label {
     halign = center
     valign = center
 }
+# @END@
 
 label {
     monitor = @MONITOR@
     text = $LAYOUT
-    color = rgba({{foreground | rgb}}, 0.65)
+    color = rgba(255, 255, 255, 0.7)
     font_size = @12.5@
     font_family = system-ui
-    position = 0, @-210@
+    position = 0, @-222@
     halign = center
     valign = center
 }
 
 label {
     monitor = @MONITOR@
-    text = cmd[update:1000] echo "<span>$(date '+%A, %d %B')</span>"
-    color = rgba({{foreground | rgb}}, 0.65)
+    text = cmd[update:60000] echo "<span>$(date '+%A, %d %B')</span>"
+    color = rgba(255, 255, 255, 0.85)
     font_size = @17.5@
     font_family = system-ui
     position = 0, @200@
@@ -93,7 +122,7 @@ image {
 label {
     monitor = @MONITOR@
     text = Hello, $USER
-    color = rgba({{foreground | rgb}}, 0.65)
+    color = rgba(255, 255, 255, 0.85)
     font_size = @17.5@
     font_family = system-ui
     position = 0, @-130@
@@ -101,21 +130,34 @@ label {
     valign = center
 }
 
+# @IF-GLASS@
+# Поле ввода прозрачное, под ним стеклянная пилюля из кадра (тот же размер, полное скругление).
+# Обводка видна только при проверке/ошибке (check_color/fail_color по умолчанию)
+input-field {
+    monitor = @MONITOR@
+    size = @230@, @44@
+    outline_thickness = @1@
+    outer_color = rgba(0, 0, 0, 0)
+    inner_color = rgba(0, 0, 0, 0)
+# @END@
+# @IF-NOGLASS@
 input-field {
     monitor = @MONITOR@
     size = @160@, @35@
     outline_thickness = @1@
+    outer_color = rgba(0, 0, 0, 0)
+    inner_color = rgba(0, 0, 0, 0.35)
+# @END@
+    rounding = -1
     dots_size = 0.2
     dots_spacing = 0.2
     dots_center = true
-    outer_color = rgba({{color0 | rgb}}, 0)
-    inner_color = rgba({{color0 | rgb}}, 0.35)
-    font_color = rgba({{foreground | rgb}}, 1)
+    font_color = rgba(255, 255, 255, 1)
     fade_on_empty = false
     font_family = system-ui
-    placeholder_text = <i><span foreground="##{{foreground | strip}}99">Touch ID or Password</span></i>
+    placeholder_text = <i><span foreground="##ffffffaa">Touch ID or Password</span></i>
     hide_input = false
-    position = 0, @-170@
+    position = 0, @-178@
     halign = center
     valign = center
 }

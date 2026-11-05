@@ -11,6 +11,10 @@ hypridle (lock_cmd) ← `loginctl lock-session` ← таймаут, сон/кр�
 PNG 3840×2160 на каждый монитор делал первый кадр таким тяжёлым, что fade-in успевал пройти
 до него, и блокировка появлялась рывком.
 
+Liquid glass (binc/glass on): фон со стеклянной пилюлей ~/.config/binc/lockglass готовит заранее (--prepare),
+стеклянные часы рисует `lockglass watch` параллельно запуску hyprlock и раз в минуту. Блокировка ничего
+не ждёт: если фон под текущие обои/мониторы ещё не готов — эта блокировка без стекла, а prepare уходит в фон.
+
 «Уже заблокировано?» спрашиваем у hypridle (D-Bus ScreenSaver.GetActive), а не через pidof: pidof ловил
 зависший hyprlock и молча не блокировал вообще. Второй hyprlock поверх блокировки запускать нельзя —
 он может зависнуть навсегда (см. main).
@@ -23,8 +27,11 @@ import hashlib
 import json
 import os
 import re
+import struct
 import subprocess
 import sys
+import time
+import zlib
 
 HOME = os.path.expanduser("~")
 CACHE = os.environ.get("XDG_CACHE_HOME", f"{HOME}/.cache")
@@ -34,6 +41,9 @@ CONFIG = f"{HOME}/.config/hypr/hyprlock.conf"
 MARKER = "# @PER-MONITOR@"
 BG_MAX = 1920
 WALLS_OUTPUTS = f"{CACHE}/walls/outputs.json"  # кадры для портретных мониторов от walls apply
+GLASS_OFF = f"{os.environ.get('XDG_STATE_HOME', f'{HOME}/.local/state')}/glass/off"
+LOCKGLASS = f"{HOME}/.config/binc/lockglass"
+GLASS_JOB = f"{BG_DIR}/glass/job.json"
 USED_BG: set[str] = set()
 
 
@@ -58,23 +68,29 @@ def small_background(path: str) -> str:
         return path
 
 
+def walls_outputs() -> dict[str, str]:
+    """Кадры, которые walls apply поставил на портретные мониторы: {монитор: путь}. Только если они
+    сделаны из текущих обоев: обои могли поставить в обход walls (waypaper) — тогда их нет."""
+    with open(WALLS_OUTPUTS) as f:
+        outs = json.load(f)
+    with open(f"{HOME}/Wallpapers/current", "rb") as f:
+        if hashlib.sha1(f.read()).hexdigest() != outs["hash"]:
+            return {}
+    return {
+        name: path for name, path in outs["outputs"].items()
+        if path != outs["source"] and os.path.exists(path)
+    }
+
+
 def portrait_backgrounds(head: str) -> str:
     """Свой фон для портретных мониторов — тот же кадр, что поставил на них walls apply.
-    Блок идёт после общего (monitor =) и рисуется поверх него. Только если кадры сделаны из
-    текущих обоев: обои могли поставить в обход walls (waypaper) — тогда остаётся общий фон."""
+    Блок идёт после общего (monitor =) и рисуется поверх него."""
     try:
-        with open(WALLS_OUTPUTS) as f:
-            outs = json.load(f)
-        with open(f"{HOME}/Wallpapers/current", "rb") as f:
-            if hashlib.sha1(f.read()).hexdigest() != outs["hash"]:
-                return ""
         bg = re.search(r"^background\s*\{.*?^\}", head, flags=re.M | re.S)
         if not bg:
             return ""
         extra = []
-        for name, path in outs["outputs"].items():
-            if path == outs["source"] or not os.path.exists(path):
-                continue
+        for name, path in walls_outputs().items():
             block = re.sub(r"^(\s*monitor\s*=).*$", rf"\1 {name}", bg.group(0), flags=re.M)
             block = re.sub(r"^(\s*path\s*=).*$", rf"\1 {small_background(path)}", block, flags=re.M)
             extra.append(f"\n# Портретный кадр для {name} (walls)\n{block}\n")
@@ -84,9 +100,66 @@ def portrait_backgrounds(head: str) -> str:
         return ""
 
 
-def build_config() -> None:
+def pick_blocks(text: str, glass: bool) -> str:
+    """Оставить блоки «# @IF-GLASS@ … # @END@» или «# @IF-NOGLASS@ … # @END@» по режиму."""
+    out, keep = [], True
+    for line in text.splitlines(keepends=True):
+        tag = line.strip()
+        if tag in ("# @IF-GLASS@", "# @IF-NOGLASS@"):
+            keep = (tag == "# @IF-GLASS@") == glass
+        elif tag == "# @END@":
+            keep = True
+        elif keep:
+            out.append(line)
+    return "".join(out)
+
+
+def glass_paths(spec: dict, monitors: list, prepare: bool) -> dict[str, dict]:
+    """Файлы стекла от lockglass: {монитор: {bg, clock, clock_size}}. При блокировке — только если всё
+    уже собрано (lockglass paths, без numpy), при --prepare — собрать."""
+    try:
+        portrait = walls_outputs()
+    except Exception:  # noqa: BLE001
+        portrait = {}
+    job = {
+        "monitors": [
+            {k: m[k] for k in ("name", "width", "height", "scale", "transform")}
+            | {"source": portrait.get(m["name"], f"{HOME}/Wallpapers/current")}
+            for m in monitors
+        ],
+        "glass": spec,
+    }
+    os.makedirs(os.path.dirname(GLASS_JOB), exist_ok=True)
+    with open(f"{GLASS_JOB}.tmp", "w") as f:
+        json.dump(job, f)
+    os.replace(f"{GLASS_JOB}.tmp", GLASS_JOB)
+    out = subprocess.run([LOCKGLASS, "prepare" if prepare else "paths"], capture_output=True, text=True, timeout=30)
+    if out.returncode == 3:
+        raise RuntimeError("фон ещё не собран")
+    if out.returncode:
+        raise RuntimeError(out.stderr.strip().splitlines()[-1] if out.stderr.strip() else "lockglass упал")
+    return json.loads(out.stdout)
+
+
+def build_config(glass: bool, prepare: bool) -> dict:
+    """Собрать конфиг; вернуть файлы стекла ({} — конфиг без стекла)."""
     with open(TEMPLATE) as f:
-        head, sep, block = f.read().partition(MARKER)
+        text = f.read()
+    spec = re.search(r"^# @GLASS@ (.*)$", text, flags=re.M)
+    monitors = json.loads(
+        subprocess.run(["hyprctl", "monitors", "-j"], capture_output=True, text=True, timeout=2, check=True).stdout
+    )
+    frames = {}
+    if glass and spec:
+        try:
+            frames = glass_paths(json.loads(spec.group(1)), monitors, prepare)
+        except Exception as e:  # noqa: BLE001 — без стекла, но заблокировать
+            print(f"lock: стекло не готово ({e}), без него", file=sys.stderr)
+            if not prepare:  # к следующей блокировке будет
+                subprocess.Popen([sys.argv[0], "--prepare"], stdin=subprocess.DEVNULL, start_new_session=True)
+    glass = bool(frames)
+
+    head, sep, block = pick_blocks(text, glass).partition(MARKER)
     if not sep:
         raise ValueError(f"нет маркера {MARKER} в {TEMPLATE}")
 
@@ -98,20 +171,20 @@ def build_config() -> None:
         head,
         flags=re.M,
     )
-    head += portrait_backgrounds(head)
+    if not glass:
+        head += portrait_backgrounds(head)
 
-    monitors = json.loads(
-        subprocess.run(["hyprctl", "monitors", "-j"], capture_output=True, text=True, timeout=2, check=True).stdout
-    )
     parts = [head]
     for m in monitors:
         scale = m["scale"]
-        text = block.replace("@MONITOR@", m["name"])
+        g = frames.get(m["name"], {})
+        text = block.replace("@MONITOR@", m["name"]).replace("@FRAME@", g.get("bg", ""))
+        text = text.replace("@CLOCK@", g.get("clock", "")).replace("@CLOCKSIZE@", str(g.get("clock_size", 0)))
         text = re.sub(r"@(-?\d+(?:\.\d+)?)@", lambda x: str(round(float(x.group(1)) * scale)), text)
         parts.append(f"# --- {m['name']} (scale {scale}) ---{text}")
 
     for old in os.listdir(BG_DIR) if os.path.isdir(BG_DIR) else []:
-        if f"{BG_DIR}/{old}" not in USED_BG:
+        if f"{BG_DIR}/{old}" not in USED_BG and os.path.isfile(f"{BG_DIR}/{old}"):
             os.remove(f"{BG_DIR}/{old}")
 
     tmp = f"{CONFIG}.tmp"
@@ -119,6 +192,20 @@ def build_config() -> None:
         f.write("# Сгенерировано ~/.config/binc/lock из шаблона wallust. Не править руками.\n")
         f.write("".join(parts))
     os.replace(tmp, CONFIG)
+    return frames
+
+
+def blank_png(path: str, size: int) -> None:
+    """Прозрачный PNG size×size (без PIL: lock не должен ждать импортов)."""
+    def chunk(kind: bytes, data: bytes) -> bytes:
+        return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
+
+    raw = (b"\0" + b"\0" * 4 * size) * size
+    png = (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", size, size, 8, 6, 0, 0, 0))
+           + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b""))
+    with open(f"{path}.tmp", "wb") as f:
+        f.write(png)
+    os.replace(f"{path}.tmp", path)
 
 
 def session_locked() -> bool:
@@ -145,14 +232,31 @@ def main() -> None:
     if not prepare and session_locked():
         print("lock: сессия уже заблокирована, второй hyprlock не нужен", file=sys.stderr)
         return
+    glass = {}
     try:
-        build_config()
+        glass = build_config(not os.path.exists(GLASS_OFF), prepare)
     except Exception as e:  # noqa: BLE001 — блокировка важнее красивой вёрстки
         print(f"lock: не удалось собрать конфиг ({e}), блокирую со старым", file=sys.stderr)
         if prepare:
             sys.exit(1)
     if prepare:
         return
+    if glass:
+        # Часы прошлой блокировки показали бы старое время → прозрачная заглушка, пока watch рисует новые.
+        # Удалять нельзя: картинку, которой не было при старте, hyprlock 0.9.6 потом так и не подгружает
+        now = time.localtime()
+        for g in glass.values():
+            try:
+                if time.localtime(os.stat(g["clock"]).st_mtime)[:5] == now[:5]:
+                    continue
+            except OSError:
+                pass
+            blank_png(g["clock"], g["clock_size"])
+        # exec ниже сохраняет PID — watch ждёт выхода самого hyprlock
+        subprocess.Popen(
+            [LOCKGLASS, "watch", str(os.getpid())],
+            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, start_new_session=True,
+        )
     os.execvp("hyprlock", ["hyprlock", *sys.argv[1:]])
 
 
