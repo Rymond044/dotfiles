@@ -23,7 +23,7 @@ monitors_rows() {
 	done < <(monitors_list)
 	row "$(lbl 󰌢 "Laptop screen only")" monitors_only_internal
 	row "$(lbl 󰍺 "All monitors")" monitors_all
-	row "$(lbl 󰒓 "Arrange (nwg-displays)")" launch nwg-displays
+	row "$(lbl 󰒓 "Arrange monitors")" launch nwg-displays
 }
 
 monitors_set() { # ИМЯ on|off

@@ -3,11 +3,11 @@
 
 utils_rows() {
 	TITLE=Utilities
-	row "$(lbl 󰩭 "Screenshot" "region / window")" utils_capture
+	row "$(lbl 󰩭 "Screenshot")" utils_capture
 	row "$(lbl 󰹑 "Screenshot full screen")" utils_capture fullscreen
-	row "$(lbl 󰊄 "Text from screen" "OCR → clipboard")" launch sh -c 'sleep 0.3; exec ~/.config/binc/ocr'
-	row "$(lbl 󰅌 "Clipboard history" clipse)" utils_clipboard
-	row "$(lbl 󰈊 "Color picker" "→ clipboard")" utils_picker
+	row "$(lbl 󰊄 "Text from screen")" launch sh -c 'sleep 0.3; exec ~/.config/binc/ocr'
+	row "$(lbl 󰅌 "Clipboard history")" utils_clipboard
+	row "$(lbl 󰈊 "Color picker")" utils_picker
 }
 
 utils_capture() { # [режим hyprcapture]
