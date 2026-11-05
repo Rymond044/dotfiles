@@ -572,6 +572,70 @@ def reload_apps() -> None:
                    shell=True, capture_output=True)
 
 
+# ---------------------------------------------------------------- терминальные цвета
+# Цвета wallust не знают смысла ANSI: «красный» мог выйти синим, «зелёный» — серо-фиолетовым,
+# и diff/ошибки не различались. Для терминалов и nvim — свои 1–6 и 9–14: оттенок по смыслу
+# (LCh), сдвинутый к тону обоев, сочность — по цветности обоев, светлота подбирается под фон
+# этих обоев до заданного контраста. Акценты интерфейса (color1 = главный акцент) не трогаем —
+# эта палитра идёт только в шаблоны TERMINAL_TEMPLATES.
+ANSI_HUES = {1: 30, 2: 140, 3: 88, 4: 265, 5: 330, 6: 205}  # red green yellow blue magenta cyan
+ANSI_HARMONIZE = 12  # максимум сдвига оттенка к тону обоев, градусов
+# режим → (контраст обычных, контраст ярких, хрома обычных, хрома ярких)
+ANSI_TUNE = {"light": (5.0, 4.5, 48, 58), "dark": (7.0, 9.5, 40, 46)}
+# Фон терминала — не голый белый/чёрный, а с оттенком акцента: режим → (сдвиг светлоты, хрома фона, хрома color0)
+ANSI_TINT = {"light": (-1.5, 12.0, 15.0), "dark": (0.0, 9.0, 12.0)}
+TERMINAL_TEMPLATES = ("kitty.conf.j2", "ghostty.j2", "neopywal.vim")
+
+
+def harmonize(hue: float, toward: float, limit: float = ANSI_HARMONIZE) -> float:
+    d = (toward - hue + 180) % 360 - 180
+    return (hue + max(-limit, min(limit, d * 0.5))) % 360
+
+
+def at_contrast(C: float, H: float, bg: str, ratio: float) -> str:
+    """Цвет с оттенком H и хромой C, ближайший по светлоте к фону, но с контрастом ≥ ratio."""
+    light_bg = luminance(bg) > 0.18
+    lo, hi = 0.0, 100.0
+    for _ in range(30):
+        mid = (lo + hi) / 2
+        ok = contrast(from_lch(mid, C, H), bg) >= ratio
+        if light_bg:
+            lo, hi = (mid, hi) if ok else (lo, mid)
+        else:
+            lo, hi = (lo, mid) if ok else (mid, hi)
+    return from_lch(lo if light_bg else hi, C, H)
+
+
+def ansi_scheme(scheme: dict, digest: str | None, mode: str) -> dict:
+    hue, chroma = tint_hue(digest, scheme)
+    vivid = 0.65 + 0.35 * min(1.0, chroma / 35)  # блёклые обои — спокойнее цвета
+    normal, bright, c_normal, c_bright = ANSI_TUNE[mode]
+    accent = lch(scheme["color1"])[2]
+    shift, tint_bg, tint_surface = ANSI_TINT[mode]
+    s = dict(scheme)
+    L, C, _ = lch(scheme["background"])
+    s["background"] = bg = from_lch(L + shift, max(C, tint_bg), accent)
+    L, C, _ = lch(scheme["color0"])
+    s["color0"] = from_lch(L + shift, max(C, tint_surface), accent)
+    for i, base in ANSI_HUES.items():
+        H = harmonize(base, hue)
+        s[f"color{i}"] = at_contrast(c_normal * vivid, H, bg, normal)
+        s[f"color{i + 8}"] = at_contrast(c_bright * vivid, H, bg, bright)
+    s["color8"] = with_contrast(scheme["color8"], bg, 4.5)  # комментарии в nvim
+    return s
+
+
+def terminal_targets() -> dict[str, str]:
+    """Шаблон → цель из основного wallust.toml (там же, куда их пишет обычный прогон)."""
+    try:
+        with open(f"{CONFIG_HOME}/wallust/wallust.toml", "rb") as f:
+            tpl = tomllib.load(f).get("templates", {})
+    except (OSError, tomllib.TOMLDecodeError):
+        return {}
+    return {t["template"]: os.path.expanduser(t["target"]) for t in tpl.values()
+            if isinstance(t, dict) and t.get("template") in TERMINAL_TEMPLATES}
+
+
 def apply(digest: str | None, reload: bool = True) -> dict:
     digest = wall_id(digest)
     st = resolve(digest)
@@ -589,6 +653,7 @@ def apply(digest: str | None, reload: bool = True) -> dict:
     r = run("wallust", "cs", "-q", "-s", "-f", "pywal", SCHEME)
     if r.returncode:
         log(f"wallust cs: {r.stderr.strip()}")
+    render(ansi_scheme(scheme, digest, mode), terminal_targets(), "ansi")  # поверх обычного прогона
     write_libadwaita(mode, schemes["light" if mode == "dark" else "dark"])
 
     icons = icon_color(scheme)

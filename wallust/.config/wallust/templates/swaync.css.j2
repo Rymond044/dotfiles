@@ -23,3 +23,13 @@
 @define-color red-hover {{color9}};
 @define-color green-base {{color2}};
 @define-color blue-base {{color4}};
+
+/* Встроенный стиль swaync 0.12 (/etc/xdg/swaync/style.css) красит подписи через CSS-переменные,
+   а не @define-color: --text-color там белый → в светлой теме, например, «Do Not Disturb» не видно. */
+:root {
+    --text-color: {{foreground}};
+    --text-color-disabled: {% if light %}{{color8}}{% else %}{{color7}}{% endif %};
+{%- if light %}
+    --noti-bg-focus: rgba({{foreground | rgb}}, 0.08);  /* фокус группы: по умолчанию тёмно-серый 0.6 */
+{%- endif %}
+}
