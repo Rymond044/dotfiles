@@ -30,6 +30,7 @@ hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" })):remove()
 hl.bind(mainMod .. " + SHIFT + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(menu))
+hl.bind(mainMod .. " + ALT + Space", hl.dsp.global("quickseek:toggle")) -- ~/Apps/quickseek, пока rofi не убран
 hl.bind(mainMod .. " + ESCAPE", hl.dsp.exec_cmd(powermenu))
 hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd(browser))
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))

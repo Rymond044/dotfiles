@@ -148,6 +148,7 @@ hg.layer("rofi", { preset = "ios_panel" })
 hg.layer("swaync-control-center", { preset = "ios_panel" })
 hg.layer("swaync-notification-window", { preset = "ios_small" })
 hg.layer("walls", { preset = "ios_panel" })
+hg.layer("quickseek", { preset = "ios_panel" })
 
 -- Полноэкранное и видео стекло не нужно (и не видно)
 hl.window_rule({ name = "glass_off_fullscreen", match = { fullscreen = true }, tag = "+hyprglass_disabled" })

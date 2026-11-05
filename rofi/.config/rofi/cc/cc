@@ -14,6 +14,9 @@ source "$CC_DIR/lib.sh"
 for f in "$CC_DIR"/sections/*.sh; do source "$f"; done
 
 SECTIONS=(wifi bt audio toggles monitors power system utils appearance)
+declare -A SEC_NAME=([wifi]=Wi-Fi [bt]=Bluetooth [audio]=Sound [toggles]=Toggles [monitors]=Monitors
+	[power]=Power [system]=System [utils]=Utilities [appearance]=Appearance)
+declare -A SEC_ICON=([wifi]=󰖩 [bt]=󰂯 [audio]=󰕾 [toggles]=󰔡 [monitors]=󰍹 [power]=󰂄 [system]=󰒓 [utils]=󰆍 [appearance]=󰸉)
 
 # section РАЗДЕЛ — подменю в цикле: после действия перерисовывается со свежим статусом.
 section() {
@@ -27,16 +30,14 @@ section() {
 	CC_SECTION= SEL=$keep
 }
 
+# Статус раздела — РАЗДЕЛ_status, если есть
+sec_status() { declare -F "$1_status" >/dev/null && "$1_status"; return 0; }
+
 main_rows() {
-	row "$(lbl 󰖩 Wi-Fi "$(wifi_status)")" section wifi
-	row "$(lbl 󰂯 Bluetooth "$(bt_status)")" section bt
-	row "$(lbl 󰕾 Sound "$(audio_status)")" section audio
-	row "$(lbl 󰔡 Toggles "$(toggles_status)")" section toggles
-	row "$(lbl 󰍹 Monitors "$(monitors_status)")" section monitors
-	row "$(lbl 󰂄 Power "$(power_status)")" section power
-	row "$(lbl 󰒓 System)" section system
-	row "$(lbl 󰆍 Utilities)" section utils
-	row "$(lbl 󰸉 Appearance "$(appearance_status)")" section appearance
+	local s
+	for s in "${SECTIONS[@]}"; do
+		row "$(lbl "${SEC_ICON[$s]}" "${SEC_NAME[$s]}" "$(sec_status "$s")")" section "$s"
+	done
 }
 
 main_mesg() {
@@ -51,6 +52,13 @@ main_mesg() {
 	printf '󰁹 %s %% · %s · up %s' "$cap" "$st" \
 		"$( ((up >= 86400)) && printf '%dd ' $((up / 86400)))$((up % 86400 / 3600))h $((up % 3600 / 60))m"
 }
+
+# Плагин quickseek (~/Apps/quickseek): cc quickseek list | run ID
+if [[ ${1:-} == quickseek ]]; then
+	source "$CC_DIR/quickseek.sh"
+	qs_main "${@:2}"
+	exit
+fi
 
 if (($# == 0)); then
 	while :; do

@@ -3,7 +3,7 @@ BINC=~/.config/binc
 
 system_rows() {
 	TITLE=System
-	MESG="Packages: $(pacman -Qq | wc -l) · AUR: $(pacman -Qqm | wc -l)"
+	[[ ${CC_QS:-} ]] || MESG="Packages: $(pacman -Qq | wc -l) · AUR: $(pacman -Qqm | wc -l)"
 	row "$(lbl 󰚰 "Update system")" term install sh -c 'yay -Syu; echo; read -rp "Press Enter to close"'
 	row "$(lbl 󰏗 "Install package")" term install "$BINC/pkg_install.sh"
 	row "$(lbl 󰣇 "Install from AUR")" term install "$BINC/pkg_aur_install.sh"

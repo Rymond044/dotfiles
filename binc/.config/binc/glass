@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Liquid glass одним переключателем: плагин hyprglass + полупрозрачные waybar, swaync и rofi.
+# Liquid glass одним переключателем: плагин hyprglass + полупрозрачные waybar, swaync, rofi и quickseek.
 #   glass          — переключить
 #   glass on|off   — включить / вернуть исходный вид (как до стекла)
 #   glass status   — on | off
@@ -27,9 +27,11 @@ sync_files() {
 		put waybar.css "@import \"$HOME/.config/waybar/glass.css\";"
 		put swaync.css "@import \"$HOME/.config/swaync/glass.css\";"
 		put rofi.rasi "@import \"$HOME/.config/rofi/glass.rasi\""
+		put quickseek.json '{ "opacity": 0.45 }' # подключён через include в quickseek/settings.json
 	else
 		local f
 		for f in waybar.css swaync.css rofi.rasi; do put "$f" "/* glass off */"; done
+		put quickseek.json '{}'
 	fi
 }
 

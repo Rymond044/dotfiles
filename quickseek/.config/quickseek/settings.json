@@ -1,0 +1,14 @@
+{
+  "fonts": { "icons": "CaskaydiaCove Nerd Font", "size": 11 },
+  "launchPrefix": ["uwsm", "app", "--"],
+  "include": ["~/.cache/glass/quickseek.json"],
+  "plugins": [
+    {
+      "id": "cc",
+      "name": "Control center",
+      "icon": "󰒓",
+      "keywords": "settings",
+      "command": ["~/.config/binc/cc", "quickseek"]
+    }
+  ]
+}

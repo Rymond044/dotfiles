@@ -65,6 +65,9 @@ launch() {
 	exit 0
 }
 
+# Закрыть control center (действие само запустило что-то в Hyprland)
+close_menu() { exit 0; }
+
 # term КЛАСС КОМАНДА… — TUI в kitty (классы с оконными правилами — hypr/lua/windowrules.lua).
 term() {
 	launch kitty --class "$1" -e "${@:2}"

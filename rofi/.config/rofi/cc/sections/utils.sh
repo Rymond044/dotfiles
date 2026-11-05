@@ -16,7 +16,7 @@ utils_capture() { # [режим hyprcapture]
 
 utils_clipboard() {
 	hyprctl dispatch "hl.dsp.exec_cmd('[float; size 900 550; center] kitty -e clipse')" >/dev/null
-	exit 0
+	close_menu
 }
 
 utils_picker() {
