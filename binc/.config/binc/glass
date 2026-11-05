@@ -27,7 +27,7 @@ sync_files() {
 		put waybar.css "@import \"$HOME/.config/waybar/glass.css\";"
 		put swaync.css "@import \"$HOME/.config/swaync/glass.css\";"
 		put rofi.rasi "@import \"$HOME/.config/rofi/glass.rasi\""
-		put quickseek.json '{ "opacity": 0.45 }' # подключён через include в quickseek/settings.json
+		put quickseek.json '{ "opacity": 0.45, "shadow": false }' # подключён через include в quickseek/settings.json
 	else
 		local f
 		for f in waybar.css swaync.css rofi.rasi; do put "$f" "/* glass off */"; done
