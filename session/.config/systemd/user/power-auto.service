@@ -1,0 +1,10 @@
+[Unit]
+Description=Профиль питания по зарядке: подключена → Balanced, отключена → Eco
+
+[Service]
+ExecStart=%h/.config/binc/power-mode auto
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

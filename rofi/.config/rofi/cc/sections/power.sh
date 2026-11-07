@@ -37,6 +37,7 @@ power_rows() {
   end=$($PM charge) boost=$($PM boost)
   row "$(lbl 󰂄 "Charge limit: $end %")" power_charge
   row "$(lbl 󰈐 "Cooler Boost: $boost")" power_boost
+  row "$(lbl 󰁹 "Battery monitor")" launch battery-monitor
   row "$(lbl 󰢻 "MSI Control Center")" launch mcontrolcenter
   row "$(lbl 󰐥 "Power menu…")" launch ~/.config/rofi/powermenu/type-1/powermenu.sh
 }

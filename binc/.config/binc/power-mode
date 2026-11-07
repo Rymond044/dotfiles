@@ -8,6 +8,7 @@
 #   power-mode set eco|balanced|performance сменить профиль и сразу записать EC
 #   power-mode apply                        записать EC по текущему профилю ppd
 #   power-mode watch                        apply на старте и на каждую смену профиля
+#   power-mode auto                         зарядка подключена → Balanced, отключена → Eco (юнит power-auto)
 #   power-mode charge [toggle|80|100]       порог заряда; без аргумента — текущий
 #   power-mode boost [toggle|on|off]        Cooler Boost; без аргумента — текущий
 EC=/sys/devices/platform/msi-ec
@@ -56,6 +57,17 @@ watch)
 	gdbus monitor --system --dest org.freedesktop.UPower.PowerProfiles |
 		while read -r line; do
 			[[ $line == *"'ActiveProfile'"* ]] && apply
+		done
+	;;
+auto)
+	# Только по событию UPower OnBattery: ручной выбор держится до следующего подключения/отключения.
+	# EC подстраивает ec-sync (watch), здесь только профиль ppd.
+	gdbus monitor --system --dest org.freedesktop.UPower --object-path /org/freedesktop/UPower |
+		while read -r line; do
+			case $line in
+			*"'OnBattery': <true>"*) powerprofilesctl set power-saver && notify "Power mode" "Eco · on battery" ;;
+			*"'OnBattery': <false>"*) powerprofilesctl set balanced && notify "Power mode" "Balanced · charger connected" ;;
+			esac
 		done
 	;;
 charge)
