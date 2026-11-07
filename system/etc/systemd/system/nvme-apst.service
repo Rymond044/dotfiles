@@ -1,0 +1,14 @@
+# APST у NVMe включается уже после загрузки: в cmdline nvme_core.default_ps_max_latency_us=0 остаётся ради
+# быстрой загрузки (с APST было ~40 с). Замер (задача 6): −0,45 Вт в простое, пакет уходит в PC6/PC8.
+# Порог 100 мс; настройка переживает сон. Откат на лету: echo 0 > …/pm_qos_latency_tolerance_us
+[Unit]
+Description=NVMe APST после загрузки
+After=multi-user.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/sh -c 'for f in /sys/class/nvme/nvme*/power/pm_qos_latency_tolerance_us; do echo 100000 > "$f"; done'
+
+[Install]
+WantedBy=multi-user.target

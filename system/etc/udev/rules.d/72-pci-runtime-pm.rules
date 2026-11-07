@@ -1,0 +1,5 @@
+# Runtime PM для всех PCI-устройств (задача 6: −0,17 Вт; засыпают Ethernet без кабеля, GNA и др.).
+# Wi-Fi BE201 не трогаем — энергосбережение Wi-Fi выключено намеренно (см. 10-intel-wifi-d3cold, 70-wifi-*).
+ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0x272b", GOTO="pci_rpm_end"
+ACTION=="add", SUBSYSTEM=="pci", ATTR{power/control}="auto"
+LABEL="pci_rpm_end"
