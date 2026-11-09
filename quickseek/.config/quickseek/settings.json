@@ -20,7 +20,8 @@
       "command": [
         "~/.config/binc/cc",
         "quickseek"
-      ]
+      ],
+      "refresh": 120
     }
   ],
   "emptyView": [
