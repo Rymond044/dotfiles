@@ -37,6 +37,15 @@ for _, event in ipairs({ "monitor.added", "monitor.removed", "monitor.layout_cha
 	end)
 end
 
+-- Демоны Quickshell: при смене мониторов Qt изредка падает с ошибкой протокола Wayland (так умер quickseek),
+-- а quickdesk сам выходит, когда на текущем наборе мониторов нет виджетов. `-n` — запущенный не трогаем.
+for _, event in ipairs({ "monitor.added", "monitor.removed" }) do
+	hl.on(event, function()
+		hl.exec_cmd("sleep 3 && uwsm app -s b -- qs -p ~/Apps/quickseek -n")
+		hl.exec_cmd("sleep 3 && uwsm app -s b -- qs -p ~/Apps/quickdesk -n")
+	end)
+end
+
 -- Обои: новый или повёрнутый монитор получает свой кадр (портретным — обрезка от walls).
 -- Пауза — awww-daemon должен успеть создать поверхность на новом выходе.
 for _, event in ipairs({ "monitor.added", "monitor.layout_changed" }) do

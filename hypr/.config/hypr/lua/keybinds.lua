@@ -30,7 +30,14 @@ hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" })):remove()
 hl.bind(mainMod .. " + SHIFT + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + Space", hl.dsp.global("quickseek:toggle")) -- ~/Apps/quickseek
-hl.bind(mainMod .. " + W", hl.dsp.global("quickdesk:toggle")) -- ~/Apps/quickdesk: виджеты поверх окон
+-- ~/Apps/quickdesk: виджеты поверх окон. Без виджетов демон не висит (quitWhenEmpty) — тогда клавиша
+-- запускает его сразу в редакторе, где можно добавить виджет
+hl.bind(
+	mainMod .. " + W",
+	hl.dsp.exec_cmd(
+		"qs -p ~/Apps/quickdesk ipc call quickdesk toggle || QUICKDESK_OPEN=edit uwsm app -s b -- qs -p ~/Apps/quickdesk -n"
+	)
+)
 hl.bind(mainMod .. " + ALT + Space", hl.dsp.exec_cmd(menu)) -- rofi-лаунчер про запас, пока rofi не убран
 hl.bind(mainMod .. " + ESCAPE", hl.dsp.exec_cmd(powermenu))
 hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd(browser))

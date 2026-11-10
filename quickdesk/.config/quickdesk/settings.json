@@ -7,6 +7,7 @@
     "eval",
     "require('quickdesk').sync(true)"
   ],
+  "quitWhenEmpty": true,
   "card": {
     "opacity": 1
   },
