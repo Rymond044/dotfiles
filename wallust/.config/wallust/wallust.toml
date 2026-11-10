@@ -20,6 +20,7 @@ clipse = {template = "custom_theme.json.j2", target = "~/.cache/wallust/clipse/c
 libadwaita = {template = 'libadwaita.css.j2', target = '~/.cache/wallust/libadwaita.css'}  # binc/theme собирает ~/.config/gtk-4.0/libadwaita.css (обе палитры)
 quickshell = {template = 'quickshell.json.j2', target = '~/.cache/wallust/quickshell.json'}
 quickseek = {template = 'quickseek.json.j2', target = '~/.cache/quickseek/colors.json'}
+quickdesk = {template = 'quickseek.json.j2', target = '~/.cache/quickdesk/colors.json'}  # тот же формат палитры
 gtk3 = {template = 'gtk3.css.j2', target = '~/.cache/wallust/gtk3.css'}  # подключают темы Wallust-* (binc/theme)
 kdeglobals = {template = 'kdeglobals.j2', target = '~/.cache/wallust/kdeglobals'}
 ghostty = {template = 'ghostty.j2', target = '~/.cache/wallust/ghostty'}

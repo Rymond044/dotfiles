@@ -12,4 +12,5 @@ dofile(os.getenv("HOME") .. "/.cache/wallust/hyprland.lua")
 require("windowrules")
 require("plugin")
 require("glass") -- hyprglass (стекло), см. glass.lua
+require("quickdesk").setup() -- виджеты: какие мониторы заняты окнами
 require("keybinds")

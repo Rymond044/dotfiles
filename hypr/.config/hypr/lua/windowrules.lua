@@ -7,6 +7,9 @@
 -- See https://wiki.hypr.land/Configuring/Window-Rules/ for more
 -- See https://wiki.hypr.land/Configuring/Workspace-Rules/ for workspace rules
 
+-- quickdesk, Super+W: виджеты поверх окон на затемнённом размытом фоне
+hl.layer_rule({ name = "quickdesk_overlay", match = { namespace = "quickdesk-overlay" }, blur = true })
+
 hl.window_rule({
 	name = "dragging_fix",
 	match = {

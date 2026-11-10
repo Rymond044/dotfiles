@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Liquid glass одним переключателем: плагин hyprglass + полупрозрачные waybar, swaync, rofi, quickseek
+# Liquid glass одним переключателем: плагин hyprglass + полупрозрачные waybar, swaync, rofi, quickseek, quickdesk
 # и стекло на экране блокировки (binc/lockglass рисует его в кадр фона hyprlock).
 #   glass          — переключить
 #   glass on|off   — включить / вернуть исходный вид (как до стекла)
@@ -29,10 +29,12 @@ sync_files() {
 		put swaync.css "@import \"$HOME/.config/swaync/glass.css\";"
 		put rofi.rasi "@import \"$HOME/.config/rofi/glass.rasi\""
 		put quickseek.json '{ "opacity": 0.45, "shadow": false }' # подключён через include в quickseek/settings.json
+		put quickdesk.json '{ "card": { "opacity": 0.45 } }' # то же для quickdesk/settings.json
 	else
 		local f
 		for f in waybar.css swaync.css rofi.rasi; do put "$f" "/* glass off */"; done
 		put quickseek.json '{}'
+		put quickdesk.json '{}'
 	fi
 }
 

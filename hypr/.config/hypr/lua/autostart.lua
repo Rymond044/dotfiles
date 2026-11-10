@@ -24,6 +24,7 @@ hl.on("hyprland.start", function()
 	hl.exec_cmd("systemctl --user start hyprpolkitagent.service")
 	daemon("clipse -listen")
 	daemon("qs -p ~/Apps/quickseek -n") -- quickseek (Super+Alt+Space), окно создаётся только при открытии
+	daemon("qs -p ~/Apps/quickdesk -n") -- quickdesk: виджеты под окнами (Super+W — поверх); занятые мониторы — lua/quickdesk.lua
 	hl.exec_cmd("~/.config/waybar/scripts/launch.sh --force")
 	hl.exec_cmd("hyprpm reload")
 end)

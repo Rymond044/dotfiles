@@ -149,6 +149,8 @@ hg.layer("swaync-control-center", { preset = "ios_panel" })
 hg.layer("swaync-notification-window", { preset = "ios_small" })
 hg.layer("walls", { preset = "ios_panel" })
 hg.layer("quickseek", { preset = "ios_panel" })
+-- quickdesk: стекло только у карточек (слой "quickdesk"); виджеты-текст — слой "quickdesk-text", без стекла
+hg.layer("quickdesk", { preset = "ios_panel" })
 
 -- Полноэкранное и видео стекло не нужно (и не видно)
 hl.window_rule({ name = "glass_off_fullscreen", match = { fullscreen = true }, tag = "+hyprglass_disabled" })

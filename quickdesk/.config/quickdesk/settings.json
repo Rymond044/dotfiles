@@ -1,0 +1,29 @@
+{
+  "include": [
+    "~/.cache/glass/quickdesk.json"
+  ],
+  "occupancyRefresh": [
+    "hyprctl",
+    "eval",
+    "require('quickdesk').sync(true)"
+  ],
+  "card": {
+    "opacity": 1
+  },
+  "weather": {
+    "latitude": 52.22977,
+    "longitude": 21.01178,
+    "name": "Warsaw"
+  },
+  "battery": {
+    "command": [
+      "uwsm",
+      "app",
+      "--",
+      "battery-monitor"
+    ]
+  },
+  "layouts": {
+    "0x83AD": []
+  }
+}
