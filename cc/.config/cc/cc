@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Control center: разделы показывает quickseek (плагин `cc quickseek`, см. quickseek.sh).
+#
+#   cc                       quickseek в корне CC (Super+Shift+A, правый клик по 󰣇 в waybar)
+#   cc РАЗДЕЛ                quickseek сразу в разделе (клики по модулям waybar)
+#   cc РАЗДЕЛ ДЕЙСТВИЕ [АРГ] действие без окна (функция РАЗДЕЛ_ДЕЙСТВИЕ) — для скриптов и тестов
+#   cc quickseek list|run ID протокол плагина quickseek
+#
+# Разделы — sections/*.sh. Каждый определяет РАЗДЕЛ_status (короткий статус раздела)
+# и РАЗДЕЛ_rows (заполняет строки раздела).
+set -uo pipefail
+
+CC_DIR=$(dirname "$(realpath "$0")")
+source "$CC_DIR/lib.sh"
+for f in "$CC_DIR"/sections/*.sh; do source "$f"; done
+
+SECTIONS=(wifi bt audio toggles monitors power system utils appearance)
+declare -A SEC_NAME=([wifi]=Wi-Fi [bt]=Bluetooth [audio]=Sound [toggles]=Toggles [monitors]=Monitors
+	[power]=Power [system]=System [utils]=Utilities [appearance]=Appearance)
+declare -A SEC_ICON=([wifi]=󰖩 [bt]=󰂯 [audio]=󰕾 [toggles]=󰔡 [monitors]=󰍹 [power]=󰂄 [system]=󰒓 [utils]=󰆍 [appearance]=󰸉)
+
+# Статус раздела — РАЗДЕЛ_status, если есть
+sec_status() { declare -F "$1_status" >/dev/null && "$1_status"; return 0; }
+
+# Плагин quickseek (~/Apps/quickseek): cc quickseek list | run ID
+if [[ ${1:-} == quickseek ]]; then
+	source "$CC_DIR/quickseek.sh"
+	qs_main "${@:2}"
+	exit
+fi
+
+# Окно — quickseek (демон из автостарта)
+qs_folder() {
+	qs -p ~/Apps/quickseek ipc call quickseek folder "$1" >/dev/null 2>&1 ||
+		notify-send -u critical "Control center" "quickseek is not running"
+}
+
+if (($# == 0)); then
+	qs_folder plugin:cc
+	exit
+fi
+
+name=$1
+[[ " ${SECTIONS[*]} " == *" $name "* ]] || { echo "cc: no section '$name'. Sections: ${SECTIONS[*]}" >&2; exit 2; }
+if (($# == 1)); then
+	qs_folder "plugin:cc:$name"
+	exit
+fi
+fn="${name}_$2"
+declare -F "$fn" >/dev/null || { echo "cc: no action '$2' in section '$name'" >&2; exit 2; }
+CC_SECTION=$name
+"$fn" "${@:3}"

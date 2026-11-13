@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Liquid glass одним переключателем: плагин hyprglass + полупрозрачные waybar, swaync, rofi, quickseek, quickdesk
+# Liquid glass одним переключателем: плагин hyprglass + полупрозрачные waybar, swaync, quickseek, quickdesk
 # и стекло на экране блокировки (binc/lockglass рисует его в кадр фона hyprlock).
 #   glass          — переключить
 #   glass on|off   — включить / вернуть исходный вид (как до стекла)
 #   glass status   — on | off
 #   glass sync     — только записать ~/.cache/glass/* по состоянию (автостарт, waybar/launch.sh)
 # Состояние: ~/.local/state/glass/off (есть файл — выключено). Его же читает hypr/lua/glass.lua
-# при каждой загрузке конфига. Стеклянные стили — в */glass.{css,rasi} рядом с основными,
+# при каждой загрузке конфига. Стеклянные стили — в */glass.css рядом с основными,
 # основные стили подключают ~/.cache/glass/*: при «off» там пусто.
 set -euo pipefail
 
@@ -16,7 +16,7 @@ off_file=$state_dir/off
 
 is_on() { [[ ! -e $off_file ]]; }
 
-# Запись через временный файл: waybar/swaync/rofi могут читать в этот момент
+# Запись через временный файл: waybar/swaync могут читать в этот момент
 put() {
 	printf '%s\n' "$2" >"$cache/$1.tmp"
 	mv -f "$cache/$1.tmp" "$cache/$1"
@@ -27,12 +27,11 @@ sync_files() {
 	if is_on; then
 		put waybar.css "@import \"$HOME/.config/waybar/glass.css\";"
 		put swaync.css "@import \"$HOME/.config/swaync/glass.css\";"
-		put rofi.rasi "@import \"$HOME/.config/rofi/glass.rasi\""
 		put quickseek.json '{ "opacity": 0.45, "shadow": false }' # подключён через include в quickseek/settings.json
 		put quickdesk.json '{ "card": { "opacity": 0.45 } }' # то же для quickdesk/settings.json
 	else
 		local f
-		for f in waybar.css swaync.css rofi.rasi; do put "$f" "/* glass off */"; done
+		for f in waybar.css swaync.css; do put "$f" "/* glass off */"; done
 		put quickseek.json '{}'
 		put quickdesk.json '{}'
 	fi
@@ -44,7 +43,6 @@ apply() {
 	pkill -USR2 -x waybar || true # перечитать стиль
 	"$HOME/.config/binc/lock" --prepare >/dev/null 2>&1 & # hyprlock: кадры со стеклом / без, заранее
 	swaync-client -rs >/dev/null 2>&1 || true
-	# rofi подхватит при следующем запуске
 	notify-send -t 1500 -h string:x-canonical-private-synchronous:glass "Liquid glass" \
 		"$(is_on && echo On || echo Off)"
 }

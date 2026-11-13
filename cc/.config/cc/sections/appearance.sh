@@ -61,7 +61,7 @@ appearance_global_menu() {
 	SEL=$keep
 }
 
-# Действия (их же можно звать без rofi: cc appearance wall light, cc appearance global auto)
+# Действия (их же можно звать без окна: cc appearance wall light, cc appearance global auto)
 appearance_wall() { "$THEME_BIN" wall "${1:-cycle}"; }
 appearance_global() { "$THEME_BIN" set "${1:-cycle}"; }
 appearance_glass() { ~/.config/binc/glass; }

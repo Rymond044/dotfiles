@@ -33,8 +33,8 @@
 **Пакет** — папка верхнего уровня. Всё внутри неё раскладывается в `$HOME` с теми же путями:
 `waybar/.config/waybar/style.css` → `~/.config/waybar/style.css`.
 
-Пакеты: `binc btop clipse fastfetch fontconfig ghostty git gtk hypr kitty nvim nwg-displays
-qt rofi session swaync wallust waybar waypaper yazi zsh`.
+Пакеты: `binc btop cc clipse fastfetch fontconfig ghostty git gtk hypr kitty nvim nwg-displays
+qt session swaync wallust waybar waypaper yazi zsh`.
 
 - `gtk` — gtk-3.0/4.0, `.gtkrc-2.0`, nwg-look, xsettingsd
 - `qt` — qt5ct, qt6ct, Kvantum (сейчас не используются: Qt на `QT_QPA_PLATFORMTHEME=kde`, палитру в

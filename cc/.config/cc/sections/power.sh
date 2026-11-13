@@ -15,7 +15,7 @@ power_status() {
   echo "$(power_name "$(power_profile)") · charge limit $($PM charge) %"
 }
 
-# Строки трёх режимов (общие для раздела и для `cc power mode`).
+# Строки трёх режимов.
 power_mode_rows() {
   local cur p icon
   cur=$(power_profile)
@@ -39,14 +39,12 @@ power_rows() {
   row "$(lbl 󰈐 "Cooler Boost: $boost")" power_boost
   row "$(lbl 󰁹 "Battery monitor")" launch battery-monitor
   row "$(lbl 󰢻 "MSI Control Center")" launch mcontrolcenter
-  row "$(lbl 󰐥 "Power menu…")" launch ~/.config/rofi/powermenu/type-1/powermenu.sh
+  row "$(lbl 󰐥 "Session…")" power_session
 }
 
-# Только выбор режима (левый клик по батарее в waybar): выбрал — закрылось.
-power_mode() {
-  ROWS=() ACTS=() SEL=0
-  power_mode_rows
-  pick "Power mode" "$(power_status)"
+# Папка Session quickseek (Lock, Suspend, Restart…) — вместо прежнего powermenu
+power_session() {
+  qs -p ~/Apps/quickseek ipc call quickseek folder session >/dev/null 2>&1
 }
 
 power_set() { "$PM" set "$1"; }

@@ -10,7 +10,7 @@ https://github.com/user-attachments/assets/44e4d759-637e-4236-847c-cd813c1b8619
 
 ## Features
 
-- **Dynamic color schemes** – Wallust picks colors from your wallpaper and applies them across all supported applications (Waybar, Rofi, Kitty, etc.). Change your wallpaper and everything updates instantly.
+- **Dynamic color schemes** – Wallust picks colors from your wallpaper and applies them across all supported applications (Waybar, quickseek, Kitty, etc.). Change your wallpaper and everything updates instantly.
 - **Intelligent package management** – Custom fzf-based scripts let you install or remove regular and AUR packages with a fuzzy finder, and even bulk‑remove multiple packages at once – all from your terminal.
 - **Hyprland power‑user tools** – Enabled `hyprsplit` for advanced multi‑monitor management and `hyprexpo` for a beautiful workspace overview. Also `monitui` is great for managing monitors!
 - **Custom Arch logo screensaver** – A unique screensaver that displays the Arch logo (or any custom logo) when the system is idle.
@@ -20,7 +20,7 @@ https://github.com/user-attachments/assets/44e4d759-637e-4236-847c-cd813c1b8619
   - `impala` – network connection manager
   - `wiremix` - audio mixer
   - `calcure` – calendar and task management
-- **Seamless application launcher** – Rofi provides not only an app launcher but also a power menu, battery manager, and a dedicated applet launcher.
+- **Spotlight-like launcher** – [quickseek](https://github.com/Rymond044/quickseek) searches apps, files, the control center (Wi-Fi, Bluetooth, sound, power…), session actions, a calculator and the web from one window.
 ---
 
 ## Components
@@ -32,7 +32,7 @@ Each top-level directory is a [GNU stow](https://www.gnu.org/software/stow/) pac
 |------------------|-------------------------------------------------|
 | `hypr/`          | Hyprland (Lua config), Hypridle, Hyprlock       |
 | `waybar/`        | Navigation bar                                  |
-| `rofi/`          | App launcher, powermenu, control center (`cc/`) |
+| `cc/`            | Control center: sections for quickseek (Wi-Fi, BT, sound, power…) |
 | `swaync/`        | Notification daemon                             |
 | `kitty/`, `ghostty/` | Terminals                                   |
 | `wallust/`       | Adaptive color palette picker                   |

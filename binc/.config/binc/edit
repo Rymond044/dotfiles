@@ -2,7 +2,7 @@
 # Открыть файлы в nvim так, будто сам открыл kitty и набрал `nvim файл`:
 # kitty со своим конфигом (шрифт, цвета wallust) → интерактивный zsh (.zshenv, .zshrc: PATH с ~/.local/bin
 # и ~/.npm-global/bin для LSP) → nvim. Нужен, потому что nvim.desktop с Terminal=true GLib открывает
-# в первом найденном терминале из своего списка (сейчас ghostty), а rofi — в rofi-sensible-terminal.
+# в первом найденном терминале из своего списка (сейчас ghostty).
 # Зовёт ~/.local/share/applications/nvim.desktop (перекрывает системный), т. е. xdg-open, Nautilus, лаунчеры.
 dir=
 [ $# -gt 0 ] && dir=$(dirname -- "$1")   # рабочая папка = папка первого файла

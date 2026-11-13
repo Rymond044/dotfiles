@@ -16,7 +16,7 @@ BAT=/sys/class/power_supply/BAT1
 
 notify() { notify-send -t 2000 -h string:x-canonical-private-synchronous:power-mode "$@"; }
 
-# Ошибку записи показываем уведомлением: из rofi/waybar stderr никто не видит.
+# Ошибку записи показываем уведомлением: из quickseek/waybar stderr никто не видит.
 ec_write() { # файл значение
 	[[ $(<"$1") == "$2" ]] && return 0
 	echo "$2" 2>/dev/null >"$1" && return 0

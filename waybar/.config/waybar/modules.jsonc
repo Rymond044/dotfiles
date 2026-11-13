@@ -184,7 +184,7 @@
       "",
       ""
     ],
-    "on-click": "~/.config/binc/cc power mode",
+    "on-click": "~/.config/binc/cc power",
     "on-click-right": "~/.config/binc/cc power",
   },
   "clock": {
@@ -203,7 +203,7 @@
   "custom/power": {
     "format": "",
     "tooltip": false,
-    "on-click": "~/.config/rofi/powermenu/type-1/powermenu.sh",
+    "on-click": "qs -p ~/Apps/quickseek ipc call quickseek folder session",
     "on-click-right": "~/.config/binc/cc power",
   },
   "hyprland/language": {

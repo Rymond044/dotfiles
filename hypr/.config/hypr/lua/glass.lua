@@ -11,7 +11,7 @@
 -- Стекло видно только сквозь полупрозрачные пиксели: непрозрачные окна (браузер, GTK) его
 -- не показывают — как и в iOS, где стекло на «хроме», а контент непрозрачный.
 --
--- Вкл/выкл целиком (плагин + прозрачность waybar/swaync/rofi): `~/.config/binc/glass [on|off]`,
+-- Вкл/выкл целиком (плагин + прозрачность waybar/swaync/quickseek/quickdesk): `~/.config/binc/glass [on|off]`,
 -- CC → Appearance. Выключено, если есть ~/.local/state/glass/off — тогда всё как до стекла.
 
 if not hl.plugin.hyprglass then
@@ -94,7 +94,7 @@ hg.preset("ios_small", {
 	bevel_size = 1.0,
 })
 
--- Панели и меню (rofi, центр уведомлений, выбиралка обоев): больше размытия, чтобы текст читался
+-- Панели и меню (центр уведомлений, выбиралка обоев, quickseek): больше размытия, чтобы текст читался
 hg.preset("ios_panel", {
 	inherits = "ios",
 	blur_strength = 2.0,
@@ -144,7 +144,6 @@ hg.config({
 for _, bar in ipairs({ "full", "medium", "compact" }) do
 	hg.layer(bar, { preset = "ios_small" })
 end
-hg.layer("rofi", { preset = "ios_panel" })
 hg.layer("swaync-control-center", { preset = "ios_panel" })
 hg.layer("swaync-notification-window", { preset = "ios_small" })
 hg.layer("walls", { preset = "ios_panel" })

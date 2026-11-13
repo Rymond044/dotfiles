@@ -13,11 +13,10 @@
 -- Set programs that you use
 local terminal = "kitty"
 local fileManager = "nautilus"
-local menu = "~/.config/rofi/launchers/type-2/launcher.sh"
-local controlCenter = "~/.config/binc/cc" -- rofi/cc: Wi-Fi, BT, звук, питание, система…
-local powermenu = "~/.config/rofi/powermenu/type-1/powermenu.sh"
+local controlCenter = "~/.config/binc/cc" -- Wi-Fi, BT, звук, питание, система… (папка CC в quickseek)
+local session = "qs -p ~/Apps/quickseek ipc call quickseek folder session" -- Lock, Suspend, Restart…
 local browser = "chromium" -- флаги в ~/.config/chromium-flags.conf
-local bufferman = "[float; size 900 550; center] kitty -e clipse"
+local bufferman = "qs -p ~/Apps/quickseek ipc call quickseek folder clipboard" -- история clipse в quickseek
 local screenshot = "grim /tmp/temp_screenshot.png && eog /tmp/temp_screenshot.png"
 
 local mainMod = "SUPER" -- Sets "Windows" key as main modifier
@@ -38,8 +37,7 @@ hl.bind(
 		"qs -p ~/Apps/quickdesk ipc call quickdesk toggle || QUICKDESK_OPEN=edit uwsm app -s b -- qs -p ~/Apps/quickdesk -n"
 	)
 )
-hl.bind(mainMod .. " + ALT + Space", hl.dsp.exec_cmd(menu)) -- rofi-лаунчер про запас, пока rofi не убран
-hl.bind(mainMod .. " + ESCAPE", hl.dsp.exec_cmd(powermenu))
+hl.bind(mainMod .. " + ESCAPE", hl.dsp.exec_cmd(session))
 hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd(browser))
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
 

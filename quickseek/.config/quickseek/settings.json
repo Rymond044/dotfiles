@@ -29,5 +29,23 @@
   ],
   "files": {
     "enabled": true
+  },
+  "power": {
+    "suspend": [
+      "sh",
+      "-c",
+      "playerctl -a pause; exec systemctl suspend"
+    ],
+    "screensaver": {
+      "title": "Screensaver",
+      "icon": "󰔎",
+      "keywords": "idle arch logo",
+      "order": 5,
+      "command": [
+        "sh",
+        "-c",
+        "exec uwsm app -- ~/.config/binc/screensaver"
+      ]
+    }
   }
 }

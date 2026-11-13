@@ -1,4 +1,4 @@
-// Цвета и шрифты в стиле control center (rofi/cc/cc.rasi): палитра wallust, перечитывается
+// Цвета и шрифты в стиле control center (как был rofi-CC): палитра wallust, перечитывается
 // после каждой смены обоев (~/.cache/wallust/quickshell.json ← wallust/templates/quickshell.json.j2).
 pragma Singleton
 import QtQuick

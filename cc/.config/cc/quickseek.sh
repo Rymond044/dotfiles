@@ -1,7 +1,7 @@
 # Control center как плагин quickseek (протокол — ~/Apps/quickseek/docs/plugins.md).
 #   cc quickseek list      разделы (папки) и их строки — из тех же РАЗДЕЛ_rows, JSON lines
 #   cc quickseek run ID    выполнить действие; ID — JSON-массив «функция аргументы…»
-# Вместо rofi: pick → вложенное меню, ask → запрос ввода (ответ в $QUICKSEEK_INPUT),
+# pick → вложенное меню, ask → запрос ввода (ответ в $QUICKSEEK_INPUT),
 # confirm → меню Yes/No, launch → закрыть окно. Ответы протокола — в fd 3, вывод действий — в /dev/null.
 CC_QS=1
 RS=$'\x1e'
@@ -104,7 +104,7 @@ qs_run() { # ID
 	QS_ACT="${args[*]}"
 	unset IFS
 	CC_SECTION=${args[0]%%_*}
-	# В rofi состояние раздела (WIFI_OBJS, BT_OBJS) уже загружено его меню, здесь — нет
+	# Состояние раздела (WIFI_OBJS, BT_OBJS) действию нужно загрузить заново
 	declare -F "${CC_SECTION}_load" >/dev/null && "${CC_SECTION}_load" >/dev/null 2>&1
 	"${args[@]}" 3>&1 >/dev/null
 }
