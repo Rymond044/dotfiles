@@ -1,0 +1,12 @@
+[Unit]
+Description=Придержать сон, пока hyprlock не дорисуется (fade-in и надписи)
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+ExecStart=%h/.config/binc/sleep-hold
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=graphical-session.target

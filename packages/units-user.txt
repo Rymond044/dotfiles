@@ -1,3 +1,4 @@
 battery-monitor.service
 ec-sync.service
 power-auto.service
+sleep-hold.service
