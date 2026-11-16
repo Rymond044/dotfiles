@@ -8,6 +8,7 @@ argocd
 ark
 asciiquarium
 audacity
+awww
 azure-cli
 base
 base-devel
@@ -24,6 +25,7 @@ btrfs-assistant
 btrfs-progs
 cava
 chromium
+clang
 cmatrix
 cowsay
 cpupower
@@ -75,6 +77,7 @@ gst-libav
 gst-plugins-bad
 gst-plugins-ugly
 gum
+guvcview
 hardinfo2
 helm
 hplip
@@ -86,9 +89,12 @@ hypridle
 hyprland
 hyprlang
 hyprlock
+hyprpicker
+hyprpm
 hyprpolkitagent
 hyprsunset
 hyprutils
+ifuse
 imagemagick
 impala
 inetutils
@@ -141,7 +147,6 @@ ncdu
 neovim
 netplan
 nginx
-niri
 nlohmann-json
 nmap
 noto-fonts-cjk
@@ -154,6 +159,7 @@ nyancat
 obs-studio
 ocrdesktop
 ollama
+ollama-vulkan
 opencode
 openresolv
 openvpn
@@ -164,6 +170,7 @@ patchelf
 pavucontrol
 perf
 pipewire-pulse
+plantuml
 plocate
 polkit-kde-agent
 postgresql
@@ -190,6 +197,7 @@ starship
 steam
 stow
 stress
+stress-ng
 sudo
 sushi
 swappy
@@ -203,6 +211,16 @@ terraform
 terragrunt
 tesseract-data-eng
 tesseract-data-rus
+texlive-basic
+texlive-bibtexextra
+texlive-binextra
+texlive-fontsrecommended
+texlive-langcyrillic
+texlive-latex
+texlive-latexextra
+texlive-latexrecommended
+texlive-mathscience
+texlive-plaingeneric
 tk
 tldr
 tmon
@@ -224,6 +242,7 @@ turbostat
 ufw
 unzip
 usbip
+usbmuxd
 uv
 uwsm
 valkey
@@ -252,6 +271,7 @@ xdg-desktop-portal-gtk
 xdg-desktop-portal-hyprland
 xdg-desktop-portal-kde
 xdg-user-dirs
+xdotool
 xf86-video-intel
 xorg-server
 xorg-xev
