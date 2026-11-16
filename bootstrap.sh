@@ -54,19 +54,41 @@ fi
 step "Системные файлы (system/ → /etc)"
 "$DOT/dot" sys install
 
+step "Проекты из ~/Apps (свои репо и форки)"
+mkdir -p "$HOME/Apps"
+# clone_app ИМЯ URL ВЕТКА — идемпотентно: существующую папку не трогаем
+clone_app() {
+  local name="$1" url="$2" branch="$3" dir="$HOME/Apps/$1"
+  if [[ -d $dir/.git ]]; then echo "  ✓ $name уже есть"; return 0; fi
+  git clone --branch "$branch" "$url" "$dir" || echo "  ✗ не удалось клонировать $name"
+}
+if ask "Склонировать quickseek, quickdesk, linux-battery-monitor, hymission, HyprCapture?"; then
+  clone_app quickseek             git@github.com:Rymond044/quickseek.git             main
+  clone_app quickdesk             git@github.com:Rymond044/quickdesk.git             main
+  clone_app linux-battery-monitor git@github.com:Rymond044/linux-battery-monitor.git main
+  clone_app hymission             git@github.com:Rymond044/hymission.git             local
+  clone_app HyprCapture           git@github.com:Rymond044/HyprCapture.git           local
+  [[ -x $HOME/Apps/linux-battery-monitor/install.sh ]] && "$HOME/Apps/linux-battery-monitor/install.sh"
+fi
+
+step "Юниты systemd (packages/units-*.txt)"
+ask "Включить юниты из списков?" && "$DOT/dot" units enable
+
 step "Что сделать руками"
 cat <<'EOF'
   • getty@tty1 override содержит имя пользователя (rymond044) — поправь, если другое:
       /etc/systemd/system/getty@tty1.service.d/override.conf
   • Сервисы, которые не включаются автоматически:
-      sudo systemctl enable hyprlock-delay.service power-profiles-daemon.service
+      (юниты из packages/units-system.txt уже включены шагом выше; `dot units diff` покажет расхождение)
   • oh-my-zsh: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" --keep-zshrc
     оболочка: chsh -s /usr/bin/zsh
-  • ~/.zshenv не в репо (там секреты) — создай руками.
-  • hyprpm-плагины (после первого входа в Hyprland):
+  • ~/.zshenv не в репо (там секреты) — скопируй docs/zshenv.example в ~/.zshenv и впиши значения.
+  • hyprpm-плагины (после первого входа в Hyprland, из терминала внутри сессии):
       hyprpm update
-      hyprpm add https://github.com/<hymission> && hyprpm enable hymission   # у нас локальный клон ~/Apps/hymission, ветка local
-      hyprpm add <hyprcapture> && hyprpm enable hyprcapture
+      hyprpm add https://github.com/hyprnux/hyprglass && hyprpm enable hyprglass
+      hyprpm add ~/Apps/hymission local && hyprpm enable hymission
+      hyprpm add ~/Apps/HyprCapture local && hyprpm enable hyprcapture
+      (hyprpm reload стартует из автостарта)
   • Цвета: hyprland.lua и hyprlock.conf ждут результатов wallust —
       binc/wallust-swww <картинка>   (или: wallust run <картинка>)
 EOF

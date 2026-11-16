@@ -1,0 +1,8 @@
+# Образец ~/.zshenv. Сам ~/.zshenv в репо НЕ входит (секреты) — скопируй этот файл
+# в ~/.zshenv и впиши значения. Лежит в docs/, чтобы stow не линковал его в $HOME.
+
+# rustup/cargo
+. "$HOME/.cargo/env"
+
+# Ключ OpenRouter (используется в terminal-инструментах/скриптах с LLM)
+export OPENROUTER_API_KEY=""

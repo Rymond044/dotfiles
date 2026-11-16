@@ -170,6 +170,63 @@ cmd_pkgs_install() {
   yay -S --needed - < "$DOT/packages/aurlist.txt"
 }
 
+# ---------- юниты systemd ----------
+# packages/units-system.txt и units-user.txt — какие юниты должны быть включены.
+# packages/units-ignore.txt — шаблоны (grep -E) юнитов, которые в списки не попадают
+# (шаблоны getty, пресеты pipewire и т. п.).
+
+units_state() { # system|user → включённые юниты
+  local scope=(); [[ $1 == user ]] && scope=(--user)
+  systemctl "${scope[@]}" list-unit-files --state=enabled --no-legend | awk '{print $1}'
+}
+
+units_known() { # system|user → включённые или слинкованные (ec-sync: link без enable)
+  local scope=(); [[ $1 == user ]] && scope=(--user)
+  systemctl "${scope[@]}" list-unit-files --state=enabled,linked --no-legend | awk '{print $1}'
+}
+
+cmd_units_save() {
+  local s f
+  for s in system user; do
+    f="$DOT/packages/units-$s.txt"
+    # новое из системы + прежние записи, которые всё ещё слинкованы/включены
+    { units_state "$s" | grep -Evf "$DOT/packages/units-ignore.txt" || true
+      if [[ -f $f ]]; then comm -12 <(sort -u "$f") <(units_known "$s" | sort -u); fi
+    } | sort -u > "$f.new"
+    mv "$f.new" "$f"
+  done
+  git -C "$DOT" diff --stat -- packages || true
+}
+
+cmd_units_diff() {
+  local s f
+  for s in system user; do
+    f="$DOT/packages/units-$s.txt"
+    say "[$s] в списке, но не включено:"
+    comm -23 <(sort -u "$f") <(units_state "$s" | sort -u) | sed 's/^/  - /'
+    say "[$s] включено, но нет в списке:"
+    comm -13 <(sort -u "$f") <(units_state "$s" | grep -Evf "$DOT/packages/units-ignore.txt" | sort -u) | sed 's/^/  + /'
+  done
+}
+
+cmd_units_enable() {
+  local u
+  while read -r u; do
+    [[ -n $u ]] || continue
+    systemctl --user is-enabled "$u" >/dev/null 2>&1 && continue
+    systemctl --user enable "$u" && say "${c_grn}✓${c_off} user: $u" || warn "не удалось: user $u"
+  done < "$DOT/packages/units-user.txt"
+  local todo=()
+  while read -r u; do
+    [[ -n $u ]] || continue
+    systemctl is-enabled "$u" >/dev/null 2>&1 || todo+=("$u")
+  done < "$DOT/packages/units-system.txt"
+  ((${#todo[@]})) || { say "Системные юниты уже включены."; return 0; }
+  printf '  %s\n' "${todo[@]}"
+  ask "Включить системные юниты (sudo)?" || return 0
+  for u in "${todo[@]}"; do sudo systemctl enable "$u" && say "${c_grn}✓${c_off} $u" || warn "не удалось: $u"; done
+}
+
 # ---------- main ----------
 
 usage() {
@@ -190,6 +247,10 @@ dot — управление dotfiles ($DOT)
   dot pkgs save         обновить packages/{pkglist,aurlist}.txt
   dot pkgs diff         расхождение списков с системой
   dot pkgs install      поставить пакеты из списков
+
+  dot units save        обновить packages/units-{system,user}.txt (включённые юниты)
+  dot units diff        расхождение списков юнитов с системой
+  dot units enable      включить юниты из списков (системные — через sudo)
 EOF
 }
 
@@ -207,6 +268,10 @@ case "${1:-}" in
   pkgs)
     case "${2:-}" in
       save) cmd_pkgs_save ;; diff) cmd_pkgs_diff ;; install) cmd_pkgs_install ;; *) usage; exit 1 ;;
+    esac ;;
+  units)
+    case "${2:-}" in
+      save) cmd_units_save ;; diff) cmd_units_diff ;; enable) cmd_units_enable ;; *) usage; exit 1 ;;
     esac ;;
   ""|-h|--help|help) usage ;;
   *) usage; exit 1 ;;

@@ -1,0 +1,12 @@
+^getty@\.service$
+^remote-fs\.target$
+^NetworkManager-
+^systemd-resolved-
+^systemd-userdbd\.socket$
+^virt(lock|log)d
+^hyprlock-delay\.service$
+^wireplumber\.service$
+^xdg-user-dirs\.service$
+^pipewire
+^gnome-keyring
+^p11-kit
