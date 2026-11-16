@@ -137,7 +137,7 @@ stow -d ~/dotfiles -t ~ --adopt hypr  # конфликтующие файлы и
 
 В репо сейчас: `default/grub`, `mkinitcpio.conf`, `modprobe.d/{iwlwifi,msi-ec,isw,xbox_bt}.conf`,
 `modules-load.d/uhid.conf`, udev-правила (Wi-Fi d3cold/power_save, сканер),
-`systemd/system/hyprlock-delay.service`, `getty@tty1` override (автологин).
+`getty@tty1` override (автологин).
 
 ```sh
 ./dot sys diff           # чем /etc отличается от репо
