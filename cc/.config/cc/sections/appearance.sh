@@ -8,11 +8,11 @@ THEME_BIN=~/.config/binc/theme
 # appearance_get КЛЮЧ — поле из `theme status` (mode, source, global, wallpaper, auto, lightness…)
 appearance_get() { "$THEME_BIN" status | awk -F'\t' -v k="$1" '$1 == k { print $2 }'; }
 
+# Статус раздела берёт то, что уже посчитал appearance_rows (theme status — Python, ~0,1 с)
 appearance_status() {
-	local mode
-	mode=$(appearance_get mode)
+	local mode=${APP_MODE:-$(appearance_get mode)}
 	printf '%s' "${mode^}"
-	[[ $(~/.config/binc/glass status) == on ]] && printf ' · glass'
+	[[ ${APP_GLASS:-$(~/.config/binc/glass status)} == on ]] && printf ' · glass'
 	return 0
 }
 
@@ -23,6 +23,7 @@ appearance_rows() {
 	mode=$(awk -F'\t' '$1 == "mode" { print $2 }' <<<"$st")
 	wall=$(awk -F'\t' '$1 == "wallpaper" { print $2 }' <<<"$st")
 	glob=$(awk -F'\t' '$1 == "global" { print $2 }' <<<"$st")
+	APP_MODE=$mode APP_GLASS=$(~/.config/binc/glass status)
 	MESG="Theme: ${mode^}"
 	row "$(lbl 󰸉 "Choose wallpaper…")" launch qs -c walls -n
 	row "$(lbl 󰒝 "Random wallpaper")" appearance_random
@@ -32,7 +33,7 @@ appearance_rows() {
 	else
 		row "$(lbl 󰏘 "Global mode: Always ${glob}")" appearance_global_menu
 	fi
-	row "$(lbl 󰂵 "Liquid glass" "$([[ $(~/.config/binc/glass status) == on ]] && echo on || echo off)")" \
+	row "$(lbl 󰂵 "Liquid glass" "$APP_GLASS")" \
 		appearance_glass
 }
 

@@ -14,12 +14,17 @@ declare -A SEC_KEYWORDS=([wifi]="wireless network internet wlan" [bt]="bluetooth
 esc() { printf '%s' "$1"; }
 lbl() { printf '%s%s%s%s%s' "$1" "$RS" "$2" "$RS" "${3:-}"; }
 
-# Строки «родитель RS иконка RS текст RS статус RS id RS папка RS ключевые слова» → JSON lines
+# Разделы, содержимое которых отдаёт само quickseek (нативные источники, docs/plugins.md → "source"):
+# звук — PipeWire, Bluetooth — BlueZ. Здесь только «точка монтирования» — место и порядок в дереве.
+declare -A SEC_SOURCE=([audio]=audio [bt]=bluetooth)
+
+# Строки «родитель RS иконка RS текст RS статус RS id RS папка RS ключевые слова RS источник» → JSON lines
 qs_json() {
 	jq -cR 'split("\u001e") as $f
 		| {title: $f[2], icon: $f[1], status: ($f[3] // "")}
 		+ (if ($f[0] // "") != "" then {parent: $f[0]} else {} end)
 		+ (if $f[5] == "1" then {id: $f[4], folder: true, keywords: ($f[6] // "")}
+		     + (if ($f[7] // "") != "" then {source: $f[7]} else {} end)
 		   elif $f[5] == "back" then {id: "", action: "back"}
 		   else {id: ($f[4] | split("\u001f") | tojson)} end)'
 }
@@ -37,9 +42,10 @@ qs_list() {
 	for s in "${SECTIONS[@]}"; do
 		(
 			ROWS=() ACTS=() TITLE= MESG=
-			printf '%s%s%s%s%s%s%s%s%s%s1%s%s\n' "" "$RS" "${SEC_ICON[$s]}" "$RS" "${SEC_NAME[$s]}" "$RS" \
-				"$(sec_status "$s" 2>/dev/null)" "$RS" "$s" "$RS" "$RS" "${SEC_KEYWORDS[$s]:-}"
-			"${s}_rows" >/dev/null 2>&1
+			# Сначала строки: они загружают состояние, по которому считается статус раздела (без второго запроса)
+			[[ -n ${SEC_SOURCE[$s]:-} ]] || "${s}_rows" >/dev/null 2>&1
+			printf '%s%s%s%s%s%s%s%s%s%s1%s%s%s%s\n' "" "$RS" "${SEC_ICON[$s]}" "$RS" "${SEC_NAME[$s]}" "$RS" \
+				"$(sec_status "$s" 2>/dev/null)" "$RS" "$s" "$RS" "$RS" "${SEC_KEYWORDS[$s]:-}" "$RS" "${SEC_SOURCE[$s]:-}"
 			qs_rows "$s"
 		) >"$tmp/$s" &
 	done

@@ -14,8 +14,9 @@ wifi_load() {
 	[[ -n ${WDEV:-} ]]
 }
 
+# Состояние уже загружено (wifi_rows) — не спрашиваем iwd второй раз
 wifi_status() {
-	wifi_load || { echo "no device"; return; }
+	[[ -n ${WIFI_OBJS:-} && -n ${WDEV:-} ]] || wifi_load || { echo "no device"; return; }
 	if [[ $WPOW != true ]]; then echo "off"
 	elif [[ $WSTATE == connected ]]; then esc "$WSSID"
 	else echo "$WSTATE" | sed 's/disconnected/not connected/'
