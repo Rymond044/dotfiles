@@ -16,11 +16,12 @@ fzf_args=(
   --color 'pointer:green,marker:green'
 )
 
-pkg_names=$(yay -Slqa | fzf "${fzf_args[@]}")
+mapfile -t pkgs < <(yay -Slqa | fzf "${fzf_args[@]}")
 
-if [[ -n "$pkg_names" ]]; then
-  # Convert newline-separated selections to space-separated for yay
-  echo "$pkg_names" | tr '\n' ' ' | xargs yay -S --noconfirm
-  sudo updatedb
-  ./.config/binc/show_done.sh
-fi
+# Esc в fzf — ничего не выбрано, окно закрывается сразу
+((${#pkgs[@]})) || exit 0
+
+yay -S --noconfirm "${pkgs[@]}"
+status=$?
+((status == 0)) && sudo updatedb
+"$(dirname "$0")/show_done.sh" "$status"

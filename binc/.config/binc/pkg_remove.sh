@@ -14,10 +14,11 @@ fzf_args=(
   --color 'pointer:red,marker:red'
 )
 
-pkg_names=$(yay -Qqe | fzf "${fzf_args[@]}")
+mapfile -t pkgs < <(yay -Qqe | fzf "${fzf_args[@]}")
 
-if [[ -n "$pkg_names" ]]; then
-  # Convert newline-separated selections to space-separated for yay
-  echo "$pkg_names" | tr '\n' ' ' | xargs sudo pacman -Rns --noconfirm
-  ./.config/binc/show_done.sh
-fi
+# Esc в fzf — ничего не выбрано, окно закрывается сразу
+((${#pkgs[@]})) || exit 0
+
+sudo pacman -Rns --noconfirm "${pkgs[@]}"
+status=$?
+"$(dirname "$0")/show_done.sh" "$status"

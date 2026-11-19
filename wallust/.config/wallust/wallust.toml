@@ -12,6 +12,7 @@ path = "~/Wallpapers/current"
 hyprland = { template = 'hyprland.lua.j2', target = '~/.cache/wallust/hyprland.lua' }
 waybar = {template = 'colors-waybar.css.j2', target = '~/.cache/wallust/colors-waybar.css'}
 kitty = {template = 'kitty.conf.j2', target = '~/.cache/wallust/kitty.conf'}
+codex = {template = 'codex.tmTheme.j2', target = '~/.codex/themes/wallust-kitty.tmTheme'}
 swaync = {template = 'swaync.css.j2', target = '~/.cache/wallust/swaync.css'}
 hyprlock = {template = 'hyprlock.conf.j2', target = '~/.cache/wallust/hyprlock.conf'}
 neopywal = {template = "neopywal.vim", target = "~/.cache/wallust/colors_neopywal.vim" }
