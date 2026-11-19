@@ -303,10 +303,25 @@ class HomeTests(unittest.TestCase):
         unit = (self.home / '.config/systemd/user/dotfiles-first-login.service').read_text()
         self.assertIn('ConditionPathExists=!', unit)
         self.assertIn('--first-login', unit)
+        self.assertIn('ExecStart=/usr/bin/kitty ', unit)
+        self.assertIn('--first-login-terminal', unit)
         self.assertIn('dotfiles-first-login.service', self.installer.plan['units_user'])
 
 
 class FirstLoginTests(unittest.TestCase):
+    def test_terminal_keeps_error_visible_and_propagates_failure(self):
+        error = subprocess.CalledProcessError(1, ['hyprpm', 'update'])
+        with patch.object(m, 'finish_first_login', side_effect=error), patch('builtins.input') as wait, contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaises(subprocess.CalledProcessError):
+                m.first_login_terminal()
+        wait.assert_called_once()
+
+    def test_terminal_closes_on_success_without_waiting(self):
+        with patch.object(m, 'finish_first_login') as finish, patch('builtins.input') as wait, contextlib.redirect_stdout(io.StringIO()):
+            m.first_login_terminal()
+        finish.assert_called_once_with()
+        wait.assert_not_called()
+
     def exercise(self, legacy=False, failed=False):
         with tempfile.TemporaryDirectory(prefix='dotfiles-first-login-test-') as temp:
             home = Path(temp)

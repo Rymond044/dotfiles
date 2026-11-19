@@ -641,8 +641,9 @@ class Installer:
 
     def first_login(self):
         # hyprpm получает версию работающего Hyprland. Сборка выполняется автоматически
-        # после следующего входа; текущую сессию установщик не перезагружает.
-        unit = f'''[Unit]\nDescription=Finish dotfiles plugin and editor setup\nAfter=graphical-session.target\nPartOf=graphical-session.target\nConditionPathExists=!%h/.local/state/dotfiles/first-login-complete\n\n[Service]\nType=oneshot\nEnvironment=DOTFILES_FIRST_LOGIN=1\nEnvironment=CMAKE_BUILD_PARALLEL_LEVEL=2 MAKEFLAGS=-j2\nExecStart=/usr/bin/python3 "{ROOT}/install/installer.py" --first-login\nTimeoutStartSec=30min\nNice=10\nCPUWeight=20\nCPUQuota=200%\n\n[Install]\nWantedBy=graphical-session.target\n'''
+        # после следующего входа в kitty: sudo внутри hyprpm нужен настоящий терминал.
+        # Текущую сессию установщик не перезагружает.
+        unit = f'''[Unit]\nDescription=Finish dotfiles plugin and editor setup\nAfter=graphical-session.target\nPartOf=graphical-session.target\nConditionPathExists=!%h/.local/state/dotfiles/first-login-complete\n\n[Service]\nType=oneshot\nEnvironment=DOTFILES_FIRST_LOGIN=1\nEnvironment=CMAKE_BUILD_PARALLEL_LEVEL=2 MAKEFLAGS=-j2\nExecStart=/usr/bin/kitty --title "Desktop setup" /usr/bin/python3 "{ROOT}/install/installer.py" --first-login-terminal\nTimeoutStartSec=30min\nNice=10\nCPUWeight=20\nCPUQuota=200%\n\n[Install]\nWantedBy=graphical-session.target\n'''
         self.write(self.config / 'systemd/user/dotfiles-first-login.service', unit.encode())
         self.plan['units_user'].append('dotfiles-first-login.service')
 
@@ -707,6 +708,18 @@ class Installer:
             print('Installation files are ready. Reboot to start enabled system services.\nPlugins and editor finish automatically at the next graphical login.')
         print('Existing unselected applications were not removed.')
         return complete
+
+
+def first_login_terminal():
+    # Пароль читает сам sudo с терминала kitty; установщик его не перехватывает.
+    print('Desktop setup: plugin compilation may ask for your sudo password.', flush=True)
+    try:
+        finish_first_login()
+    except (ValueError, RuntimeError, OSError, subprocess.CalledProcessError, KeyboardInterrupt):
+        import traceback
+        traceback.print_exc()
+        input('Desktop setup failed. Copy the error above, then press Enter to close. ')
+        raise
 
 
 def finish_first_login(*, home=None, cache=None):
@@ -810,7 +823,11 @@ def main(argv=None):
     parser.add_argument('--check', action='store_true', help='Check required config links, excluding generated/local files')
     parser.add_argument('--config-packages', help='Comma-separated config packages to check explicitly')
     parser.add_argument('--first-login', action='store_true', help=argparse.SUPPRESS)
+    parser.add_argument('--first-login-terminal', action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
+    if args.first_login_terminal:
+        first_login_terminal()
+        return
     if args.first_login:
         finish_first_login()
         return
