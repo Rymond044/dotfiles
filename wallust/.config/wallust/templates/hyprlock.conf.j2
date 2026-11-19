@@ -74,10 +74,11 @@ image {
 # @IF-NOGLASS@
 label {
     monitor = @MONITOR@
-    text = cmd[update:1000] echo "$(date +"%-I:%M%p")"
+    text = cmd[update:1000] date +"<b>%-I:%M%p</b>"
     color = rgba(255, 255, 255, 0.85)
     font_size = @70@
-    font_family = SF Pro Display Bold
+    # Вес задаётся в тексте: hyprgraphics сбрасывает Bold из имени шрифта в Regular.
+    font_family = SF Pro Display
     # от центра, как и дата: при привязке к верху на высоком DP-1 часы уезжали от даты
     position = 0, @300@
     halign = center
