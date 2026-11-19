@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Battery Monitor
+Comment=Battery usage history, sleep drain and power measurements
+Exec=@BIN@ app
+Icon=io.github.rymond044.BatteryMonitor
+Terminal=false
+Categories=System;Monitor;GTK;
+Keywords=power;energy;battery;sleep;drain;
+StartupNotify=true
+StartupWMClass=io.github.rymond044.BatteryMonitor

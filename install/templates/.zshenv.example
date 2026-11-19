@@ -1,0 +1,7 @@
+# Локальные секреты отделены от версионируемых конфигов.
+if [ -r "${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/.env" ]; then
+    set -a
+    . "${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/.env"
+    set +a
+fi
+[ ! -r "$HOME/.cargo/env" ] || . "$HOME/.cargo/env"

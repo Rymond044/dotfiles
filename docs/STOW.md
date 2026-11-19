@@ -2,7 +2,7 @@
 
 ## Идея в двух словах
 
-Все конфиги лежат в `~/dotfiles` (это git-репо). В домашней папке вместо настоящих
+Версионируемые конфиги лежат в `~/dotfiles` (это git-репо). В домашней папке вместо настоящих
 файлов — **симлинки** в репо. Их расставляет [GNU stow](https://www.gnu.org/software/stow/).
 Правишь `~/.config/hypr/...` как раньше, а на самом деле меняется файл в `~/dotfiles`, и
 `git status` сразу это видит.
@@ -24,7 +24,9 @@
 ├── …                ← остальные пакеты (см. `./dot list`)
 ├── system/          ← НЕ stow: копии файлов из /etc (ставятся копированием)
 │   └── etc/...
-├── packages/        ← pkglist.txt (pacman), aurlist.txt (AUR)
+├── packages/        ← scopes.json + системные списки pacman/AUR/units
+├── hardware/        ← выбираемые аппаратные настройки
+├── install/         ← установщик, шаблоны и закреплённые проекты
 ├── docs/            ← эта документация
 ├── dot              ← скрипт-обёртка для всех операций
 └── bootstrap.sh     ← развернуть всё на чистой системе
@@ -135,9 +137,10 @@ stow -d ~/dotfiles -t ~ --adopt hypr  # конфликтующие файлы и
 Файлы из `/etc` **копируются**, а не линкуются: initramfs (mkinitcpio), udev и systemd
 читают их до того, как доступен `/home`, и ждут файлы, принадлежащие root.
 
-В репо сейчас: `default/grub`, `mkinitcpio.conf`, `modprobe.d/{iwlwifi,msi-ec,isw,xbox_bt}.conf`,
-`modules-load.d/uhid.conf`, udev-правила (Wi-Fi d3cold/power_save, сканер),
-`getty@tty1` override (автологин).
+В `system/` — общие настройки. Профили Wi-Fi/MSI EC/NVMe/сканера/Xbox перенесены
+в `hardware/` и применяются только при соответствующем выборе в установщике.
+GRUB/initramfs дополняются с сохранением текущих параметров; полные старые снимки
+лежат в `hardware/msi/reference/`. Детали — [INSTALL.md](INSTALL.md).
 
 ```sh
 ./dot sys diff           # чем /etc отличается от репо
@@ -152,21 +155,29 @@ stow -d ~/dotfiles -t ~ --adopt hypr  # конфликтующие файлы и
 ## Списки пакетов
 
 ```sh
-./dot pkgs save      # перезаписать packages/pkglist.txt (pacman -Qqen) и aurlist.txt (-Qqem)
-./dot pkgs diff      # что установлено, но не в списке, и наоборот
-./dot pkgs install   # pacman -S --needed + yay -S --needed по спискам
+./dot pkgs save      # аудит неизвестных пакетов; назначения scope сохраняются
+./dot pkgs diff      # неизвестные явно установленные пакеты
+./dot pkgs install   # выбор пакетов по scopes (без установки конфигов)
+./dot pkgs export    # списки общей базы из packages/scopes.json
 ```
 
 ## Новая машина
 
+Интерактивная установка с разделением system/user/hardware:
+
 ```sh
-git clone --recurse-submodules git@github.com:Rymond044/dotfiles.git ~/dotfiles
+git clone --recurse-submodules https://github.com/Rymond044/dotfiles.git ~/dotfiles
 ~/dotfiles/bootstrap.sh
 ```
 
-`bootstrap.sh` ставит git/stow/yay и пакеты, убирает мешающие файлы в `~/.dotfiles-backup/<дата>/`,
-расставляет ссылки, копирует `system/` и в конце печатает, что осталось сделать руками:
-hyprpm-плагины, oh-my-zsh, `~/.zshenv`, первый прогон wallust.
+User-программы выбираются чекбоксами. По умолчанию отмечены Telegram, Discord, KeePassXC
+и qBittorrent. Аппаратные опции выбираются отдельно. Невыбранные приложения не удаляются.
+Конфиги личных программ ставятся только при их выборе; локальные секреты сохраняются.
+Свои приложения, плагины и Oh My Zsh устанавливаются автоматически; плагины заканчивают
+настройку при следующем графическом входе.
+
+`./dot plan` показывает чистую базу без изменений. Все варианты выбора, устройство
+каталога, бэкапы и проверки описаны в [INSTALL.md](INSTALL.md).
 
 ## Что не в репо
 

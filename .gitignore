@@ -3,6 +3,10 @@ hypr/.config/hypr/hyprlock.conf
 
 # Секреты и личное
 binc/.config/binc/myvpn
+**/.env
+**/.env.local
+__pycache__/
+*.pyc
 
 # Рантайм-данные приложений (на случай, если попадут в свёрнутую папку)
 clipse/.config/clipse/clipboard_history.json

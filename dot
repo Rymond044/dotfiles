@@ -5,7 +5,7 @@ set -euo pipefail
 
 DOT="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 TARGET="$HOME"
-NOT_PACKAGES=(system packages docs)
+NOT_PACKAGES=(system packages docs install hardware)
 
 c_red=$'\e[31m' c_grn=$'\e[32m' c_ylw=$'\e[33m' c_dim=$'\e[2m' c_off=$'\e[0m'
 say()  { printf '%s\n' "$*"; }
@@ -49,22 +49,13 @@ cmd_unlink() {
 # конфиг через «временный файл + rename», заменяют симлинк обычным файлом — такие
 # файлы показываются как REPLACED, чинятся через `dot adopt <pkg>`.
 cmd_check() {
-  local p f rel tgt bad=0
-  while read -r p; do
-    while IFS= read -r -d '' f; do
-      rel="${f#"$DOT/$p/"}"
-      tgt="$TARGET/$rel"
-      if [[ ! -e $tgt && ! -L $tgt ]]; then
-        say "${c_ylw}MISSING${c_off}  $p: ~/$rel"; bad=1
-      elif [[ "$(readlink -f "$tgt")" != "$(readlink -f "$f")" ]]; then
-        if [[ -L $tgt ]]; then say "${c_red}FOREIGN${c_off}  $p: ~/$rel → $(readlink "$tgt")"
-        else say "${c_red}REPLACED${c_off} $p: ~/$rel (обычный файл вместо ссылки)"; fi
-        bad=1
-      fi
-    done < <(find "$DOT/$p" \( -type f -o -type l \) -not -path '*/.git/*' -not -name .git -print0)
-  done < <(pkgs_or_all "$@")
-  ((bad)) && { warn "Есть проблемы. REPLACED → dot adopt <pkg>; MISSING → dot link <pkg>"; return 1; }
-  say "${c_grn}Все ссылки на месте.${c_off}"
+  if (($#)); then
+    local selected
+    selected=$(IFS=,; printf '%s' "$*")
+    python3 "$DOT/install/installer.py" --check --config-packages "$selected"
+  else
+    python3 "$DOT/install/installer.py" --check
+  fi
 }
 
 cmd_adopt() {
@@ -152,22 +143,15 @@ cmd_sys_add() {
 # ---------- списки пакетов ----------
 
 cmd_pkgs_save() {
-  pacman -Qqen > "$DOT/packages/pkglist.txt"
-  pacman -Qqem > "$DOT/packages/aurlist.txt"
-  git -C "$DOT" diff --stat -- packages || true
+  python3 "$DOT/install/installer.py" --audit
 }
 
 cmd_pkgs_diff() {
-  say "Установлено, но нет в списках:"
-  comm -23 <(pacman -Qqe | sort) <(sort -u "$DOT"/packages/{pkglist,aurlist}.txt) | sed 's/^/  + /'
-  say "В списках, но не установлено:"
-  comm -13 <(pacman -Qq | sort) <(sort -u "$DOT"/packages/{pkglist,aurlist}.txt) | sed 's/^/  - /'
+  python3 "$DOT/install/installer.py" --audit
 }
 
 cmd_pkgs_install() {
-  sudo pacman -S --needed - < "$DOT/packages/pkglist.txt"
-  command -v yay >/dev/null || die "yay не найден (bootstrap.sh ставит его сам)"
-  yay -S --needed - < "$DOT/packages/aurlist.txt"
+  python3 "$DOT/install/installer.py" --packages-only "$@"
 }
 
 # ---------- юниты systemd ----------
@@ -186,35 +170,31 @@ units_known() { # system|user → включённые или слинкован
 }
 
 cmd_units_save() {
-  local s f
-  for s in system user; do
-    f="$DOT/packages/units-$s.txt"
-    # новое из системы + прежние записи, которые всё ещё слинкованы/включены
-    { units_state "$s" | grep -Evf "$DOT/packages/units-ignore.txt" || true
-      if [[ -f $f ]]; then comm -12 <(sort -u "$f") <(units_known "$s" | sort -u); fi
-    } | sort -u > "$f.new"
-    mv "$f.new" "$f"
-  done
-  git -C "$DOT" diff --stat -- packages || true
+  warn "Unit lists are scoped requirements. They are not overwritten from the current machine."
+  cmd_units_diff
 }
 
 cmd_units_diff() {
-  local s f
+  local s f state
   for s in system user; do
     f="$DOT/packages/units-$s.txt"
+    state=$(units_state "$s") || return 1
     say "[$s] в списке, но не включено:"
-    comm -23 <(sort -u "$f") <(units_state "$s" | sort -u) | sed 's/^/  - /'
+    comm -23 <(sort -u "$f") <(printf '%s\n' "$state" | sed '/^$/d' | sort -u) | sed 's/^/  - /'
     say "[$s] включено, но нет в списке:"
-    comm -13 <(sort -u "$f") <(units_state "$s" | grep -Evf "$DOT/packages/units-ignore.txt" | sort -u) | sed 's/^/  + /'
+    comm -13 <(sort -u "$f") <(printf '%s\n' "$state" | sed '/^$/d' | grep -Evf "$DOT/packages/units-ignore.txt" | sort -u) | sed 's/^/  + /'
   done
 }
 
 cmd_units_enable() {
   local u
+  say "User units:"; cat "$DOT/packages/units-user.txt"
+  say "System units:"; cat "$DOT/packages/units-system.txt"
+  ask "Enable these units (without starting them)?" || return 0
   while read -r u; do
     [[ -n $u ]] || continue
     systemctl --user is-enabled "$u" >/dev/null 2>&1 && continue
-    systemctl --user enable "$u" && say "${c_grn}✓${c_off} user: $u" || warn "не удалось: user $u"
+    systemctl --user enable "$u" && say "${c_grn}✓${c_off} user: $u" || die "не удалось: user $u"
   done < "$DOT/packages/units-user.txt"
   local todo=()
   while read -r u; do
@@ -224,7 +204,7 @@ cmd_units_enable() {
   ((${#todo[@]})) || { say "Системные юниты уже включены."; return 0; }
   printf '  %s\n' "${todo[@]}"
   ask "Включить системные юниты (sudo)?" || return 0
-  for u in "${todo[@]}"; do sudo systemctl enable "$u" && say "${c_grn}✓${c_off} $u" || warn "не удалось: $u"; done
+  for u in "${todo[@]}"; do sudo systemctl enable "$u" && say "${c_grn}✓${c_off} $u" || die "не удалось: $u"; done
 }
 
 # ---------- main ----------
@@ -238,23 +218,27 @@ dot — управление dotfiles ($DOT)
   dot check  [pkg…]     проверить, что все ссылки на месте
   dot adopt  pkg…       забрать в репо файлы, которые приложение заменило
   dot list              список пакетов
+  dot install [args…]   установка system + выбранных user/hardware (bootstrap)
+  dot plan [args…]      план установки без изменений
 
   dot sys diff          отличия system/ от /etc
   dot sys install       скопировать system/ в систему (с подтверждением)
   dot sys pull          забрать изменения из /etc в system/
   dot sys add FILE…     поставить файл из системы на учёт
 
-  dot pkgs save         обновить packages/{pkglist,aurlist}.txt
-  dot pkgs diff         расхождение списков с системой
-  dot pkgs install      поставить пакеты из списков
+  dot pkgs save|diff    показать неразобранные пакеты без смешивания scopes
+  dot pkgs export       обновить системные списки из packages/scopes.json
+  dot pkgs install      выбрать и установить пакеты по scopes
 
-  dot units save        обновить packages/units-{system,user}.txt (включённые юниты)
+  dot units save        аудит служб без перезаписи scoped-списков
   dot units diff        расхождение списков юнитов с системой
   dot units enable      включить юниты из списков (системные — через sudo)
 EOF
 }
 
 case "${1:-}" in
+  install) shift; exec "$DOT/bootstrap.sh" "$@" ;;
+  plan) shift; exec "$DOT/bootstrap.sh" --plan "$@" ;;
   link)   shift; cmd_link "$@" ;;
   unlink) shift; cmd_unlink "$@" ;;
   check)  shift; cmd_check "$@" ;;
@@ -267,7 +251,9 @@ case "${1:-}" in
     esac ;;
   pkgs)
     case "${2:-}" in
-      save) cmd_pkgs_save ;; diff) cmd_pkgs_diff ;; install) cmd_pkgs_install ;; *) usage; exit 1 ;;
+      save) cmd_pkgs_save ;; diff) cmd_pkgs_diff ;;
+      export) python3 "$DOT/install/installer.py" --export ;;
+      install) shift 2; cmd_pkgs_install "$@" ;; *) usage; exit 1 ;;
     esac ;;
   units)
     case "${2:-}" in

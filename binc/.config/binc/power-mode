@@ -28,6 +28,8 @@ Install the udev rule: ~/dotfiles/dot sys install"
 
 apply() {
 	local profile shift fan
+	# Общий профиль ppd работает и без драйвера MSI EC.
+	[[ -e $EC/shift_mode && -e $EC/fan_mode ]] || return 0
 	profile=$(powerprofilesctl get) || return 1
 	case $profile in
 	power-saver) shift=eco fan=silent ;;
@@ -60,6 +62,13 @@ watch)
 		done
 	;;
 auto)
+	# Начальное состояние тоже применяем: UPower может не прислать событие до смены зарядки.
+	initial=$(gdbus call --system --dest org.freedesktop.UPower --object-path /org/freedesktop/UPower \
+		--method org.freedesktop.DBus.Properties.Get org.freedesktop.UPower OnBattery 2>/dev/null)
+	case $initial in
+	*true*) powerprofilesctl set power-saver ;;
+	*false*) powerprofilesctl set balanced ;;
+	esac
 	# Только по событию UPower OnBattery: ручной выбор держится до следующего подключения/отключения.
 	# EC подстраивает ec-sync (watch), здесь только профиль ppd.
 	gdbus monitor --system --dest org.freedesktop.UPower --object-path /org/freedesktop/UPower |

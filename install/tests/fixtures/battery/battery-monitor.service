@@ -1,0 +1,14 @@
+[Unit]
+Description=Battery Monitor sampler
+Documentation=https://github.com/Rymond044/linux-battery-monitor
+
+[Service]
+ExecStart=@BIN@ collect
+Restart=on-failure
+RestartSec=10
+Nice=10
+CPUWeight=20
+MemoryMax=96M
+
+[Install]
+WantedBy=default.target

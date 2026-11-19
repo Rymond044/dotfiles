@@ -89,7 +89,9 @@ plugins=(git
 )
 
 source $ZSH/oh-my-zsh.sh
-source <(kubectl completion zsh)
+if command -v kubectl >/dev/null 2>&1; then
+    source <(kubectl completion zsh)
+fi
 # User configuration
 
 # export MANPATH="/usr/local/man:$MANPATH"

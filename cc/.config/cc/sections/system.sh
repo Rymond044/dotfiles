@@ -8,6 +8,6 @@ system_rows() {
 	row "$(lbl 󰏗 "Install package")" term install "$BINC/pkg_install.sh"
 	row "$(lbl 󰣇 "Install from AUR")" term install "$BINC/pkg_aur_install.sh"
 	row "$(lbl 󰆴 "Remove package")" term install "$BINC/pkg_remove.sh"
-	row "$(lbl 󰷈 "Edit dotfiles")" launch zeditor ~/dotfiles
+	row "$(lbl 󰷈 "Edit dotfiles")" launch kitty --directory ~/dotfiles -e nvim .
 	row "$(lbl 󰍛 "Resource monitor")" term btop btop
 }

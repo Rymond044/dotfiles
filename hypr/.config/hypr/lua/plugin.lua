@@ -20,6 +20,7 @@
 --     },
 -- })
 
+if hl.plugin.hymission then
 hl.config({
 	plugin = {
 		hymission = {
@@ -43,6 +44,9 @@ hl.config({
 	},
 })
 
+end
+
+if hl.plugin.hyprcapture then
 hl.config({
 	plugin = {
 		hyprcapture = {
@@ -100,6 +104,8 @@ hl.config({
 	},
 })
 
+end
+
 -- hl.config({
 -- 	plugin = {
 -- 		hyprbars = {
@@ -125,19 +131,29 @@ hl.config({
 -- 	action = [[hyprctl dispatch 'hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle" })']],
 -- })
 
+if hl.plugin.hymission then
 hl.plugin.hymission.gesture({
 	fingers = 3,
 	direction = "vertical",
 	action = "toggle",
 })
+end
 
+local priority = {}
+local priority_file = io.open(os.getenv("HOME") .. "/.config/dotfiles/hardware/monitor-priority", "r")
+if priority_file then
+    for name in priority_file:lines() do
+        priority[#priority + 1] = name
+    end
+    priority_file:close()
+end
 local smw = require("plugins")
 smw.setup({
 	workspace_count = 9,
 	-- Фиксированный порядок диапазонов: eDP-1 = 1–9, DP-1 = 10–18, HDMI-A-1 = 19–27.
 	-- Без него smw раздаёт диапазоны по порядку подключения, и после переподключения монитора
 	-- воркспейсы перетасовываются.
-	monitor_priority = { "eDP-1", "DP-1", "HDMI-A-1" },
+	monitor_priority = priority,
 	keep_focused = true,
 	enable_persistent_workspaces = true,
 	enable_notifications = false,

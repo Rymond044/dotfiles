@@ -1,0 +1,1 @@
+8250.nr_uarts=0 tpm_tis.interrupts=0 i915.force_probe=!7d55 xe.force_probe=7d55 xe.enable_psr=1 nvme_core.default_ps_max_latency_us=0

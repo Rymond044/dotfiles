@@ -1,0 +1,2338 @@
+{
+  "version": 1,
+  "system": {
+    "repo": [
+      "adw-gtk-theme",
+      "alsa-utils",
+      "ark",
+      "awww",
+      "base-devel",
+      "bat",
+      "bluetui",
+      "bluez",
+      "bluez-utils",
+      "bookworm",
+      "breeze",
+      "brightnessctl",
+      "btop",
+      "chromium",
+      "cmake",
+      "cpio",
+      "curl",
+      "eog",
+      "evince",
+      "eza",
+      "fd",
+      "ffmpeg",
+      "fftw",
+      "file",
+      "fontconfig",
+      "fzf",
+      "gimp",
+      "git",
+      "glib2",
+      "gnome-keyring",
+      "grim",
+      "gsettings-desktop-schemas",
+      "gtk4",
+      "gtk4-layer-shell",
+      "gum",
+      "hypridle",
+      "hyprland",
+      "hyprlock",
+      "hyprpicker",
+      "hyprpm",
+      "hyprpolkitagent",
+      "hyprsunset",
+      "hyprwayland-scanner",
+      "imagemagick",
+      "impala",
+      "iwd",
+      "jq",
+      "kitty",
+      "layer-shell-qt",
+      "libadwaita",
+      "libnotify",
+      "libpipewire",
+      "libpulse",
+      "libqalculate",
+      "libreoffice-still",
+      "libvips",
+      "linux-firmware",
+      "lua",
+      "man-db",
+      "mesa",
+      "mpv",
+      "nautilus",
+      "neovim",
+      "networkmanager",
+      "nlohmann-json",
+      "noto-fonts-cjk",
+      "noto-fonts-emoji",
+      "nwg-displays",
+      "nwg-look",
+      "opencv",
+      "otf-font-awesome",
+      "papers",
+      "pipewire",
+      "pipewire-pulse",
+      "pkgconf",
+      "plasma-integration",
+      "plasma-workspace",
+      "playerctl",
+      "plocate",
+      "poppler",
+      "power-profiles-daemon",
+      "python",
+      "python-gobject",
+      "python-numpy",
+      "python-pillow",
+      "qt5-wayland",
+      "qt6-base",
+      "qt6-declarative",
+      "qt6-imageformats",
+      "qt6-multimedia",
+      "qt6-svg",
+      "qt6-wayland",
+      "quickshell",
+      "ripgrep",
+      "slurp",
+      "starship",
+      "stow",
+      "sudo",
+      "swaync",
+      "tesseract",
+      "tesseract-data-eng",
+      "tesseract-data-rus",
+      "trash-cli",
+      "ttf-cascadia-code-nerd",
+      "ttf-cascadia-mono-nerd",
+      "ttf-material-symbols-variable",
+      "unzip",
+      "upower",
+      "uwsm",
+      "wiremix",
+      "wireplumber",
+      "wl-clipboard",
+      "xdg-desktop-portal-gtk",
+      "xdg-desktop-portal-hyprland",
+      "xdg-user-dirs",
+      "xdg-utils",
+      "zip",
+      "zsh"
+    ],
+    "aur": [
+      "adwaita-colors-icon-theme",
+      "apple-fonts",
+      "bibata-cursor-theme",
+      "calcure",
+      "clipse",
+      "matugen-bin",
+      "terminaltexteffects-git",
+      "wallust",
+      "waybar-git",
+      "wayfreeze-git"
+    ],
+    "configs": [
+      "binc",
+      "btop",
+      "cc",
+      "clipse",
+      "fontconfig",
+      "git",
+      "gtk",
+      "hypr",
+      "kitty",
+      "nvim",
+      "quickshell",
+      "quickdesk",
+      "quickseek",
+      "session",
+      "swaync",
+      "wallust",
+      "waybar",
+      "zsh",
+      "nwg-displays"
+    ],
+    "units_system": [
+      "NetworkManager.service",
+      "iwd.service",
+      "bluetooth.service",
+      "power-profiles-daemon.service",
+      "systemd-resolved.service",
+      "systemd-timesyncd.service"
+    ],
+    "units_user": [
+      "power-auto.service",
+      "sleep-hold.service",
+      "battery-monitor.service"
+    ]
+  },
+  "user": [
+    {
+      "id": "chatgpt-bin",
+      "group": "Communication and AI",
+      "label": "ChatGPT desktop application by OpenAI",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Связь и AI-приложения"
+    },
+    {
+      "id": "claude-code",
+      "group": "Communication and AI",
+      "label": "An agentic coding tool that lives in your terminal",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Связь и AI-приложения"
+    },
+    {
+      "id": "claude-desktop",
+      "group": "Communication and AI",
+      "label": "Official Claude AI desktop app from Anthropic — Chat, Cowork, and Claude Code",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Связь и AI-приложения"
+    },
+    {
+      "id": "github-copilot-cli-bin",
+      "group": "Communication and AI",
+      "label": "GitHub Copilot CLI brings the power of Copilot coding agent directly to your terminal.",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Связь и AI-приложения"
+    },
+    {
+      "id": "localsend-bin",
+      "group": "Communication and AI",
+      "label": "An open source cross-platform alternative to AirDrop",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Связь и AI-приложения"
+    },
+    {
+      "id": "openai-codex",
+      "group": "Communication and AI",
+      "label": "OpenAIs lightweight coding agent that runs in your terminal",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Связь и AI-приложения"
+    },
+    {
+      "id": "opencode",
+      "group": "Communication and AI",
+      "label": "The open source coding agent",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Связь и AI-приложения"
+    },
+    {
+      "id": "ansible",
+      "group": "Development",
+      "label": "Official assortment of Ansible collections",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "ansible-lint",
+      "group": "Development",
+      "label": "Checks playbooks for practices and behaviour that could potentially be improved.",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "argocd",
+      "group": "Development",
+      "label": "Declarative continuous deployment for Kubernetes",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "azure-cli",
+      "group": "Development",
+      "label": "Command-line tools for Microsoft Azure",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "clang",
+      "group": "Development",
+      "label": "C language family frontend for LLVM",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "docker",
+      "group": "Development",
+      "label": "Pack, ship and run any application as a lightweight container",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "docker-buildx",
+      "group": "Development",
+      "label": "Docker CLI plugin for extended build capabilities with BuildKit",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "docker-compose",
+      "group": "Development",
+      "label": "Fast, isolated development environments using Docker",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "git-filter-repo",
+      "group": "Development",
+      "label": "Quickly rewrite git repository history (filter-branch replacement)",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "github-cli",
+      "group": "Development",
+      "label": "The GitHub CLI",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "github-desktop",
+      "group": "Development",
+      "label": "GUI for managing Git and GitHub",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "gitlab",
+      "group": "Development",
+      "label": "Project management and code hosting application",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "gitlab-runner",
+      "group": "Development",
+      "label": "The official GitLab CI runner written in Go",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "gprbuild",
+      "group": "Development",
+      "label": "Builder for multi-language systems.",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "helm",
+      "group": "Development",
+      "label": "The Kubernetes Package Manager",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "kind",
+      "group": "Development",
+      "label": "Kubernetes IN Docker - local clusters for testing Kubernetes",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "kubelet",
+      "group": "Development",
+      "label": "An agent that runs on each node in a Kubernetes cluster making sure that containers are running in a Pod",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "lazydocker",
+      "group": "Development",
+      "label": "A simple terminal UI for docker and docker-compose, written in Go with the gocui library.",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "lazygit",
+      "group": "Development",
+      "label": "Simple terminal UI for git commands",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "meld",
+      "group": "Development",
+      "label": "Compare files, directories and working copies",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "mkcert",
+      "group": "Development",
+      "label": "Simple tool for making locally-trusted development certificates",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "nginx",
+      "group": "Development",
+      "label": "Lightweight HTTP server and IMAP/POP3 proxy server",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "postgresql",
+      "group": "Development",
+      "label": "Sophisticated object-relational DBMS",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "pyalpm",
+      "group": "Development",
+      "label": "Python bindings for libalpm",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "pyenv",
+      "group": "Development",
+      "label": "Easily switch between multiple versions of Python",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "python-git-dummy",
+      "group": "Development",
+      "label": "Generate dummy Git repositories populated with the desired number of commits, branches, and structure.",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "python-pipx",
+      "group": "Development",
+      "label": "Install and Run Python Applications in Isolated Environments",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "python-pyqt5",
+      "group": "Development",
+      "label": "A set of Python bindings for the Qt5 toolkit",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "python-redis",
+      "group": "Development",
+      "label": "The Python interface to the Redis key-value store",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "python312",
+      "group": "Development",
+      "label": "Major release 3.12 of the Python high-level programming language",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "python313",
+      "group": "Development",
+      "label": "Major release 3.13 of the Python programming language",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "terraform",
+      "group": "Development",
+      "label": "HashiCorp tool for building and updating infrastructure as code idempotently",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "terragrunt",
+      "group": "Development",
+      "label": "Thin wrapper for Terraform and OpenTofu for working with multiple modules",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "uv",
+      "group": "Development",
+      "label": "An extremely fast Python package installer and resolver written in Rust",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "valkey",
+      "group": "Development",
+      "label": "An in-memory database that persists on disk",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "visual-studio-code-bin",
+      "group": "Development",
+      "label": "Visual Studio Code (vscode): Editor for building and debugging modern web and cloud applications (official binary version)",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "xmlada",
+      "group": "Development",
+      "label": "An XML parser for Ada.",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "zed",
+      "group": "Development",
+      "label": "A high-performance, multiplayer code editor from the creators of Atom and Tree-sitter",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Разработка и инфраструктура"
+    },
+    {
+      "id": "acpi",
+      "group": "Diagnostics",
+      "label": "Client for battery, power, and thermal readings",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "battop",
+      "group": "Diagnostics",
+      "label": "Interactive batteries viewer",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "bootconfig",
+      "group": "Diagnostics",
+      "label": "Apply, delete or show boot config to initrd",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "bpf",
+      "group": "Diagnostics",
+      "label": "BPF tools",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "cpupower",
+      "group": "Diagnostics",
+      "label": "Linux kernel tool to examine and tune power saving related features of your processor",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "dmidecode",
+      "group": "Diagnostics",
+      "label": "Desktop Management Interface table related utilities",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "downgrade",
+      "group": "Diagnostics",
+      "label": "Bash script for downgrading one or more packages to a version in your cache or the A.L.A.",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "execstack",
+      "group": "Diagnostics",
+      "label": "set the executable stack flag of ELF binaries and libraries",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "expac",
+      "group": "Diagnostics",
+      "label": "alpm data (pacman database) extraction utility",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "geekbench",
+      "group": "Diagnostics",
+      "label": "A cross-platform benchmark that measures processor and memory performance",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "gparted-git",
+      "group": "Diagnostics",
+      "label": "A Partition Magic clone, frontend to GNU Parted",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "hardinfo2",
+      "group": "Diagnostics",
+      "label": "System Information and Benchmark for Linux Systems.",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "htop",
+      "group": "Diagnostics",
+      "label": "Interactive process viewer",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "hyfetch",
+      "group": "Diagnostics",
+      "label": "Neofetch with LGBTQ+ pride flags!",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "intel-gpu-tools",
+      "group": "Diagnostics",
+      "label": "Tools for development and testing of the Intel DRM driver",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "intel-oneapi-compiler-shared-runtime-libs",
+      "group": "Diagnostics",
+      "label": "Intel oneAPI compiler runtime libraries: Minimal compiler libraries",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "intel-oneapi-openmp",
+      "group": "Diagnostics",
+      "label": "Intel oneAPI OpenMP runtime library",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "intel-speed-select",
+      "group": "Diagnostics",
+      "label": "Intel Speed Select",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "intel-undervolt",
+      "group": "Diagnostics",
+      "label": "Intel CPU undervolting tool",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "inxi",
+      "group": "Diagnostics",
+      "label": "Full featured CLI system information tool",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "iotop",
+      "group": "Diagnostics",
+      "label": "View I/O usage of processes",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "iw",
+      "group": "Diagnostics",
+      "label": "nl80211 based CLI configuration utility for wireless devices",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "kcpuid",
+      "group": "Diagnostics",
+      "label": "Kernel tool for various cpu debug outputs",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "kdiskmark",
+      "group": "Diagnostics",
+      "label": "HDD and SSD benchmark tool with a very friendly graphical user interface",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "libva-utils",
+      "group": "Diagnostics",
+      "label": "Intel VA-API Media Applications and Scripts for libva",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "libvpl-tools",
+      "group": "Diagnostics",
+      "label": "Tools for Intel Video Processing Library",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "monitui",
+      "group": "Diagnostics",
+      "label": "A delightfully minimal TUI for wrangling Hyprland monitors",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "ncdu",
+      "group": "Diagnostics",
+      "label": "Disk usage analyzer with an ncurses interface",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "nvtop",
+      "group": "Diagnostics",
+      "label": "GPUs process monitoring for AMD, Intel and NVIDIA",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "pacutils",
+      "group": "Diagnostics",
+      "label": "Helper tools for libalpm",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "patchelf",
+      "group": "Diagnostics",
+      "label": "Small utility to modify the dynamic linker and RPATH of ELF executables",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "perf",
+      "group": "Diagnostics",
+      "label": "Linux kernel performance auditing tool",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "powerstat",
+      "group": "Diagnostics",
+      "label": "A tool for measuring a laptops power usage via the battery.",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "powertop",
+      "group": "Diagnostics",
+      "label": "A tool to diagnose issues with power consumption and power management",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "ptui-bin",
+      "group": "Diagnostics",
+      "label": "Picture TUI",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "stress",
+      "group": "Diagnostics",
+      "label": "A tool that stress tests your system (CPU, memory, I/O, disks)",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "stress-ng",
+      "group": "Diagnostics",
+      "label": "Software to stress test a computer system in various selectable ways",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "sysfsutils",
+      "group": "Diagnostics",
+      "label": "System Utilities Based on Sysfs",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "systemctl-tui",
+      "group": "Diagnostics",
+      "label": "A fast, simple TUI for interacting with systemd services and their logs",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "sysz",
+      "group": "Diagnostics",
+      "label": "fzf terminal UI for systemctl",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "tmon",
+      "group": "Diagnostics",
+      "label": "Monitoring and Testing Tool for Linux kernel thermal subsystem",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "turbostat",
+      "group": "Diagnostics",
+      "label": "Report processor frequency and idle statistics",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "x86_energy_perf_policy",
+      "group": "Diagnostics",
+      "label": "Read or write MSR_IA32_ENERGY_PERF_BIAS",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Диагностика и эксперименты"
+    },
+    {
+      "id": "flatpak",
+      "group": "Extra applications",
+      "label": "Linux application sandboxing and distribution framework (formerly xdg-app)",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные GUI и прежние компоненты"
+    },
+    {
+      "id": "flatseal",
+      "group": "Extra applications",
+      "label": "A permissions manager for Flatpak",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные GUI и прежние компоненты"
+    },
+    {
+      "id": "gnome-calculator",
+      "group": "Extra applications",
+      "label": "GNOME Scientific calculator",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные GUI и прежние компоненты"
+    },
+    {
+      "id": "gnome-power-manager",
+      "group": "Extra applications",
+      "label": "System power information and statistics",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные GUI и прежние компоненты"
+    },
+    {
+      "id": "grimblast-git",
+      "group": "Extra applications",
+      "label": "A helper for screenshots within Hyprland.",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные GUI и прежние компоненты"
+    },
+    {
+      "id": "ocrdesktop",
+      "group": "Extra applications",
+      "label": "OCR the current window or desktop and make it browsable for the user",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные GUI и прежние компоненты"
+    },
+    {
+      "id": "pavucontrol",
+      "group": "Extra applications",
+      "label": "PulseAudio Volume Control",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные GUI и прежние компоненты"
+    },
+    {
+      "id": "pods",
+      "group": "Extra applications",
+      "label": "Manage your Podman/Docker containers",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные GUI и прежние компоненты"
+    },
+    {
+      "id": "waypaper",
+      "group": "Extra applications",
+      "label": "GUI wallpaper setter for Wayland and Xorg window managers. It works as a frontend for popular wallpaper backends like swaybg, swww, wallutils, hyprpaper and feh.",
+      "source": "aur",
+      "default": false,
+      "configs": [
+        "waypaper"
+      ],
+      "reason_ru": "Дополнительные GUI и прежние компоненты"
+    },
+    {
+      "id": "wev",
+      "group": "Extra applications",
+      "label": "A tool for debugging wayland events on a Wayland window, analagous to the X11 tool xev",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные GUI и прежние компоненты"
+    },
+    {
+      "id": "xclip",
+      "group": "Extra applications",
+      "label": "Command line interface to the X11 clipboard",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные GUI и прежние компоненты"
+    },
+    {
+      "id": "xdotool",
+      "group": "Extra applications",
+      "label": "Command-line X11 automation tool",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные GUI и прежние компоненты"
+    },
+    {
+      "id": "xorg-server",
+      "group": "Extra applications",
+      "label": "Xorg X server",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные GUI и прежние компоненты"
+    },
+    {
+      "id": "xorg-xev",
+      "group": "Extra applications",
+      "label": "Print contents of X events",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные GUI и прежние компоненты"
+    },
+    {
+      "id": "xorg-xinput",
+      "group": "Extra applications",
+      "label": "Small commandline tool to configure devices",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные GUI и прежние компоненты"
+    },
+    {
+      "id": "yad",
+      "group": "Extra applications",
+      "label": "A fork of zenity - display graphical dialogs from shell scripts or command line",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные GUI и прежние компоненты"
+    },
+    {
+      "id": "arc-icon-theme",
+      "group": "Extra themes and fonts",
+      "label": "Arc icon theme. Official releases only.",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные темы и шрифты"
+    },
+    {
+      "id": "breeze-cursors",
+      "group": "Extra themes and fonts",
+      "label": "Breeze cursors",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные темы и шрифты"
+    },
+    {
+      "id": "mate-icon-theme",
+      "group": "Extra themes and fonts",
+      "label": "MATE icon theme",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные темы и шрифты"
+    },
+    {
+      "id": "noto-fonts-extra",
+      "group": "Extra themes and fonts",
+      "label": "Google Noto TTF fonts - additional variants",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные темы и шрифты"
+    },
+    {
+      "id": "ttf-cascadia-code",
+      "group": "Extra themes and fonts",
+      "label": "A monospaced font by Microsoft that includes programming ligatures",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные темы и шрифты"
+    },
+    {
+      "id": "ttf-dejavu",
+      "group": "Extra themes and fonts",
+      "label": "Font family based on the Bitstream Vera Fonts with a wider range of characters",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные темы и шрифты"
+    },
+    {
+      "id": "ttf-jetbrains-mono-nerd",
+      "group": "Extra themes and fonts",
+      "label": "Patched font JetBrains Mono from nerd fonts library",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные темы и шрифты"
+    },
+    {
+      "id": "ttf-linux-libertine",
+      "group": "Extra themes and fonts",
+      "label": "Serif (Libertine) and Sans Serif (Biolinum) OpenType fonts with large Unicode coverage",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные темы и шрифты"
+    },
+    {
+      "id": "ttf-meslo",
+      "group": "Extra themes and fonts",
+      "label": "Meslo LG is a customized version of Apple's Menlo font with various line gap and dotted zero",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные темы и шрифты"
+    },
+    {
+      "id": "ttf-nerd-fonts-symbols",
+      "group": "Extra themes and fonts",
+      "label": "High number of extra glyphs from popular 'iconic fonts'",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные темы и шрифты"
+    },
+    {
+      "id": "ttf-nerd-fonts-symbols-mono",
+      "group": "Extra themes and fonts",
+      "label": "High number of extra glyphs from popular 'iconic fonts' (monospace)",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные темы и шрифты"
+    },
+    {
+      "id": "ttf-ubuntu-font-family",
+      "group": "Extra themes and fonts",
+      "label": "Ubuntu font family",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные темы и шрифты"
+    },
+    {
+      "id": "vimix-cursors",
+      "group": "Extra themes and fonts",
+      "label": "An X Cursor theme inspired by Material design and based on capitaine-cursors",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные темы и шрифты"
+    },
+    {
+      "id": "woff2-font-awesome",
+      "group": "Extra themes and fonts",
+      "label": "Iconic font designed for Bootstrap - woff2 format",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные темы и шрифты"
+    },
+    {
+      "id": "fastfetch",
+      "group": "Extra tools",
+      "label": "A feature-rich and performance oriented neofetch like system information tool",
+      "source": "repo",
+      "default": false,
+      "configs": [
+        "fastfetch"
+      ],
+      "reason_ru": "Дополнительный пакет; обязательный вызов не подтверждён — проверить перед реализацией"
+    },
+    {
+      "id": "inotify-tools",
+      "group": "Extra tools",
+      "label": "a C library and a set of command-line programs for Linux providing a simple interface to inotify.",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительный пакет; обязательный вызов не подтверждён — проверить перед реализацией"
+    },
+    {
+      "id": "keepassxc",
+      "group": "Extra tools",
+      "label": "Cross-platform community-driven port of Keepass password manager",
+      "source": "repo",
+      "default": true,
+      "configs": [],
+      "reason_ru": "Необязательный; чекбокс включён по умолчанию по решению владельца"
+    },
+    {
+      "id": "qbittorrent",
+      "group": "Extra tools",
+      "label": "An advanced BitTorrent client programmed in C++, based on Qt toolkit and libtorrent-rasterbar",
+      "source": "repo",
+      "default": true,
+      "configs": [],
+      "reason_ru": "Необязательный; чекбокс включён по умолчанию по решению владельца"
+    },
+    {
+      "id": "sushi",
+      "group": "Extra tools",
+      "label": "A quick previewer for Nautilus",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительный пакет; обязательный вызов не подтверждён — проверить перед реализацией"
+    },
+    {
+      "id": "tldr",
+      "group": "Extra tools",
+      "label": "Command line client for tldr, a collection of simplified man pages.",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительный пакет; обязательный вызов не подтверждён — проверить перед реализацией"
+    },
+    {
+      "id": "tree",
+      "group": "Extra tools",
+      "label": "A directory listing program displaying a depth indented list of files",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительный пакет; обязательный вызов не подтверждён — проверить перед реализацией"
+    },
+    {
+      "id": "wget",
+      "group": "Extra tools",
+      "label": "Network utility to retrieve files from the web",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Arch и установка"
+    },
+    {
+      "id": "xdg-desktop-portal-kde",
+      "group": "Extra tools",
+      "label": "A backend implementation for xdg-desktop-portal using Qt/KF5",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительный backend: текущий portals.conf использует hyprland;gtk"
+    },
+    {
+      "id": "zsh-autocomplete",
+      "group": "Extra tools",
+      "label": "Real-time type-ahead completion for Zsh",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительный пакет; обязательный вызов не подтверждён — проверить перед реализацией"
+    },
+    {
+      "id": "gamemode",
+      "group": "Games",
+      "label": "A daemon/lib combo that allows games to request a set of optimisations be temporarily applied to the host OS",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Игры и совместимость"
+    },
+    {
+      "id": "gamescope",
+      "group": "Games",
+      "label": "SteamOS session compositing window manager",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Игры и совместимость"
+    },
+    {
+      "id": "lib32-gamemode",
+      "group": "Games",
+      "label": "A daemon/lib combo that allows games to request a set of optimisations be temporarily applied to the host OS",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Игры и совместимость"
+    },
+    {
+      "id": "lib32-mesa",
+      "group": "Games",
+      "label": "Open-source OpenGL drivers - 32-bit",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Игры и совместимость"
+    },
+    {
+      "id": "lib32-vulkan-intel",
+      "group": "Games",
+      "label": "Open-source Vulkan driver for Intel GPUs - 32-bit",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Игры и совместимость"
+    },
+    {
+      "id": "lutris",
+      "group": "Games",
+      "label": "Open Gaming Platform",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Игры и совместимость"
+    },
+    {
+      "id": "protonup-qt",
+      "group": "Games",
+      "label": "Install and manage Proton-GE and Luxtorpeda for Steam and Wine-GE for Lutris",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Игры и совместимость"
+    },
+    {
+      "id": "steam",
+      "group": "Games",
+      "label": "Valve's digital software delivery system",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Игры и совместимость"
+    },
+    {
+      "id": "wine",
+      "group": "Games",
+      "label": "A compatibility layer for running Windows programs",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Игры и совместимость"
+    },
+    {
+      "id": "wine-mono",
+      "group": "Games",
+      "label": "Wine's built-in replacement for Microsoft's .NET Framework",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Игры и совместимость"
+    },
+    {
+      "id": "audacity",
+      "group": "Media and creation",
+      "label": "A program that lets you manipulate digital audio waveforms",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Медиа и творчество"
+    },
+    {
+      "id": "drawing",
+      "group": "Media and creation",
+      "label": "Basic image editor for the GNOME desktop",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Медиа и творчество"
+    },
+    {
+      "id": "droidcam",
+      "group": "Media and creation",
+      "label": "A tool to turn your phone/tablet into a wireless/usb webcam",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Медиа и творчество"
+    },
+    {
+      "id": "easyeffects",
+      "group": "Media and creation",
+      "label": "Audio Effects for Pipewire applications",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Медиа и творчество"
+    },
+    {
+      "id": "gromit-mpx",
+      "group": "Media and creation",
+      "label": "On-screen annotation tool",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Медиа и творчество"
+    },
+    {
+      "id": "guvcview",
+      "group": "Media and creation",
+      "label": "Simple GTK interface for capturing and viewing video from V4L2 devices",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Медиа и творчество"
+    },
+    {
+      "id": "kamoso",
+      "group": "Media and creation",
+      "label": "A webcam recorder from KDE community",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Медиа и творчество"
+    },
+    {
+      "id": "ksnip",
+      "group": "Media and creation",
+      "label": "Qt-based screenshot tool that provides many annotation features",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Медиа и творчество"
+    },
+    {
+      "id": "obs-studio",
+      "group": "Media and creation",
+      "label": "Free, open source software for live streaming and recording",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Медиа и творчество"
+    },
+    {
+      "id": "sox",
+      "group": "Media and creation",
+      "label": "The Swiss Army knife of sound processing tools",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Медиа и творчество"
+    },
+    {
+      "id": "swappy",
+      "group": "Media and creation",
+      "label": "A Wayland native snapshot editing tool",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Медиа и творчество"
+    },
+    {
+      "id": "video-trimmer",
+      "group": "Media and creation",
+      "label": "Cut out a fragment of a video quickly",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Медиа и творчество"
+    },
+    {
+      "id": "yt-dlp",
+      "group": "Media and creation",
+      "label": "A youtube-dl fork with additional features and fixes",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Медиа и творчество"
+    },
+    {
+      "id": "bind",
+      "group": "Network and downloads",
+      "label": "A complete, highly portable implementation of the DNS protocol",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "VPN, сеть и загрузки"
+    },
+    {
+      "id": "inetutils",
+      "group": "Network and downloads",
+      "label": "A collection of common network programs",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "VPN, сеть и загрузки"
+    },
+    {
+      "id": "netplan",
+      "group": "Network and downloads",
+      "label": "Network configuration abstraction renderer",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "VPN, сеть и загрузки"
+    },
+    {
+      "id": "nmap",
+      "group": "Network and downloads",
+      "label": "Utility for network discovery and security auditing",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "VPN, сеть и загрузки"
+    },
+    {
+      "id": "openresolv",
+      "group": "Network and downloads",
+      "label": "resolv.conf management framework (resolvconf)",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "VPN, сеть и загрузки"
+    },
+    {
+      "id": "openvpn",
+      "group": "Network and downloads",
+      "label": "An easy-to-use, robust and highly configurable VPN (Virtual Private Network)",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "VPN, сеть и загрузки"
+    },
+    {
+      "id": "samba",
+      "group": "Network and downloads",
+      "label": "SMB Fileserver and AD Domain server",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "VPN, сеть и загрузки"
+    },
+    {
+      "id": "windscribe",
+      "group": "Network and downloads",
+      "label": "Windscribe Client",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "VPN, сеть и загрузки"
+    },
+    {
+      "id": "wireguard-tools",
+      "group": "Network and downloads",
+      "label": "next generation secure network tunnel - tools for configuration",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "VPN, сеть и загрузки"
+    },
+    {
+      "id": "wireless_tools",
+      "group": "Network and downloads",
+      "label": "Tools allowing to manipulate the Wireless Extensions",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "VPN, сеть и загрузки"
+    },
+    {
+      "id": "zerotier-one",
+      "group": "Network and downloads",
+      "label": "Creates virtual Ethernet networks of almost unlimited size.",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "VPN, сеть и загрузки"
+    },
+    {
+      "id": "fbreader",
+      "group": "Office and study",
+      "label": "An e-book reader for Linux",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Офис, книги и учёба"
+    },
+    {
+      "id": "plantuml",
+      "group": "Office and study",
+      "label": "Component that allows to quickly write uml diagrams",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Офис, книги и учёба"
+    },
+    {
+      "id": "praat",
+      "group": "Office and study",
+      "label": "A speech analysis tool used for doing phonetics by computer",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Офис, книги и учёба"
+    },
+    {
+      "id": "texlive-basic",
+      "group": "Office and study",
+      "label": "TeX Live - Essential programs and files",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Офис, книги и учёба"
+    },
+    {
+      "id": "texlive-bibtexextra",
+      "group": "Office and study",
+      "label": "TeX Live - BibTeX additional styles",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Офис, книги и учёба"
+    },
+    {
+      "id": "texlive-binextra",
+      "group": "Office and study",
+      "label": "TeX Live - TeX auxiliary programs",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Офис, книги и учёба"
+    },
+    {
+      "id": "texlive-fontsrecommended",
+      "group": "Office and study",
+      "label": "TeX Live - Recommended fonts",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Офис, книги и учёба"
+    },
+    {
+      "id": "texlive-langcyrillic",
+      "group": "Office and study",
+      "label": "TeX Live - Cyrillic",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Офис, книги и учёба"
+    },
+    {
+      "id": "texlive-latex",
+      "group": "Office and study",
+      "label": "TeX Live - LaTeX fundamental packages",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Офис, книги и учёба"
+    },
+    {
+      "id": "texlive-latexextra",
+      "group": "Office and study",
+      "label": "TeX Live - LaTeX additional packages",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Офис, книги и учёба"
+    },
+    {
+      "id": "texlive-latexrecommended",
+      "group": "Office and study",
+      "label": "TeX Live - LaTeX recommended packages",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Офис, книги и учёба"
+    },
+    {
+      "id": "texlive-mathscience",
+      "group": "Office and study",
+      "label": "TeX Live - Mathematics, natural sciences, computer science packages",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Офис, книги и учёба"
+    },
+    {
+      "id": "texlive-plaingeneric",
+      "group": "Office and study",
+      "label": "TeX Live - Plain (La)TeX packages",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Офис, книги и учёба"
+    },
+    {
+      "id": "discord",
+      "group": "Recommended optional applications",
+      "label": "All-in-one voice and text chat for gamers",
+      "source": "repo",
+      "default": true,
+      "configs": [],
+      "reason_ru": "Необязательный; чекбокс включён по умолчанию"
+    },
+    {
+      "id": "telegram-desktop",
+      "group": "Recommended optional applications",
+      "label": "Official Telegram Desktop client",
+      "source": "repo",
+      "default": true,
+      "configs": [],
+      "reason_ru": "Необязательный; чекбокс включён по умолчанию"
+    },
+    {
+      "id": "firewalld",
+      "group": "Security",
+      "label": "Firewall daemon with D-Bus interface",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительная аутентификация и защита"
+    },
+    {
+      "id": "ufw",
+      "group": "Security",
+      "label": "Uncomplicated and easy to use CLI tool for managing a netfilter firewall",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительная аутентификация и защита"
+    },
+    {
+      "id": "ascii-2048",
+      "group": "Terminal extras",
+      "label": "2048 game for terminal in ASCII",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Оформление и развлечения терминала"
+    },
+    {
+      "id": "asciiquarium",
+      "group": "Terminal extras",
+      "label": "An aquarium/sea animation in ASCII art",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Оформление и развлечения терминала"
+    },
+    {
+      "id": "cava",
+      "group": "Terminal extras",
+      "label": "Console-based Audio Visualizer with support for multiple backends",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Оформление и развлечения терминала"
+    },
+    {
+      "id": "cbonsai",
+      "group": "Terminal extras",
+      "label": "A bonsai tree generator, written in C using ncurses",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Оформление и развлечения терминала"
+    },
+    {
+      "id": "cmatrix",
+      "group": "Terminal extras",
+      "label": "A curses-based scrolling 'Matrix'-like screen",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Оформление и развлечения терминала"
+    },
+    {
+      "id": "cowsay",
+      "group": "Terminal extras",
+      "label": "Configurable talking cow (and a bit more)",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Оформление и развлечения терминала"
+    },
+    {
+      "id": "durdraw",
+      "group": "Terminal extras",
+      "label": "Frame based ASCII and ANSI drawing and playback program",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Оформление и развлечения терминала"
+    },
+    {
+      "id": "figlet",
+      "group": "Terminal extras",
+      "label": "A program for making large letters out of ordinary text",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Оформление и развлечения терминала"
+    },
+    {
+      "id": "figlet-fonts",
+      "group": "Terminal extras",
+      "label": "Additional asciiart fonts for figlet",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Оформление и развлечения терминала"
+    },
+    {
+      "id": "fortune-mod",
+      "group": "Terminal extras",
+      "label": "The Fortune Cookie Program from BSD games",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Оформление и развлечения терминала"
+    },
+    {
+      "id": "genact",
+      "group": "Terminal extras",
+      "label": "A nonsense activity generator",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Оформление и развлечения терминала"
+    },
+    {
+      "id": "gnome-mines",
+      "group": "Terminal extras",
+      "label": "Clear hidden mines from a minefield",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Оформление и развлечения терминала"
+    },
+    {
+      "id": "greed",
+      "group": "Terminal extras",
+      "label": "A game of consumption. Eat as much as you can before munching yourself into a corner!",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Оформление и развлечения терминала"
+    },
+    {
+      "id": "gti",
+      "group": "Terminal extras",
+      "label": "A silly git launcher",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Оформление и развлечения терминала"
+    },
+    {
+      "id": "lolcat",
+      "group": "Terminal extras",
+      "label": "Okay, no unicorns. But rainbows!!",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Оформление и развлечения терминала"
+    },
+    {
+      "id": "nodejs-mapscii",
+      "group": "Terminal extras",
+      "label": "Map+Ascii -> MapSCII! Console Map Viewer.",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Оформление и развлечения терминала"
+    },
+    {
+      "id": "nyancat",
+      "group": "Terminal extras",
+      "label": "Nyancat rendered in your terminal.",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Оформление и развлечения терминала"
+    },
+    {
+      "id": "oneko",
+      "group": "Terminal extras",
+      "label": "A cat that chases around your cursor",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Оформление и развлечения терминала"
+    },
+    {
+      "id": "peaclock",
+      "group": "Terminal extras",
+      "label": "A colourful binary clock for the terminal",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Оформление и развлечения терминала"
+    },
+    {
+      "id": "pipes.sh",
+      "group": "Terminal extras",
+      "label": "Animated pipes terminal screensaver",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Оформление и развлечения терминала"
+    },
+    {
+      "id": "toilet",
+      "group": "Terminal extras",
+      "label": "Free replacement for the FIGlet utility",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Оформление и развлечения терминала"
+    },
+    {
+      "id": "tuime",
+      "group": "Terminal extras",
+      "label": "A colorful and fun TUI clock written in Rust, with a screensaver mode",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Оформление и развлечения терминала"
+    },
+    {
+      "id": "vitetris",
+      "group": "Terminal extras",
+      "label": "Virtual terminal *tris clone",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Оформление и развлечения терминала"
+    },
+    {
+      "id": "alacritty",
+      "group": "Terminals and editors",
+      "label": "A cross-platform, GPU-accelerated terminal emulator",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные терминалы и редакторы"
+    },
+    {
+      "id": "ghostty",
+      "group": "Terminals and editors",
+      "label": "Fast, native, feature-rich terminal emulator pushing modern features",
+      "source": "repo",
+      "default": false,
+      "configs": [
+        "ghostty"
+      ],
+      "reason_ru": "Дополнительные терминалы и редакторы"
+    },
+    {
+      "id": "mc",
+      "group": "Terminals and editors",
+      "label": "A file manager that emulates Norton Commander",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные терминалы и редакторы"
+    },
+    {
+      "id": "nano",
+      "group": "Terminals and editors",
+      "label": "Pico editor clone with enhancements",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные терминалы и редакторы"
+    },
+    {
+      "id": "tmux",
+      "group": "Terminals and editors",
+      "label": "Terminal multiplexer",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные терминалы и редакторы"
+    },
+    {
+      "id": "vim",
+      "group": "Terminals and editors",
+      "label": "Vi Improved, a highly configurable, improved version of the vi text editor",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Дополнительные терминалы и редакторы"
+    },
+    {
+      "id": "yazi",
+      "group": "Terminals and editors",
+      "label": "Blazing fast terminal file manager written in Rust, based on async I/O",
+      "source": "repo",
+      "default": false,
+      "configs": [
+        "yazi"
+      ],
+      "reason_ru": "Дополнительные терминалы и редакторы"
+    },
+    {
+      "id": "dnsmasq",
+      "group": "Virtual machines and devices",
+      "label": "Lightweight, easy to configure DNS forwarder and DHCP server",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Виртуализация и устройства"
+    },
+    {
+      "id": "escrcpy-bin",
+      "group": "Virtual machines and devices",
+      "label": "📱Graphical Scrcpy to display and control Android devices powered by Electron(Prebuilt version.Use system-wide electron).使用图形化的 Scrcpy 显示和控制您的 Android 设备，由 Electron 驱动。",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Виртуализация и устройства"
+    },
+    {
+      "id": "hyperv",
+      "group": "Virtual machines and devices",
+      "label": "Hyper-V tools",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Виртуализация и устройства"
+    },
+    {
+      "id": "ifuse",
+      "group": "Virtual machines and devices",
+      "label": "A fuse filesystem to access the contents of an iPhone or iPod Touch",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Виртуализация и устройства"
+    },
+    {
+      "id": "libvirt",
+      "group": "Virtual machines and devices",
+      "label": "API for controlling virtualization engines (openvz,kvm,qemu,virtualbox,xen,etc)",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Виртуализация и устройства"
+    },
+    {
+      "id": "miraclecast-git",
+      "group": "Virtual machines and devices",
+      "label": "MiracleCast provides software to connect external monitors to your system via Wifi. It is compatible to Miracast. Link-management works, everything else is still being worked on. Replaces openwfd. Contribute on https://github.com/albfan/aur-miraclecast",
+      "source": "aur",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Виртуализация и устройства"
+    },
+    {
+      "id": "qemu-desktop",
+      "group": "Virtual machines and devices",
+      "label": "A QEMU setup for desktop environments",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Виртуализация и устройства"
+    },
+    {
+      "id": "scrcpy",
+      "group": "Virtual machines and devices",
+      "label": "Display and control your Android device",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Виртуализация и устройства"
+    },
+    {
+      "id": "swtpm",
+      "group": "Virtual machines and devices",
+      "label": "Libtpms-based TPM emulator with socket, character device, and Linux CUSE interface",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Виртуализация и устройства"
+    },
+    {
+      "id": "usbip",
+      "group": "Virtual machines and devices",
+      "label": "An USB device sharing system over IP network",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Виртуализация и устройства"
+    },
+    {
+      "id": "usbmuxd",
+      "group": "Virtual machines and devices",
+      "label": "USB Multiplex Daemon",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Виртуализация и устройства"
+    },
+    {
+      "id": "vde2",
+      "group": "Virtual machines and devices",
+      "label": "Virtual Distributed Ethernet for emulators like qemu",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Виртуализация и устройства"
+    },
+    {
+      "id": "virt-manager",
+      "group": "Virtual machines and devices",
+      "label": "Desktop user interface for managing virtual machines",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Виртуализация и устройства"
+    },
+    {
+      "id": "virtualbox",
+      "group": "Virtual machines and devices",
+      "label": "Powerful x86 virtualization for enterprise as well as home use",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Виртуализация и устройства"
+    },
+    {
+      "id": "virtualbox-host-dkms",
+      "group": "Virtual machines and devices",
+      "label": "VirtualBox Host kernel modules sources",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Виртуализация и устройства"
+    },
+    {
+      "id": "waydroid",
+      "group": "Virtual machines and devices",
+      "label": "A container-based approach to boot a full Android system on a regular Linux system",
+      "source": "repo",
+      "default": false,
+      "configs": [],
+      "reason_ru": "Виртуализация и устройства"
+    }
+  ],
+  "hardware": {
+    "msi": {
+      "label": "MSI Prestige 14 AI Evo C1MG",
+      "repo": [
+        "intel-ucode",
+        "intel-media-driver",
+        "mesa",
+        "vulkan-intel",
+        "sof-firmware",
+        "linux-headers",
+        "dkms",
+        "iw"
+      ],
+      "aur": [
+        "msi-ec-git",
+        "mcontrolcenter-bin"
+      ],
+      "units_system": [
+        "nvme-apst.service"
+      ],
+      "units_user": [
+        "ec-sync.service"
+      ],
+      "configs": [
+        "MControlCenter.conf",
+        "ec-sync.service"
+      ],
+      "match": "Prestige 14 AI Evo C1MG"
+    },
+    "scanner": {
+      "label": "HP scanner",
+      "repo": [
+        "cups",
+        "hplip",
+        "system-config-printer"
+      ],
+      "aur": [],
+      "units_system": [],
+      "units_user": []
+    },
+    "xbox": {
+      "label": "Xbox controller",
+      "repo": [
+        "dkms",
+        "linux-headers"
+      ],
+      "aur": [
+        "xpadneo-dkms"
+      ],
+      "units_system": [],
+      "units_user": []
+    },
+    "fingerprint": {
+      "label": "Fingerprint reader (enrollment required)",
+      "repo": [
+        "fprintd"
+      ],
+      "aur": [],
+      "units_system": [],
+      "units_user": []
+    },
+    "face": {
+      "label": "Face recognition / Howdy (enrollment required)",
+      "repo": [],
+      "aur": [
+        "howdy"
+      ],
+      "units_system": [],
+      "units_user": []
+    },
+    "btrfs": {
+      "label": "Btrfs snapshots (existing Btrfs root + GRUB)",
+      "repo": [
+        "btrfs-progs",
+        "btrfs-assistant",
+        "snapper",
+        "grub-btrfs"
+      ],
+      "aur": [],
+      "units_system": [
+        "snapper-cleanup.timer",
+        "snapper-timeline.timer",
+        "grub-btrfsd.service"
+      ],
+      "units_user": []
+    }
+  },
+  "features": {
+    "ai-tags": {
+      "label": "AI wallpaper tagging — Ollama + Gemma (model download)",
+      "repo": [
+        "ollama",
+        "ollama-vulkan"
+      ],
+      "aur": [],
+      "model": "gemma4"
+    }
+  },
+  "excluded": [
+    "auto-cpufreq",
+    "base",
+    "btrfs-assistant",
+    "btrfs-progs",
+    "dunst",
+    "efibootmgr",
+    "electron33-bin",
+    "fwupd",
+    "grub",
+    "grub-btrfs",
+    "gsettings-qt5",
+    "gst-libav",
+    "gst-plugins-bad",
+    "gst-plugins-ugly",
+    "hyprgraphics",
+    "hyprlang",
+    "hyprutils",
+    "libva-intel-driver",
+    "linux",
+    "os-prober",
+    "polkit-kde-agent",
+    "tk",
+    "xboxdrv",
+    "xf86-video-intel",
+    "yay",
+    "yay-debug",
+    "zsh-autosuggestions"
+  ],
+  "exclusion_notes": {
+    "xboxdrv": "Legacy userspace alternative; Xbox hardware option uses xpadneo-dkms.",
+    "yay-debug": "Debug symbols are not an application requirement.",
+    "auto-cpufreq": "Alternative power manager; the base uses power-profiles-daemon."
+  }
+}

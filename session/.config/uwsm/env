@@ -10,7 +10,5 @@ export XCURSOR_SIZE=20
 # из wallust), стиль Breeze, перекрашивается на лету по KGlobalSettings.notifyChange. qt6ct/Kvantum не стоят.
 export QT_QPA_PLATFORMTHEME=kde
 
-# VA-API на Arc (Meteor Lake)
-export LIBVA_DRIVER_NAME=iHD
-export TFA_DEVICE=/dev/dri/renderD128
-export ffmpeg_vaapi_device=/dev/dri/renderD128
+# Аппаратные переменные ставит только явно выбранный hardware-профиль.
+[ ! -r "${XDG_CONFIG_HOME:-$HOME/.config}/uwsm/hardware-env" ] || . "${XDG_CONFIG_HOME:-$HOME/.config}/uwsm/hardware-env"

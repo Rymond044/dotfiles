@@ -12,7 +12,10 @@ power_name() {
 }
 
 power_status() {
-  echo "$(power_name "$(power_profile)") · charge limit $($PM charge) %"
+  local status
+  status=$(power_name "$(power_profile)")
+  [[ ! -r $EC/shift_mode ]] || status+=" · charge limit $($PM charge) %"
+  echo "$status"
 }
 
 # Строки трёх режимов.
@@ -29,16 +32,22 @@ power_rows() {
   TITLE=Power
   if [[ -w $EC/shift_mode ]]; then
     MESG="$(power_status)"
-  else
+  elif [[ -d $EC ]]; then
     MESG="⚠ EC is read-only: mode, charge limit and Cooler Boost need the udev rule (dot sys install)"
+  else
+    MESG="$(power_status)"
   fi
   power_mode_rows
-  local end boost
-  end=$($PM charge) boost=$($PM boost)
-  row "$(lbl 󰂄 "Charge limit: $end %")" power_charge
-  row "$(lbl 󰈐 "Cooler Boost: $boost")" power_boost
+  if [[ -r $EC/shift_mode ]]; then
+    local end boost
+    end=$($PM charge) boost=$($PM boost)
+    row "$(lbl 󰂄 "Charge limit: $end %")" power_charge
+    row "$(lbl 󰈐 "Cooler Boost: $boost")" power_boost
+  fi
   row "$(lbl 󰁹 "Battery monitor")" launch battery-monitor
-  row "$(lbl 󰢻 "MSI Control Center")" launch mcontrolcenter
+  if [[ -d $EC ]] && command -v mcontrolcenter >/dev/null; then
+    row "$(lbl 󰢻 "MSI Control Center")" launch mcontrolcenter
+  fi
   row "$(lbl 󰐥 "Session…")" power_session
 }
 

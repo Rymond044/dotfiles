@@ -19,6 +19,19 @@ local browser = "chromium" -- флаги в ~/.config/chromium-flags.conf
 local bufferman = "qs -p ~/Apps/quickseek ipc call quickseek folder clipboard" -- история clipse в quickseek
 local screenshot = "grim /tmp/temp_screenshot.png && eog /tmp/temp_screenshot.png"
 
+-- Во время первой сборки плагинов сессия остаётся работоспособной.
+local function plugin_action(name, method, ...)
+    local args = { ... }
+    return function()
+        local plugin = hl.plugin[name]
+        if plugin and plugin[method] then
+            plugin[method](table.unpack(args))
+        else
+            hl.exec_cmd("notify-send 'Desktop setup' 'Plugins are not ready yet. Check dotfiles-first-login.service.'")
+        end
+    end
+end
+
 local mainMod = "SUPER" -- Sets "Windows" key as main modifier
 
 -- Example binds, see https://wiki.hypr.land/Configuring/Binds/ for more
@@ -55,10 +68,8 @@ for _, dir in ipairs({ "left", "right", "up", "down" }) do
 end
 
 -- hl.bind("SUPER + Tab", function() hl.plugin.hyprtasking.toggle("all") end)
-hl.bind("SUPER + TAB", hl.plugin.hymission.toggle)
-hl.bind("CTRL + TAB", function()
-	hl.plugin.hymission.toggle("onlycurrentworkspace")
-end)
+hl.bind("SUPER + TAB", plugin_action("hymission", "toggle"))
+hl.bind("CTRL + TAB", plugin_action("hymission", "toggle", "onlycurrentworkspace"))
 
 hl.bind("SHIFT + CTRL + M", hl.dsp.pass({ window = "class:vesktop" }))
 hl.bind("SHIFT + CTRL + M", hl.dsp.pass({ window = "class:discord" }))
@@ -74,11 +85,9 @@ hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:mag
 --hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd('wayfreeze & PID=$!; sleep 0.1; grim -g "$(slurp)" - | wl-copy'))
 hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("~/.config/binc/ocr"))
 
-hl.bind("SUPER + SHIFT + s", hl.plugin.hyprcapture.open)
+hl.bind("SUPER + SHIFT + s", plugin_action("hyprcapture", "open"))
 
-hl.bind("Print", function()
-	hl.plugin.hyprcapture.open_editor("fullscreen")
-end)
+hl.bind("Print", plugin_action("hyprcapture", "open_editor", "fullscreen"))
 
 --буфер обмена
 hl.bind(mainMod .. " + V", hl.dsp.exec_cmd(bufferman))

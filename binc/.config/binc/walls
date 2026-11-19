@@ -34,6 +34,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -603,10 +604,13 @@ def ensure_ollama() -> subprocess.Popen | None:
         return None
     except OSError:
         pass
+    if not shutil.which("ollama"):
+        raise RuntimeError("AI tagging is not installed. Select 'AI wallpaper tagging' in the dotfiles installer.")
     # Одна модель и один запрос: без этого ollama поднимал второй раннер gemma4 (2 × 9,4 ГБ при 15 ГБ RAM → своп)
     # Vulkan + iGPU — считать на Arc (пакет ollama-vulkan; по умолчанию встроенная графика выключена)
-    env = dict(os.environ, OLLAMA_MAX_LOADED_MODELS="1", OLLAMA_NUM_PARALLEL="1",
-               OLLAMA_VULKAN="1", OLLAMA_IGPU_ENABLE="1")
+    env = dict(os.environ, OLLAMA_MAX_LOADED_MODELS="1", OLLAMA_NUM_PARALLEL="1")
+    if os.path.isfile(f"{HOME}/.config/dotfiles/hardware/msi"):
+        env.update(OLLAMA_VULKAN="1", OLLAMA_IGPU_ENABLE="1")
     proc = subprocess.Popen(["ollama", "serve"], env=env, stdout=subprocess.DEVNULL,
                             stderr=open(f"{CACHE}/ollama.log", "w"))
     for _ in range(100):
@@ -618,7 +622,12 @@ def ensure_ollama() -> subprocess.Popen | None:
             if proc.poll() is not None:
                 break
     proc.terminate()
-    raise RuntimeError("ollama serve не поднялся")
+    try:
+        proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait()
+    raise RuntimeError("Ollama server did not start.")
 
 
 def image_b64(path: str, side: int = 768) -> str:
@@ -697,7 +706,7 @@ def cmd_tag(args) -> None:
         server = ensure_ollama()
         names = {m["name"].split(":")[0] for m in ollama("/api/tags")["models"]}
         if MODEL.split(":")[0] not in names:
-            raise RuntimeError(f"нет модели {MODEL} (ollama pull {MODEL})")
+            raise RuntimeError(f"Model {MODEL} is not installed. Select AI wallpaper tagging in the installer, or run: ollama pull {MODEL}")
         t0 = time.monotonic()
         for i, (h, name) in enumerate(todo):
             if stop:
@@ -729,8 +738,11 @@ def cmd_tag(args) -> None:
             save_view()
         if server:
             server.terminate()
-            with contextlib.suppress(subprocess.TimeoutExpired):
+            try:
                 server.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                server.kill()
+                server.wait()
     if done:
         notify(f"Tagged {done} of {len(todo)} wallpapers" + (" (stopped)" if stop else ""))
 

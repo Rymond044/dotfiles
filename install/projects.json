@@ -1,0 +1,67 @@
+{
+  "apps": [
+    {
+      "name": "quickseek",
+      "url": "https://github.com/Rymond044/quickseek.git",
+      "rev": "d8e2681460a024d9a1203f3c9c1b0c11892c7f5e",
+      "plugin": null
+    },
+    {
+      "name": "quickdesk",
+      "url": "https://github.com/Rymond044/quickdesk.git",
+      "rev": "fff7fbd9f7484c7a3bc78a2b1ec3a89d684f78b3",
+      "plugin": null
+    },
+    {
+      "name": "linux-battery-monitor",
+      "url": "https://github.com/Rymond044/linux-battery-monitor.git",
+      "rev": "ad39b0b1a1e3c0737edfa2ec7146f3d2e4bf26cd",
+      "plugin": null
+    },
+    {
+      "name": "hymission",
+      "url": "https://github.com/Rymond044/hymission.git",
+      "rev": "66437b5502906f7d5980fcf9f0263c4ae50fdf60",
+      "plugin": "hymission"
+    },
+    {
+      "name": "HyprCapture",
+      "url": "https://github.com/Rymond044/HyprCapture.git",
+      "rev": "6d23e47cd77f882a2bde3a1f7da6d67c32cb3626",
+      "plugin": "hyprcapture"
+    },
+    {
+      "name": "hyprglass",
+      "url": "https://github.com/hyprnux/hyprglass.git",
+      "rev": "c65931aa81827f5f21a88e4d8a1087a03f689f2d",
+      "plugin": "hyprglass"
+    }
+  ],
+  "shell": [
+    {
+      "name": "oh-my-zsh",
+      "url": "https://github.com/ohmyzsh/ohmyzsh.git",
+      "rev": "2100c630ba4bd67bb48802c3e7da893a4fdaa1a0"
+    },
+    {
+      "name": "zsh-autosuggestions",
+      "url": "https://github.com/zsh-users/zsh-autosuggestions",
+      "rev": "85919cd1ffa7d2d5412f6d3fe437ebdbeeec4fc5"
+    },
+    {
+      "name": "zsh-shift-select",
+      "url": "https://github.com/jirutka/zsh-shift-select.git",
+      "rev": "da460999b7d31aef0f0a82a3e749d70edf6f2ef9"
+    },
+    {
+      "name": "zsh-syntax-highlighting",
+      "url": "https://github.com/zsh-users/zsh-syntax-highlighting.git",
+      "rev": "1d85c692615a25fe2293bdd44b34c217d5d2bf04"
+    },
+    {
+      "name": "zsh-z",
+      "url": "https://github.com/agkozak/zsh-z",
+      "rev": "acd0e1984df350c189f8f9c4956ec586b6c73fca"
+    }
+  ]
+}
