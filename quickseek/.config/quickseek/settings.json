@@ -47,5 +47,6 @@
         "exec uwsm app -- ~/.config/binc/screensaver"
       ]
     }
-  }
+  },
+  "hidden": []
 }
