@@ -1,0 +1,51 @@
+# Исправленный рецепт: официальные SF Pro / Compact обновлены Apple 2026-11-04.
+# Контрольные суммы проверены 2026-11-20; шрифты и лицензии в репозиторий не включены.
+pkgname=apple-fonts
+pkgver=7.0.6
+pkgrel=2
+pkgdesc='Apple font families (verified 2026-11-20 archives)'
+arch=(any)
+url='https://developer.apple.com/fonts/'
+license=(custom)
+provides=(ttf-font)
+makedepends=(7zip libarchive)
+options=('!strip' '!debug')
+_baseurl='https://devimages-cdn.apple.com/design/resources/download'
+source=("${_baseurl}/SF-Pro.dmg"
+        "${_baseurl}/SF-Compact.dmg"
+        "${_baseurl}/SF-Mono.dmg"
+        "${_baseurl}/NY.dmg")
+sha256sums=('b27fe6622f1fa96a707c73dca6666d439c35b312d5b1d47e0e2980e618eb4b28'
+            '6f241171876a84174d4b99baf469bafb3f8e2454cea123d850b33f1fb0f70f5f'
+            '6d4a0b78e3aacd06f913f642cead1c7db4af34ed48856d7171a2e0b55d9a7945'
+            '1c2eedb4526cc0f326f8b7ea978f5a433756476a2c8c56072537608edb88f8f4')
+noextract=(SF-Pro.dmg SF-Compact.dmg SF-Mono.dmg NY.dmg)
+
+prepare() {
+    local family work archive payload
+    mkdir -p "$srcdir/fonts" "$srcdir/licenses"
+    for family in SF-Pro SF-Compact SF-Mono NY; do
+        work="$srcdir/unpack/$family"
+        mkdir -p "$work/dmg" "$work/pkg" "$work/fonts"
+        7z e "$srcdir/$family.dmg" '*.pkg' -r -y -mmt2 -o"$work/dmg"
+        for archive in "$work/dmg/"*.pkg; do
+            bsdtar -xf "$archive" -C "$work/pkg"
+        done
+        install -m644 "$work/pkg/Resources/English.lproj/License.rtf" "$srcdir/licenses/$family.rtf"
+        while IFS= read -r -d '' payload; do
+            bsdtar -xf "$payload" -C "$work/fonts"
+        done < <(find "$work/pkg" -type f -name Payload -print0)
+        while IFS= read -r -d '' archive; do
+            install -m644 "$archive" "$srcdir/fonts/"
+        done < <(find "$work/fonts" -type f \( -iname '*.otf' -o -iname '*.ttf' \) -print0)
+        # Не держим промежуточные DMG/PKG/Payload вместе со всеми извлечёнными шрифтами.
+        rm -rf -- "$work"
+    done
+    # Нужный hyprlock шрифт обязателен: пустой пакет не должен считаться успехом.
+    test -f "$srcdir/fonts/SF-Pro-Display-Bold.otf"
+}
+
+package() {
+    install -Dm644 -t "$pkgdir/usr/share/licenses/$pkgname" "$srcdir/licenses/"*
+    install -Dm644 -t "$pkgdir/usr/share/fonts/$pkgname" "$srcdir/fonts/"*
+}

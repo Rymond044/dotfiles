@@ -102,6 +102,81 @@ class PlanTests(unittest.TestCase):
             self.assertEqual((ROOT / 'packages' / name).read_text().split(), d[field])
 
 
+class AurFailureTests(unittest.TestCase):
+    def test_build_log_keeps_real_output_and_exit_status(self):
+        with tempfile.TemporaryDirectory() as temp:
+            log=Path(temp)/'package.log'
+            result=m.run([sys.executable,'-c','print("package build failed"); raise SystemExit(7)'],check=False,log_path=log)
+            self.assertEqual(result.returncode,7)
+            self.assertIn('package build failed',log.read_text())
+
+    def test_already_installed_targets_are_not_rebuilt(self):
+        with tempfile.TemporaryDirectory() as home, patch.object(m, 'run', return_value=subprocess.CompletedProcess([],0,stdout='')) as command, patch.object(m.shutil,'which',return_value='/usr/bin/yay'), patch.object(m.Installer,'repositories'):
+            installer=m.Installer(m.make_plan(),home=home)
+            installer.packages()
+            self.assertFalse(any(list(call.args[0])[:2]==['yay','-S'] for call in command.call_args_list))
+            self.assertEqual(installer.package_failures,{})
+
+    def test_nonzero_helper_status_with_installed_package_is_success(self):
+        plan=m.make_plan();plan['aur']=['clipse']
+        installed=set()
+        def command(args,**kwargs):
+            args=list(map(str,args))
+            if args[:2]==['pacman','-Qq']:
+                return subprocess.CompletedProcess(args,0 if args[-1] in installed else 1,stdout='')
+            if args[:2]==['pacman','-Si']:
+                return subprocess.CompletedProcess(args,1,stdout='')
+            if args[:2]==['yay','-S']:
+                installed.add('clipse')
+                return subprocess.CompletedProcess(args,1,stdout='')
+            return subprocess.CompletedProcess(args,0,stdout='')
+        with tempfile.TemporaryDirectory() as home,patch.object(m,'run',side_effect=command),patch.object(m.shutil,'which',return_value='/usr/bin/yay'),patch.object(m.Installer,'repositories'):
+            installer=m.Installer(plan,home=home);installer.packages()
+            self.assertEqual(installer.package_failures,{})
+
+    def test_apple_fonts_uses_corrected_recipe_after_aur_failure(self):
+        plan=m.make_plan();plan['aur']=['apple-fonts']
+        installed=set()
+        def command(args,**kwargs):
+            args=list(map(str,args))
+            if args[:2]==['pacman','-Qq']:
+                return subprocess.CompletedProcess(args,0 if args[-1] in installed else 1,stdout='')
+            status=1 if args[:2] in (['pacman','-Si'],['yay','-S']) else 0
+            return subprocess.CompletedProcess(args,status,stdout='')
+        def repair(log):
+            installed.add('apple-fonts');return 0
+        with tempfile.TemporaryDirectory() as home,patch.object(m,'run',side_effect=command),patch.object(m.shutil,'which',return_value='/usr/bin/yay'),patch.object(m.Installer,'repositories'),patch.object(m.Installer,'repair_apple_fonts',side_effect=repair) as fallback:
+            installer=m.Installer(plan,home=home);installer.packages()
+            fallback.assert_called_once()
+            self.assertEqual(installer.package_failures,{})
+
+    def test_failed_aur_package_does_not_abort_other_packages(self):
+        plan = m.make_plan()
+        plan['repo'] = ['git']
+        plan['aur'] = ['wallust', 'clipse']
+        calls = []
+        installed = {'git'}
+        def command(args, **kwargs):
+            args = list(map(str, args))
+            calls.append(args)
+            if args[:2] == ['pacman', '-Qq']:
+                return subprocess.CompletedProcess(args, 0 if args[-1] in installed else 1, stdout='')
+            if args[:2] == ['pacman', '-Si']:
+                return subprocess.CompletedProcess(args, 1, stdout='')
+            if args[0] == 'yay' and 'wallust' in args:
+                if kwargs.get('check', True):
+                    raise subprocess.CalledProcessError(1, args)
+                return subprocess.CompletedProcess(args, 1, stdout='')
+            if args[0] == 'yay' and 'clipse' in args:
+                installed.add('clipse')
+            return subprocess.CompletedProcess(args, 0, stdout='')
+        with tempfile.TemporaryDirectory() as home, patch.object(m, 'run', side_effect=command), patch.object(m.shutil, 'which', return_value='/usr/bin/yay'), patch.object(m.Installer, 'repositories'):
+            installer = m.Installer(plan, home=home)
+            installer.packages()
+            self.assertIn('wallust', installer.package_failures)
+        self.assertTrue(any(c[0]=='yay' and c[-1]=='clipse' for c in calls))
+
+
 class HomeTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix='dotfiles-install-test-')
@@ -115,6 +190,15 @@ class HomeTests(unittest.TestCase):
         self.assertEqual(target.stat().st_mode & 0o777, 0o600)
         self.installer.write(target, b'TOKEN=second\n', mode=0o600, preserve=True)
         self.assertEqual(target.read_bytes(), b'TOKEN=first\n')
+
+    def test_incomplete_setup_is_reported_and_does_not_enable_autologin(self):
+        self.installer.package_failures={'wallust':{'status':1,'log':'/tmp/wallust.log'}}
+        self.assertNotIn('/etc/systemd/system/getty@tty1.service.d/zz-dotfiles.conf',self.installer.root_files())
+        self.assertFalse(self.installer.installation_report())
+        report=json.loads((self.home/'.local/state/dotfiles/install-report.json').read_text())
+        self.assertFalse(report['complete'])
+        self.assertIn('wallust',report['missing_packages'])
+        self.assertTrue(report['deferred_steps'])
 
     def test_replacing_symlink_never_overwrites_source(self):
         source = self.home / 'source'

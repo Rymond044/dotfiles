@@ -23,8 +23,24 @@ import shutil, subprocess, sys
 name=Path(sys.argv[0]).name
 args=sys.argv[1:]
 with open('/tmp/commands.jsonl','a') as log: log.write(json.dumps([name]+args)+'\n')
+db=Path('/tmp/package-db.json')
+installed=set(json.loads(db.read_text())) if db.exists() else set()
+def install_packages(arguments):
+    installed.update(a for a in arguments if not a.startswith('-'))
+    db.write_text(json.dumps(sorted(installed)))
+if name=='pacman':
+    if args[0]=='-Qq': sys.exit(0 if args[-1] in installed else 1)
+    if args[0]=='-Si':
+        native=json.loads(Path('/mnt/packages/scopes.json').read_text())['system']['repo']
+        sys.exit(0 if args[-1] in native else 1)
+    raise SystemExit('Unexpected pacman query')
+if name=='yay' and args[0]=='-S':
+    if args[-1]==os.environ.get('DOTFILES_FAIL_AUR'): sys.exit(1)
+    install_packages(args[1:]);sys.exit(0)
 if name == 'sudo':
     command=args.pop(0)
+    if command=='pacman':
+        install_packages(args[1:]);sys.exit(0)
     if command == 'install':
         clean=[]
         while args:
@@ -48,7 +64,7 @@ raise SystemExit('Unknown test command: '+name)
 '''
 
 
-def drive(args):
+def drive(args, expected=0):
     master, slave=pty.openpty()
     fcntl.ioctl(slave,termios.TIOCSWINSZ,struct.pack('HHHH',32,160,0,0))
     proc=subprocess.Popen(args,stdin=slave,stdout=slave,stderr=slave,start_new_session=True)
@@ -65,7 +81,7 @@ def drive(args):
                     os.write(master,b'y\n'); replied+=1
         if proc.poll() is None:
             proc.wait(timeout=3)
-        if proc.returncode:
+        if proc.returncode != expected:
             raise AssertionError(output.decode(errors='replace')[-7000:])
         return output
     finally:
@@ -74,7 +90,7 @@ def drive(args):
         os.close(master)
 
 
-def scenario(name, users, hardware):
+def scenario(name, users, hardware, failed_package=None):
     with tempfile.TemporaryDirectory(prefix='dotfiles-full-smoke-') as temp:
         temp = Path(temp)
         for path in ['bin','home','run','etc/default','etc/systemd/system','var-backups','battery','boot']:
@@ -96,7 +112,7 @@ def scenario(name, users, hardware):
         source = ROOT / 'install/tests/fixtures/battery'
         for filename in ['battery-monitor.service','io.github.rymond044.BatteryMonitor.desktop','io.github.rymond044.BatteryMonitor.svg']:
             shutil.copyfile(source/filename, temp/'battery'/filename)
-        for command in ['sudo','git','yay','systemctl','chsh']:
+        for command in ['sudo','git','yay','pacman','systemctl','chsh']:
             path=temp/'bin'/command; path.write_text(WRAPPER); path.chmod(0o755)
         affinity=','.join(str(x) for x in sorted(os.sched_getaffinity(0))[:2])
         args=['nice','-n','10','taskset','-c',affinity,'bwrap','--die-with-parent','--new-session','--unshare-all',
@@ -111,7 +127,9 @@ def scenario(name, users, hardware):
               '--setenv','VIPS_CONCURRENCY','1','--setenv','RAYON_NUM_THREADS','2',
               '--setenv','TERM','xterm-256color','--setenv','LANG','C.UTF-8','--chdir','/mnt',
               '/usr/bin/python3','/mnt/install/installer.py','--user',users,'--hardware',hardware,'--features','none']
-        drive(args)
+        if failed_package:
+            args[args.index('--clearenv')+1:args.index('--clearenv')+1] = ['--setenv','DOTFILES_FAIL_AUR',failed_package]
+        drive(args,expected=2 if failed_package else 0)
         log=[json.loads(line) for line in (temp/'commands.jsonl').read_text().splitlines()]
         home=temp/'home'
         assert (home/'.config/kitty/kitty.conf').is_symlink()
@@ -121,8 +139,13 @@ def scenario(name, users, hardware):
         assert (home/'.config/dotfiles/.env').stat().st_mode & 0o777 == 0o600
         assert (home/'Pictures/pfp/current_pfp.jpg').is_file()
         assert (home/'Wallpapers/current').is_file()
-        assert (home/'.cache/wallust/hyprland.lua').is_file()
-        assert (home/'.cache/wallust/hyprlock.conf').is_file()
+        assert (home/'.cache/wallust/hyprland.lua').is_file() == (failed_package is None)
+        assert (home/'.cache/wallust/hyprlock.conf').is_file() == (failed_package is None)
+        report=json.loads((home/'.local/state/dotfiles/install-report.json').read_text())
+        assert report['complete'] == (failed_package is None)
+        if failed_package:
+            assert failed_package in report['missing_packages']
+            assert not (temp/'etc/systemd/system/getty@tty1.service.d/zz-dotfiles.conf').exists()
         assert (home/'.config/systemd/user/dotfiles-first-login.service').is_file()
         assert not (home/'.local/state/dotfiles/first-login-complete').exists()
         assert not any('remove' in c or '--now' in c or 'disable' in c for c in log)
@@ -152,7 +175,7 @@ def scenario(name, users, hardware):
             home/'.config/dotfiles/.env': b'LOCAL_SECRET=preserved\n',
         }
         for path, data in retained.items(): path.write_bytes(data)
-        drive(args)
+        drive(args,expected=2 if failed_package else 0)
         for path, data in retained.items(): assert path.read_bytes() == data
         print(f'PASS {name}: install + repeat; actual stow/theme/files; package/git/unit operations simulated.')
 
@@ -161,3 +184,5 @@ if __name__=='__main__':
     scenario('base','none','none')
     scenario('MSI + default optional apps','telegram-desktop,discord,keepassxc,qbittorrent','msi')
     scenario('optional repositories','chatgpt-bin,steam','none')
+
+    scenario('failed AUR package continues setup','none','none',failed_package='wallust')

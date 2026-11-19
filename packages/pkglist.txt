@@ -106,6 +106,7 @@ ttf-cascadia-mono-nerd
 ttf-material-symbols-variable
 unzip
 upower
+util-linux
 uwsm
 wiremix
 wireplumber

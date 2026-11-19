@@ -73,9 +73,14 @@ def make_plan(users=(), hardware=(), features=(), data=None):
     return plan
 
 
-def run(args, *, capture=False, check=True, **kwargs):
+def run(args, *, capture=False, check=True, log_path=None, **kwargs):
     print('+ ' + shlex.join(map(str, args)), flush=True)
-    return subprocess.run(list(map(str, args)), check=check, text=True, capture_output=capture, **kwargs)
+    command = list(map(str, args))
+    if log_path is not None:
+        Path(log_path).parent.mkdir(parents=True, exist_ok=True)
+        # Сохраняем только вывод PTY: скрытый ввод пароля sudo в лог не записывается.
+        command = ['script', '--quiet', '--return', '--flush', '--append', '--log-out', str(log_path), '--command', shlex.join(command)]
+    return subprocess.run(command, check=check, text=True, capture_output=capture, **kwargs)
 
 
 def confirm(question):
@@ -205,6 +210,9 @@ class Installer:
         self.config = self.home / '.config'
         self.backup = self.home / '.dotfiles-backup' / datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f')
         self.selected = set(plan['repo'] + plan['aur'])
+        self.package_failures = {}
+        self.deferred = []
+        self.package_logs = self.home / '.local/state/dotfiles/install-logs' / self.backup.name
 
     def local_parents(self, target):
         """Новые локальные файлы не должны попадать в репо через folded-папки stow."""
@@ -266,16 +274,97 @@ class Installer:
         target.symlink_to(source)
 
     def packages(self):
-        run(['sudo', 'pacman', '-S', '--needed', 'git', 'stow', 'base-devel', 'gum'])
-        if not shutil.which('yay'):
-            with tempfile.TemporaryDirectory(prefix='dotfiles-yay-') as temp:
-                run(['git', 'clone', 'https://aur.archlinux.org/yay-bin.git', temp + '/yay'])
-                run(['makepkg', '-si'], cwd=temp + '/yay')
+        # Сначала обновляем pacman/libalpm, и только затем собираем/проверяем yay.
+        run(['sudo', 'pacman', '-Syu', '--needed', 'git', 'stow', 'base-devel', 'gum', 'util-linux'])
         self.repositories()
         # Полное обновление избегает частичного обновления Arch после синхронизации баз.
         run(['sudo', 'pacman', '-Syu', '--needed', *self.plan['repo']])
-        if self.plan['aur']:
-            run(['yay', '-S', '--needed', *self.plan['aur']])
+        missing = [name for name in self.plan['aur'] if not self.package_installed(name)]
+        yay_ready = self.ensure_yay() if self.plan['aur'] else True
+        if not yay_ready:
+            self.deferred.append('AUR helper yay is unavailable; see the installer output and yay.log.')
+        if not missing:
+            return
+        for name in missing:
+            self.install_extra_package(name, yay_ready)
+        # Единственный повтор только неустановленных целей: сетевой сбой не пересобирает весь набор.
+        for name in list(self.package_failures):
+            self.install_extra_package(name, yay_ready)
+
+    def package_installed(self, name):
+        return run(['pacman', '-Qq', name], capture=True, check=False).returncode == 0
+
+    def ensure_yay(self):
+        if shutil.which('yay') and run(['yay', '--version'], capture=True, check=False).returncode == 0:
+            return True
+        try:
+            with tempfile.TemporaryDirectory(prefix='dotfiles-yay-') as temp:
+                run(['git', 'clone', 'https://aur.archlinux.org/yay-bin.git', temp + '/yay'])
+                log = self.package_logs / 'yay.log'
+                self.local_parents(log)
+                result = run(['makepkg', '-si'], cwd=temp + '/yay', check=False, log_path=log)
+                if result.returncode in (130, -2):
+                    raise KeyboardInterrupt
+                if result.returncode:
+                    return False
+            return run(['yay', '--version'], capture=True, check=False).returncode == 0
+        except (OSError, subprocess.CalledProcessError) as error:
+            print(f'AUR helper unavailable: {error}. Continuing other setup steps.')
+            return False
+
+    def install_extra_package(self, name, yay_ready):
+        if self.package_installed(name):
+            self.package_failures.pop(name, None)
+            return
+        log = self.package_logs / f'{name}.log'
+        self.local_parents(log)
+        status = 1
+        try:
+            # Пакет мог переехать в официальный репозиторий после создания каталога.
+            native = run(['pacman', '-Si', name], capture=True, check=False).returncode == 0
+            if native or yay_ready:
+                command = ['sudo', 'pacman', '-S', '--needed', name] if native else ['yay', '-S', '--needed', name]
+                status = run(command, check=False, log_path=log).returncode
+                if status in (130, -2):
+                    raise KeyboardInterrupt
+            # yay может сообщить ошибку после частично успешной транзакции. Проверяем БД.
+            if not self.package_installed(name) and name == 'apple-fonts':
+                status = self.repair_apple_fonts(log)
+        except (OSError, subprocess.CalledProcessError) as error:
+            print(f'{name}: {error}')
+        if self.package_installed(name):
+            self.package_failures.pop(name, None)
+            print(f'Installed: {name}')
+        else:
+            self.package_failures[name] = {'status': status or 1, 'log': str(log)}
+            print(f'Pending package: {name}. Continuing; build output: {log}')
+
+    def repair_apple_fonts(self, log):
+        print('Building apple-fonts from the corrected, checksum-verified recipe.')
+        directory = self.home / '.cache/dotfiles/build/apple-fonts'
+        self.write(directory / 'PKGBUILD', (ROOT / 'install/aur/apple-fonts/PKGBUILD').read_bytes())
+        self.write(directory / 'makepkg.conf', b'source /etc/makepkg.conf\nCOMPRESSZST=(zstd -c -T2 -3 -)\n')
+        sources = directory / 'sources'
+        sources.mkdir(exist_ok=True)
+        result = run(['makepkg', '--config', directory / 'makepkg.conf', '-si', '--needed', '--cleanbuild'], cwd=directory,
+                     env=dict(os.environ, SRCDEST=str(sources), MAKEFLAGS='-j2'), check=False, log_path=log)
+        if result.returncode in (130, -2):
+            raise KeyboardInterrupt
+        return result.returncode
+
+    def installation_report(self):
+        complete = not self.package_failures and not self.deferred
+        report = self.home / '.local/state/dotfiles/install-report.json'
+        self.write(report, (json.dumps({'complete': complete, 'missing_packages': self.package_failures,
+                                      'deferred_steps': self.deferred}, indent=2) + '\n').encode())
+        if not complete:
+            print('Setup continued, but some components still need attention:')
+            for name, details in self.package_failures.items():
+                print(f'  {name}: {details["log"]}')
+            for step in self.deferred:
+                print('  ' + step)
+            print(f'Status report: {report}\nRerun bootstrap after resolving the listed errors; installed packages are skipped.')
+        return complete
 
     def clone(self, project, destination):
         if destination.exists():
@@ -412,9 +501,12 @@ class Installer:
             result[str(grub)] = text.encode()
         # Имя пользователя — параметр установки, не сохранённое имя владельца dotfiles.
         username = pwd.getpwuid(os.getuid()).pw_name
-        result['/etc/systemd/system/getty@tty1.service.d/zz-dotfiles.conf'] = (
-            '[Service]\nExecStart=\nExecStart=-/usr/bin/agetty --autologin ' + username + ' --noclear %I $TERM\n'
-        ).encode()
+        if all((self.home / '.cache/wallust' / name).is_file() for name in ['hyprland.lua', 'hyprlock.conf']):
+            result['/etc/systemd/system/getty@tty1.service.d/zz-dotfiles.conf'] = (
+                '[Service]\nExecStart=\nExecStart=-/usr/bin/agetty --autologin ' + username + ' --noclear %I $TERM\n'
+            ).encode()
+        else:
+            self.deferred.append('Console autologin deferred: the initial desktop/lock theme is not ready.')
         if 'msi' in self.plan['hardware']:
             target = Path('/etc/default/grub')
             if target.exists():
@@ -519,6 +611,9 @@ class Installer:
             raise RuntimeError('Unit activation cancelled.')
         run(['systemctl', '--user', 'daemon-reload'])
         for name in self.plan['units_user']:
+            if name == 'ec-sync.service' and 'msi-ec-git' in self.package_failures:
+                self.deferred.append('ec-sync.service awaits the msi-ec-git package.')
+                continue
             run(['systemctl', '--user', 'enable', name])
         for name in self.plan['units_system']:
             run(['sudo', 'systemctl', 'enable', name])
@@ -532,8 +627,17 @@ class Installer:
         new = self.write(current, secrets.choice(sorted((assets / 'wallpapers').iterdir())).read_bytes(), preserve=True)
         self.write(self.home / 'Pictures/pfp/current_pfp.jpg', (assets / 'avatar.jpg').read_bytes(), preserve=True)
         if new or not (self.home / '.cache/wallust/hyprland.lua').exists():
-            run([self.config / 'binc/walls', 'index'])
-            run([self.config / 'binc/theme', 'apply', '--no-reload'])
+            missing = {'wallust', 'matugen-bin'}.intersection(self.package_failures)
+            if missing:
+                self.deferred.append('Initial wallpaper theme awaits: ' + ', '.join(sorted(missing)))
+                print('Theme preparation deferred; continuing the installation.')
+                return
+            try:
+                run([self.config / 'binc/walls', 'index'])
+                run([self.config / 'binc/theme', 'apply', '--no-reload'])
+            except (OSError, subprocess.CalledProcessError) as error:
+                self.deferred.append(f'Initial wallpaper theme: {error}')
+                print('Theme preparation deferred; continuing the installation.')
 
     def first_login(self):
         # hyprpm получает версию работающего Hyprland. Сборка выполняется автоматически
@@ -590,7 +694,7 @@ class Installer:
                 raise RuntimeError('The Btrfs snapshot option requires an already configured GRUB bootloader.')
         self.packages()
         if packages_only:
-            return
+            return self.installation_report()
         self.projects()
         self.configs()
         self.defaults()
@@ -598,7 +702,11 @@ class Installer:
         self.first_login()
         self.enable_units()
         self.ai_tags()
-        print('Installation files are ready. Reboot to start enabled system services.\nPlugins and editor finish automatically at the next graphical login.\nExisting unselected applications were not removed.')
+        complete = self.installation_report()
+        if complete:
+            print('Installation files are ready. Reboot to start enabled system services.\nPlugins and editor finish automatically at the next graphical login.')
+        print('Existing unselected applications were not removed.')
+        return complete
 
 
 def finish_first_login(*, home=None, cache=None):
@@ -744,7 +852,8 @@ def main(argv=None):
     print('Local secrets and current wallpaper are preserved. System changes are reviewed separately.')
     if not confirm('Install this selection? Existing unselected applications will be kept.'):
         return
-    Installer(plan).apply(args.packages_only)
+    if not Installer(plan).apply(args.packages_only):
+        sys.exit(2)
 
 
 if __name__ == '__main__':
