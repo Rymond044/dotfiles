@@ -19,9 +19,40 @@ def git(directory, *args):
 
 
 class SMW:
-    def __init__(self, root=ROOT):
+    def __init__(self, root=ROOT, home=None):
         self.root = Path(root)
         self.path = self.root / SUBMODULE
+        self.home = Path(home) if home is not None else Path.home()
+
+    def links(self, repair=False):
+        """Подключаем файлы пакета отдельно от локальных настроек экранов."""
+        if not self.initialized() or not (self.path / 'init.lua').is_file():
+            raise RuntimeError('SMW Lua package is missing. Run: dot smw restore')
+        missing = []
+        conflicts = []
+        for name in git(self.path, 'ls-files', '--', '*.lua').splitlines():
+            source = self.path / name
+            target = self.home / '.config/hypr/plugins' / name
+            if not source.is_file():
+                raise RuntimeError(f'SMW source is missing: {source}')
+            if target.is_file() and target.resolve() == source.resolve():
+                continue
+            if target.exists() or target.is_symlink():
+                conflicts.append(str(target))
+            else:
+                missing.append((source, target))
+        # Проверяем все конфликты до создания ссылок; чужие файлы не перезаписываем.
+        if conflicts:
+            raise RuntimeError('SMW link conflicts; local files preserved:\n' + '\n'.join(conflicts))
+        if repair:
+            for source, target in missing:
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.symlink_to(source)
+            print(f'SMW links ready ({len(missing)} added).')
+        elif missing:
+            print('Missing SMW links; run: dot smw restore\n' + '\n'.join(str(t) for _, t in missing))
+        else:
+            print('SMW links are healthy.')
 
     def recorded(self):
         entries = git(self.root, 'ls-files', '--stage', '--', SUBMODULE).splitlines()
@@ -53,6 +84,7 @@ class SMW:
               'Checkout differs. Review and commit the submodule, or run: dot smw restore')
         if git(self.path, 'status', '--porcelain', '--untracked-files=all'):
             print('Local changes are present.')
+        self.links()
 
     def restore(self):
         self.recorded()
@@ -62,6 +94,7 @@ class SMW:
             raise RuntimeError('SMW directory is not empty and is not an initialized submodule.')
         subprocess.run(['git', '-C', str(self.root), 'submodule', 'update', '--init',
                         '--checkout', '--', SUBMODULE], check=True)
+        self.links(repair=True)
         self.status()
         print('Hyprland was not reloaded.')
 
@@ -102,6 +135,8 @@ class SMW:
         print(f'Lua syntax OK ({len(lua_files)} files).')
         print(f'Current: {current}\nCandidate: {candidate}')
         if current == candidate:
+            if not check:
+                self.links(repair=True)
             print('Already up to date.')
             return
         print(git(self.path, 'log', '--oneline', f'{current}..{candidate}'))
@@ -113,6 +148,7 @@ class SMW:
         if git(self.path, 'rev-parse', 'HEAD') != current or self.recorded() != recorded:
             raise RuntimeError('SMW changed during the update. Retry after reviewing it.')
         git(self.path, 'checkout', '--detach', candidate)
+        self.links(repair=True)
         print('SMW updated. Hyprland was not reloaded.')
         print('Review: git diff --submodule=log -- ' + SUBMODULE)
         print('After testing, commit the submodule in dotfiles to record this version.')

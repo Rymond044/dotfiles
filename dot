@@ -32,10 +32,15 @@ stow_() { stow -d "$DOT" -t "$TARGET" "$@"; }
 
 cmd_link() {
   need_stow
-  local p
+  local p ignore
+  ignore=$(python3 "$DOT/install/installer.py" --stow-ignore)
   while read -r p; do
     [[ -d $DOT/$p ]] || die "нет пакета: $p"
-    stow_ --restow "$p" && say "${c_grn}✓${c_off} $p"
+    if [[ $p == hypr && ! -f $DOT/hypr/.config/hypr/plugins/init.lua ]]; then
+      die "SMW не скачан. Сначала выполните: ./dot smw restore"
+    fi
+    stow_ --no-folding --restow --ignore "$ignore" "$p" || return $?
+    say "${c_grn}✓${c_off} $p"
   done < <(pkgs_or_all "$@")
 }
 

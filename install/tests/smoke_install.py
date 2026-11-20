@@ -133,6 +133,11 @@ def scenario(name, users, hardware, failed_package=None):
         log=[json.loads(line) for line in (temp/'commands.jsonl').read_text().splitlines()]
         home=temp/'home'
         assert (home/'.config/kitty/kitty.conf').is_symlink()
+        assert (home/'.config/hypr/plugins/lua/monitors.lua').is_symlink()
+        sandbox = args[:args.index('/usr/bin/python3')]
+        # Lua видит те же абсолютные ссылки /mnt, что и установленная сессия.
+        drive(sandbox + ['/usr/bin/lua', '-e', 'package.path = "/tmp/home/.config/hypr/?.lua;/tmp/home/.config/hypr/?/init.lua;" .. package.path; assert(type(require("plugins").setup) == "function")'])
+        drive(sandbox + ['/usr/bin/python3', '/mnt/install/installer.py', '--check', '--config-packages', 'hypr'])
         assert not (home/'.codex').exists()
         assert not (home/'.cache/wallust/ghostty').exists()
         assert '/home/rymond044/' not in (home/'.gtkrc-2.0').read_text()
@@ -173,10 +178,14 @@ def scenario(name, users, hardware, failed_package=None):
             home/'Wallpapers/current': b'existing wallpaper',
             home/'Pictures/pfp/current_pfp.jpg': b'existing avatar',
             home/'.config/dotfiles/.env': b'LOCAL_SECRET=preserved\n',
+            home/'.config/hypr/monitors.lua': b'-- personal monitor layout\n',
+            home/'.config/hypr/monitors.conf': b'# personal monitor layout\n',
         }
         for path, data in retained.items(): path.write_bytes(data)
+        (home/'.config/hypr/plugins/lua/monitors.lua').unlink()
         drive(args,expected=2 if failed_package else 0)
         for path, data in retained.items(): assert path.read_bytes() == data
+        drive(sandbox + ['/usr/bin/python3', '/mnt/install/installer.py', '--check', '--config-packages', 'hypr'])
         print(f'PASS {name}: install + repeat; actual stow/theme/files; package/git/unit operations simulated.')
 
 

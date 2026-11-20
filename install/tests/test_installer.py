@@ -247,6 +247,10 @@ class HomeTests(unittest.TestCase):
         self.assertEqual(avatar.read_bytes(), b'existing avatar')
 
     def test_stow_integration_excludes_optional_and_machine_configs(self):
+        monitor_dir = self.home / '.config/hypr'
+        monitor_dir.mkdir(parents=True)
+        for name in ('monitors.lua', 'monitors.conf'):
+            (monitor_dir / name).write_text('personal monitor settings\n')
         real_run = subprocess.run
         def controlled(args, **kwargs):
             if str(args[0]) == 'stow':
@@ -262,16 +266,51 @@ class HomeTests(unittest.TestCase):
             self.installer.configs()
         self.assertTrue((self.home / '.zshrc').is_symlink())
         self.assertTrue((self.home / '.config/kitty/kitty.conf').is_symlink())
+        self.assertTrue((self.home / '.config/hypr/plugins/lua/monitors.lua').is_file())
         self.assertFalse((self.home / '.config/ghostty').exists())
         self.assertFalse((self.home / '.config/yazi').exists())
         self.assertFalse((self.home / '.config/MControlCenter.conf').exists())
         self.assertFalse((self.home / '.config/systemd/user/ec-sync.service').exists())
         self.assertFalse((self.home / '.config/electron-flags.conf').exists())
         self.assertNotIn('--ignore-gpu-blocklist', (self.home / '.config/chromium-flags.conf').read_text())
-        self.assertNotIn('eDP-1', (self.home / '.config/hypr/monitors.lua').read_text())
+        for name in ('monitors.lua', 'monitors.conf'):
+            self.assertEqual((monitor_dir / name).read_text(), 'personal monitor settings\n')
+            self.assertFalse((monitor_dir / name).is_symlink())
         self.assertNotIn('xe.force_probe', (self.home / '.config/uwsm/env').read_text())
         self.assertEqual((self.home / '.config/dotfiles/.env').stat().st_mode & 0o777, 0o600)
+
+        # Настоящий Lua загружает SMW через установленные ссылки, включая monitors.lua.
+        real_run(['lua', '-e', 'package.path = "./?.lua;./?/init.lua;" .. package.path; assert(type(require("plugins").setup) == "function")'],
+                 cwd=monitor_dir, check=True, capture_output=True, text=True)
+        with patch.dict(os.environ, env), contextlib.redirect_stdout(io.StringIO()):
+            m.check_configs(['hypr'])
+            (monitor_dir / 'plugins/lua/monitors.lua').unlink()
+            with self.assertRaisesRegex(RuntimeError, 'required config links'):
+                m.check_configs(['hypr'])
+        # Реальная dot link должна исправить сбой, сохранив локальные настройки экранов.
+        real_run([str(ROOT / 'dot'), 'link', 'hypr'], env=dict(os.environ, **env),
+                 check=True, text=True, capture_output=True)
+        with patch.dict(os.environ, env), contextlib.redirect_stdout(io.StringIO()):
+            m.check_configs(['hypr'])
+        for name in ('monitors.lua', 'monitors.conf'):
+            self.assertEqual((monitor_dir / name).read_text(), 'personal monitor settings\n')
+
+        conflict = monitor_dir / 'hyprland.lua'
+        conflict.unlink()
+        conflict.write_text('-- personal config\n')
+        result = real_run([str(ROOT / 'dot'), 'link', 'hypr'], env=dict(os.environ, **env),
+                          text=True, capture_output=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(conflict.read_text(), '-- personal config\n')
         self.assertFalse((self.home / '.local/state/dotfiles').exists())
+
+    def test_check_rejects_uninitialized_smw(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / 'hypr/.config/hypr/plugins').mkdir(parents=True)
+            with patch.object(m, 'ROOT', root), patch.object(m, 'make_plan', return_value={'configs': ['hypr']}), contextlib.redirect_stdout(io.StringIO()):
+                with self.assertRaisesRegex(RuntimeError, 'required config links'):
+                    m.check_configs(['hypr'])
 
     def test_upgrade_from_folded_stow_keeps_generated_files_out_of_repo(self):
         repo = self.home / 'repo'

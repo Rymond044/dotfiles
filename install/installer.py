@@ -22,7 +22,7 @@ import tomllib
 ROOT = Path(__file__).resolve().parents[1]
 CATALOG = ROOT / 'packages/scopes.json'
 # Эти файлы устанавливаются отдельно: выбор зависит от hardware/MIME и локальных данных.
-IGNORE = r'(^|/)(mimeapps\.list|wallust\.toml|\.gtkrc-2\.0|chromium-flags\.conf|electron-flags\.conf|monitors\.(lua|conf)|MControlCenter\.conf|ec-sync\.service|cameractrlsd\.service|hyprlock\.conf|user-dirs\.(dirs|locale)|clipboard_history\.json|clipse\.log|tmp_files|bookmarks|myvpn|libadwaita\.css)$'
+IGNORE = r'(^|/)(mimeapps\.list|wallust\.toml|\.gtkrc-2\.0|chromium-flags\.conf|electron-flags\.conf|MControlCenter\.conf|ec-sync\.service|cameractrlsd\.service|hyprlock\.conf|user-dirs\.(dirs|locale)|clipboard_history\.json|clipse\.log|tmp_files|bookmarks|myvpn|libadwaita\.css)$|^\.config/hypr/monitors\.(lua|conf)$'
 ELECTRON_APPS = {'discord', 'chatgpt-bin', 'claude-desktop', 'visual-studio-code-bin', 'github-desktop', 'escrcpy-bin'}
 DESKTOP_PACKAGES = {
     'org.gnome.Nautilus.desktop': 'nautilus', 'chromium.desktop': 'chromium',
@@ -798,9 +798,15 @@ def check_configs(packages=None):
         plan['configs'] = packages
     bad = False
     for package in plan['configs']:
+        if package == 'hypr':
+            # Пустой сабмодуль не попадёт в rglob и иначе даст ложный успех.
+            for name in ('init.lua', 'lua/split-monitor-workspaces.lua', 'lua/monitors.lua'):
+                if not (ROOT / 'hypr/.config/hypr/plugins' / name).is_file():
+                    print(f'MISSING SMW SOURCE: {name}; run: ./dot smw restore')
+                    bad = True
         for source in (ROOT / package).rglob('*'):
             relative = source.relative_to(ROOT / package)
-            if (not source.is_file() and not source.is_symlink()) or '.git' in relative.parts or re.search(IGNORE, relative.as_posix()):
+            if (not source.is_file() and not source.is_symlink()) or {'.git', '.gitignore'} & set(relative.parts) or re.search(IGNORE, relative.as_posix()):
                 continue
             target = home / relative
             if not target.exists() or target.resolve() != source.resolve():
@@ -821,10 +827,14 @@ def main(argv=None):
     parser.add_argument('--audit', action='store_true')
     parser.add_argument('--export', action='store_true', help='Regenerate system lists from the scope catalog')
     parser.add_argument('--check', action='store_true', help='Check required config links, excluding generated/local files')
+    parser.add_argument('--stow-ignore', action='store_true', help=argparse.SUPPRESS)
     parser.add_argument('--config-packages', help='Comma-separated config packages to check explicitly')
     parser.add_argument('--first-login', action='store_true', help=argparse.SUPPRESS)
     parser.add_argument('--first-login-terminal', action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
+    if args.stow_ignore:
+        print(IGNORE)
+        return
     if args.first_login_terminal:
         first_login_terminal()
         return
