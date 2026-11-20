@@ -1,58 +1,50 @@
-# Rymond044 Hyprland dotfiles
+# Rymond044’s Hyprland dotfiles
 
-> *My configuration for a clean, functional, and aesthetically pleasing Hyprland setup.*
+My Arch Linux desktop runs Hyprland with a Lua configuration. Waybar adapts to each monitor’s logical width, Wallust builds a palette from the wallpaper, and two Quickshell apps handle search and desktop widgets.
 
 ## Showcase
-<img width="2880" height="1800" alt="image" src="https://github.com/user-attachments/assets/82b2ab31-9af5-4327-ace6-e9958ac6f036" />
 
-https://github.com/user-attachments/assets/44e4d759-637e-4236-847c-cd813c1b8619
-> i wish github could load videos larger than 10mb >:|
+[![A frame from the desktop recording. Click to watch the showcase.](docs/media/showcase.jpg)](docs/media/showcase.mp4)
 
-## Features
+[Watch the desktop recording (MP4)](docs/media/showcase.mp4) · 17 seconds, 720p. Search for Kitty, calculate an expression, open the session menu and add a calendar above a terminal. Recorded on an isolated Hyprland display with a demo widget layout.
 
-- **Dynamic color schemes** – Wallust picks colors from your wallpaper and applies them across all supported applications (Waybar, quickseek, Kitty, etc.). Change your wallpaper and everything updates instantly.
-- **Intelligent package management** – Custom fzf-based scripts let you install or remove regular and AUR packages with a fuzzy finder, and even bulk‑remove multiple packages at once – all from your terminal.
-- **Hyprland power‑user tools** – Enabled `hyprsplit` for advanced multi‑monitor management and `hyprexpo` for a beautiful workspace overview. Also `monitui` is great for managing monitors!
-- **Custom Arch logo screensaver** – A unique screensaver that displays the Arch logo (or any custom logo) when the system is idle.
-- **TUI suite** – A collection of terminal‑based utilities integrated into the workflow:
-  - `btop` – system monitor with matching theme
-  - `bluetui` – Bluetooth management
-  - `impala` – network connection manager
-  - `wiremix` - audio mixer
-  - `calcure` – calendar and task management
-- **Spotlight-like launcher** – [quickseek](https://github.com/Rymond044/quickseek) searches apps, files, the control center (Wi-Fi, Bluetooth, sound, power…), session actions, a calculator and the web from one window.
----
+## Around the desktop
 
-## Components
+| Shortcut | What it opens |
+| --- | --- |
+| Super + Space | [quickseek](https://github.com/Rymond044/quickseek) searches applications, evaluates expressions and finds files with the `f ` prefix. |
+| Super + Shift + A | The control center inside quickseek, with sections for Wi-Fi, Bluetooth, sound, displays, power and appearance. |
+| Super + V / Super + Esc | Clipboard history / session actions in quickseek. |
+| Super + W | [quickdesk](https://github.com/Rymond044/quickdesk) raises desktop widgets above windows. Its editor saves a layout for each combination of monitors. |
+| Super + Tab / Ctrl + Tab | HyMission’s overview of all workspaces / the current workspace. |
+| Super + Shift + S | HyprCapture’s capture interface. |
+| Super + arrow / Super + Shift + arrow | Move focus / move a window in that direction, crossing monitors at the edge. |
 
-Each top-level directory is a [GNU stow](https://www.gnu.org/software/stow/) package mirroring `$HOME`
-(e.g. `hypr/.config/hypr` → `~/.config/hypr`).
+Split Monitor Workspaces gives each monitor its own set of workspaces. Changing the wallpaper updates the palette used by Waybar, the terminals, notifications and Quickshell. Light and dark modes can follow the wallpaper or be pinned. The desktop also includes a custom idle screensaver, a battery history viewer and terminal package pickers for pacman and the AUR.
 
-| Package          | Description                                     |
-|------------------|-------------------------------------------------|
-| `hypr/`          | Hyprland (Lua config), Hypridle, Hyprlock       |
-| `waybar/`        | Navigation bar                                  |
-| `cc/`            | Control center: sections for quickseek (Wi-Fi, BT, sound, power…) |
-| `swaync/`        | Notification daemon                             |
-| `kitty/`, `ghostty/` | Terminals                                   |
-| `wallust/`       | Adaptive color palette picker                   |
-| `nvim/`          | LazyVim                                         |
-| `zsh/`           | zshrc + starship                                |
-| `gtk/`, `qt/`    | GTK / Qt theming (colors: `binc/theme`)         |
-| `session/`       | mimeapps, chromium/electron flags, user units   |
-| `btop/`, `fastfetch/`, `yazi/`, `clipse/` | TUI tools              |
-| `binc/`          | Custom scripts (`~/.config/binc`)               |
-| `system/`        | Files for `/etc` (copied, not linked)           |
-| `packages/`      | pacman / AUR package lists                      |
+## Install on Arch Linux
 
-## Install
+Start from an installed Arch system with a regular user and sudo access. Preview the base package selection first, then open the interactive installer to choose personal apps, optional features and hardware support. The MSI laptop profile is opt-in.
 
 ```sh
 git clone --recurse-submodules https://github.com/Rymond044/dotfiles.git ~/dotfiles
-~/dotfiles/bootstrap.sh
+cd ~/dotfiles
+./dot plan
+./bootstrap.sh
 ```
 
-Day-to-day usage (`./dot link|check|adopt|sys|pkgs`) is described in [docs/STOW.md](docs/STOW.md).
+The [installation guide](docs/INSTALL.md) covers selection flags, first-login setup and recovery. The [package catalog](packages/scopes.json) defines what belongs to each installation scope.
 
----
-> _With great power comes great responsibility..._
+## Repository map
+
+| Where | What lives there |
+| --- | --- |
+| [hypr](hypr/.config/hypr) | Hyprland Lua modules, keyboard bindings, Hypridle and Hyprlock. |
+| [quickseek](quickseek), [quickdesk](quickdesk), [cc](cc) | App settings and control-center integration. The two Quickshell apps themselves live in separate repositories. |
+| [waybar](waybar), [swaync](swaync), [wallust](wallust), [quickshell](quickshell) | Bar layouts, notifications, palette templates and desktop panels. |
+| [binc](binc/.config/binc) | Desktop commands for themes, wallpapers, locking and package management. |
+| [kitty](kitty), [ghostty](ghostty), [nvim](nvim), [zsh](zsh) | Terminal, editor and shell configuration. |
+| [system](system), [hardware](hardware), [session](session) | System files for `/etc`, hardware profiles and user-session defaults. |
+| [install](install), [packages](packages) | Installer, package selection and service lists. |
+
+User config packages mirror paths under `$HOME`. For example, GNU Stow links files from `hypr/.config/hypr/` into `~/.config/hypr/`. From the repository, use `./dot check` to verify links, `./dot sys diff` to compare tracked system files with `/etc`, and `./dot --help` for all commands. See the [Stow guide](docs/STOW.md) for the day-to-day workflow.
