@@ -221,6 +221,11 @@ dot — управление dotfiles ($DOT)
   dot install [args…]   установка system + выбранных user/hardware (bootstrap)
   dot plan [args…]      план установки без изменений
 
+  dot smw status       show installed and recorded SMW versions
+  dot smw update       update SMW for the installed Hyprland release
+  dot smw update --check  preview the update without changing Lua files
+  dot smw restore      restore SMW recorded in the dotfiles index
+
   dot sys diff          отличия system/ от /etc
   dot sys install       скопировать system/ в систему (с подтверждением)
   dot sys pull          забрать изменения из /etc в system/
@@ -237,6 +242,7 @@ EOF
 }
 
 case "${1:-}" in
+  smw) shift; exec python3 "$DOT/install/smw.py" "$@" ;;
   install) shift; exec "$DOT/bootstrap.sh" "$@" ;;
   plan) shift; exec "$DOT/bootstrap.sh" --plan "$@" ;;
   link)   shift; cmd_link "$@" ;;
