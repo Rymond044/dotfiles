@@ -1,0 +1,146 @@
+#!/usr/bin/env python3
+"""Плагин quickseek: ручные проверки и сохранённый отчёт dotfiles."""
+import concurrent.futures
+import datetime
+import fcntl
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+
+ROOT = Path(__file__).resolve().parents[3]
+CACHE = Path(os.environ.get('XDG_CACHE_HOME', Path.home() / '.cache')) / 'dotfiles-status'
+REPORT = CACHE / 'report.json'
+CHECKS = [('links', 'Config links'), ('packages', 'Unclassified packages'),
+          ('system', 'Tracked system configs'), ('units', 'Unit list differences'),
+          ('failed', 'Failed user services')]
+
+
+def command(args):
+    try:
+        p = subprocess.run(args, capture_output=True, text=True, timeout=30,
+                           env={**os.environ, 'LC_ALL': 'C', 'NO_COLOR': '1'})
+        return p.returncode, (p.stdout + p.stderr).strip()
+    except (OSError, subprocess.SubprocessError) as e:
+        return -1, str(e)
+
+
+def check(key):
+    if key == 'system':
+        lines = []
+        try:
+            for source in sorted((ROOT / 'system').rglob('*')):
+                if not source.is_file():
+                    continue
+                target = Path('/') / source.relative_to(ROOT / 'system')
+                try:
+                    if source.read_bytes() != target.read_bytes():
+                        lines.append(f'Different: {target}')
+                except FileNotFoundError:
+                    lines.append(f'Missing: {target}')
+                except PermissionError:
+                    lines.append(f'Unreadable: {target}')
+            return dict(status=f'{len(lines)} differences', text='\n'.join(lines) or 'Tracked system files match.')
+        except OSError as e:
+            return dict(status='Unavailable', text=str(e))
+    args = {'links': [str(ROOT / 'dot'), 'check'],
+            'packages': [str(ROOT / 'dot'), 'pkgs', 'diff'],
+            'units': [str(ROOT / 'dot'), 'units', 'diff'],
+            'failed': ['systemctl', '--user', '--failed', '--no-legend', '--plain', '--no-pager']}[key]
+    code, text = command(args)
+    if key == 'units':
+        text = text.replace('в списке, но не включено:', 'listed but not enabled:').replace('включено, но нет в списке:', 'enabled but not listed:')
+    if code:
+        status = 'Needs review' if key == 'links' and code == 1 else 'Unavailable'
+    elif key == 'links':
+        status = 'Healthy'
+    elif key == 'packages':
+        body = text.split('Unclassified explicit packages:\n', 1)[-1].split('Scope assignments were preserved.', 1)[0]
+        status = f'{len([line for line in body.splitlines() if line.strip()])} unclassified'
+    elif key == 'units':
+        status = str(sum(line.startswith(('  - ', '  + ')) for line in text.splitlines())) + ' differences'
+    else:
+        status = f'{len(text.splitlines())} failed'
+    return dict(status=status, text=text or 'No failed user services.')
+
+
+def read_report():
+    try:
+        data = json.loads(REPORT.read_text())
+        if isinstance(data.get('checks'), dict) and isinstance(data.get('time'), str):
+            return data
+    except (OSError, ValueError, AttributeError):
+        pass
+    return None
+
+
+def refresh():
+    CACHE.mkdir(parents=True, exist_ok=True, mode=0o700)
+    with (CACHE / 'refresh.lock').open('w') as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            return
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
+            results = dict(zip((k for k, _ in CHECKS), pool.map(check, (k for k, _ in CHECKS))))
+        data = dict(time=datetime.datetime.now().astimezone().isoformat(timespec='seconds'), checks=results)
+        fd, name = tempfile.mkstemp(dir=CACHE)
+        try:
+            with os.fdopen(fd, 'w') as stream:
+                json.dump(data, stream, ensure_ascii=False)
+            os.replace(name, REPORT)
+        finally:
+            if os.path.exists(name):
+                os.unlink(name)
+
+
+def emit(**row):
+    if not row.get('icon'):
+        icons = {'links': '󰌹', 'packages': '󰏖', 'system': '󰒓', 'units': '󰑓', 'failed': '󰅚'}
+        row['icon'] = '󰥔' if row['id'].endswith(':time') else icons.get(row['id'], '󰋽')
+    print(json.dumps(row, ensure_ascii=False))
+
+
+def listing():
+    report = read_report()
+    emit(id='refresh', title='Refresh checks', status='Manual', icon='󰑐', keywords='refresh audit check diagnostics')
+    emit(id='checked', title='Last checked', status=report['time'] if report else 'Never — run Refresh checks', icon='󰥔')
+    if not report:
+        return
+    for key, title in CHECKS:
+        result = report['checks'].get(key, dict(status='Unavailable', text='No result.'))
+        emit(id=key, title=title, folder=True, status=result['status'], keywords='dotfiles status health diagnostics')
+        emit(id=key + ':time', parent=key, title='Checked at', status=report['time'])
+        for n, line in enumerate(result['text'].splitlines()):
+            if line.strip():
+                emit(id=f'{key}:line:{n}', parent=key, title=f'Line {n + 1}', description=line, keywords=line, icon='󰋽')
+
+
+def main():
+    if sys.argv[1:] == ['list']:
+        listing()
+    elif len(sys.argv) == 3 and sys.argv[1] == 'run':
+        key = sys.argv[2]
+        if key == 'refresh':
+            refresh()
+            return
+        report = read_report()
+        if not report:
+            return
+        value = report['time'] if key == 'checked' or key.endswith(':time') else None
+        if ':line:' in key:
+            section, index = key.split(':line:')
+            try:
+                value = report['checks'][section]['text'].splitlines()[int(index)]
+            except (KeyError, ValueError, IndexError):
+                return
+        if value:
+            subprocess.run(['wl-copy', '--', value], check=False, timeout=2)
+    else:
+        raise SystemExit('Usage: dotfiles-status list | run ID')
+
+
+if __name__ == '__main__':
+    main()

@@ -22,6 +22,17 @@
         "quickseek"
       ],
       "refresh": 120
+    },
+    {
+      "id": "dotfiles",
+      "name": "Dotfiles status",
+      "icon": "󰋽",
+      "keywords": "dotfiles status health diagnostics состояние конфиги",
+      "command": [
+        "~/.config/binc/dotfiles-status"
+      ],
+      "refresh": 120,
+      "description": "Saved dotfiles checks; Refresh checks updates them manually. Enter a check to see details."
     }
   ],
   "emptyView": [
